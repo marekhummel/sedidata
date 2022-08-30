@@ -1,16 +1,17 @@
 import cassiopeia as cass
+from api.riot.dragon import DragonDelegate
 from api.riot.masteries import MasteryDelegate
 
 
 class WebApi:
     Mastery: MasteryDelegate
+    Dragon: DragonDelegate
 
-    def __init__(self, summoner_name):
+    def __init__(self, summoner_name, region):
         self._config()
-        self.summoner = cass.get_summoner(
-            name=summoner_name, region=cass.Region.europe_west
-        )
+        self.summoner = cass.get_summoner(name=summoner_name, region=region)
         self.Mastery = MasteryDelegate(self.summoner)
+        self.Dragon = DragonDelegate(region)
 
     def _config(self):
         config = cass.get_default_config()

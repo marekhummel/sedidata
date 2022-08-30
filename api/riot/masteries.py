@@ -37,3 +37,12 @@ class MasteryDelegate:
 
     def mastery_unplayed(self):
         return [c.champion.name for c in self._masteries if c.level == 0]
+
+    def champs_sorted_by_mastery(self):
+        return [
+            c.champion.name
+            for c in sorted(self._masteries, key=lambda m: m.points, reverse=True)
+        ]
+
+    def champs_with_minpts(self, minpts):
+        return [c.champion.name for c in self._masteries if c.points > minpts]
