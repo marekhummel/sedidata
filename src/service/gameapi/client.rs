@@ -1,5 +1,6 @@
 use std::{
-    collections::{hash_map::Entry, HashMap},
+    cell::{Ref, RefCell},
+    collections::HashMap,
     fs::File,
     io::{self, BufRead, Read, Write},
     path::Path,
@@ -7,6 +8,7 @@ use std::{
 
 use base64::{engine::general_purpose, write::EncoderStringWriter};
 use json::JsonValue;
+use once_cell::sync::OnceCell;
 use reqwest::{
     blocking::Client,
     header::{self, HeaderMap, HeaderValue, InvalidHeaderValue},
@@ -24,7 +26,7 @@ struct LockFileContent {
 
 pub struct ApiClient {
     client: Client,
-    cache: HashMap<ClientRequestType, JsonValue>,
+    cache: HashMap<ClientRequestType, OnceCell<JsonValue>>,
     base_url: String,
     summoner_id: Option<SummonerId>,
 }
@@ -52,9 +54,17 @@ impl ApiClient {
             .build()?;
 
         // Create
+        let cache = vec![
+            (ClientRequestType::Summoner, OnceCell::new()),
+            (ClientRequestType::Champions, OnceCell::new()),
+            (ClientRequestType::Masteries, OnceCell::new()),
+            (ClientRequestType::Loot, OnceCell::new()),
+        ]
+        .into_iter()
+        .collect();
         Ok(Self {
             client,
-            cache: HashMap::new(),
+            cache,
             base_url: lockfile.base_url,
             summoner_id: None,
         })
@@ -62,7 +72,7 @@ impl ApiClient {
 
     fn read_certificate() -> Result<Certificate, CertificateError> {
         let mut buffer = Vec::new();
-        let mut cert_file = File::open("riotgames.pem")?;
+        let mut cert_file = File::open("config/riotgames.pem")?;
         cert_file.read_to_end(&mut buffer)?;
         let cert = reqwest::Certificate::from_pem(&buffer)?;
         Ok(cert)
@@ -82,16 +92,19 @@ impl ApiClient {
         })
     }
 
-    pub fn request(&mut self, request_type: ClientRequestType) -> Result<&JsonValue, RequestError> {
+    pub fn request(&self, request_type: ClientRequestType) -> Result<&JsonValue, RequestError> {
         // Check for cache
-        if !self.cache.contains_key(&request_type) {
+        self.cache.get(&request_type).unwrap().get_or_try_init(|| {
             // Get url
             let url = match request_type {
                 ClientRequestType::Summoner => {
                     format!("{}lol-summoner/v1/current-summoner", self.base_url)
                 }
                 ClientRequestType::Champions => match &self.summoner_id {
-                    Some(sid) => format!("{}lol-champions/v1/inventories/{}/champions", self.base_url, sid),
+                    Some(sid) => format!(
+                        "{}lol-champions/v1/inventories/{}/champions",
+                        self.base_url, sid
+                    ),
                     None => return Err(RequestError::SummonerIdNeeded()),
                 },
                 ClientRequestType::Masteries => match &self.summoner_id {
@@ -114,13 +127,11 @@ impl ApiClient {
 
             // Return json
             let text = response.text()?;
-            let mut file = File::create(format!("{:?}.json", request_type)).unwrap();
+            let mut file = File::create(format!("data/{:?}.json", request_type)).unwrap();
             file.write_all(text.as_bytes());
             let json = json::parse(text.as_str())?;
-            self.cache.insert(request_type, json);
-        }
-
-        Ok(self.cache.get(&request_type).unwrap())
+            Ok(json)
+        })
     }
 
     pub fn set_summoner_id(&mut self, sid: SummonerId) {
@@ -128,7 +139,14 @@ impl ApiClient {
     }
 
     pub fn refresh(&mut self) -> () {
-        self.cache = HashMap::new();
+        self.cache.clear();
+        self.cache
+            .insert(ClientRequestType::Summoner, OnceCell::new());
+        self.cache
+            .insert(ClientRequestType::Champions, OnceCell::new());
+        self.cache
+            .insert(ClientRequestType::Masteries, OnceCell::new());
+        self.cache.insert(ClientRequestType::Loot, OnceCell::new());
         self.summoner_id = None;
     }
 }

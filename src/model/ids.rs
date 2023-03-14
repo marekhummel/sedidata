@@ -3,10 +3,10 @@ use std::fmt::Display;
 #[derive(Debug, Clone)]
 pub struct SummonerId(String);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ChampionId(String);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SkinId(String);
 
 #[derive(Debug, Clone)]
