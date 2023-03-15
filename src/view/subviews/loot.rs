@@ -90,4 +90,28 @@ impl<'a, 'b> LootView<'a, 'b> {
 
         Ok(())
     }
+
+    pub fn unplayed_champs(&self) -> ViewResult {
+        Ok(())
+    }
+
+    pub fn blue_essence_overview(&self) -> ViewResult {
+        Ok(())
+    }
+
+    pub fn missing_champ_shards(&self) -> ViewResult {
+        Ok(())
+    }
+
+    pub fn interesting_skins(&self) -> ViewResult {
+        Ok(())
+    }
+
+    pub fn skin_shards_first_skin(&self) -> ViewResult {
+        Ok(())
+    }
+
+    pub fn skin_shards_disenchantable(&self) -> ViewResult {
+        Ok(())
+    }
 }
