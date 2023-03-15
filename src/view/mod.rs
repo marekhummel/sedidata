@@ -1,7 +1,4 @@
-use crate::service::{
-    data_manager::{DataRetrievalError, DataRetrievalResult},
-    lookup::LookupError,
-};
+use crate::service::{data_manager::DataRetrievalError, lookup::LookupError};
 
 pub mod repl;
 mod subviews;

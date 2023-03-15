@@ -1,5 +1,4 @@
 use std::{
-    cell::{Ref, RefCell},
     collections::HashMap,
     fs::File,
     io::{self, BufRead, Read, Write},
@@ -128,7 +127,7 @@ impl ApiClient {
             // Return json
             let text = response.text()?;
             let mut file = File::create(format!("data/{:?}.json", request_type)).unwrap();
-            file.write_all(text.as_bytes());
+            let _ = file.write_all(text.as_bytes());
             let json = json::parse(text.as_str())?;
             Ok(json)
         })

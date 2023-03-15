@@ -9,7 +9,7 @@ pub fn run(manager: DataManager) {
     let lookup = get_lookup_service(&manager);
     let util = UtilService::new(&manager);
 
-    let basic_view = BasicView::new(&manager, &lookup, &util);
+    let basic_view = BasicView::new(&manager);
     let inventory_view = InventoryView::new(&manager, &lookup, &util);
     let loot_view = LootView::new(&manager, &lookup, &util);
 
