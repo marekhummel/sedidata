@@ -17,7 +17,7 @@ use super::gameapi::{
 
 pub struct DataManager {
     client: ApiClient,
-    summoner: Summoner,
+    summoner: OnceCell<Summoner>,
     champ_info_cache: OnceCell<AllChampionInfo>,
     masteries_cache: OnceCell<Vec<Mastery>>,
     loot_cache: OnceCell<LootItems>,
@@ -31,7 +31,7 @@ impl DataManager {
 
         Ok(Self {
             client,
-            summoner,
+            summoner: OnceCell::from(summoner),
             champ_info_cache: OnceCell::new(),
             masteries_cache: OnceCell::new(),
             loot_cache: OnceCell::new(),
@@ -39,10 +39,10 @@ impl DataManager {
     }
 
     pub fn get_summoner(&self) -> &Summoner {
-        &self.summoner
+        self.summoner.get().unwrap()
     }
 
-    pub fn get_champions(&self) -> Result<&Vec<Champion>, DataRetrievalError> {
+    pub fn get_champions(&self) -> DataRetrievalResult<&Vec<Champion>> {
         self.champ_info_cache
             .get_or_try_init(|| {
                 let champs_json = self.client.request(ClientRequestType::Champions)?;
@@ -52,7 +52,7 @@ impl DataManager {
             .map(|champ_info| &champ_info.champions)
     }
 
-    pub fn get_skins(&self) -> Result<&Vec<Skin>, DataRetrievalError> {
+    pub fn get_skins(&self) -> DataRetrievalResult<&Vec<Skin>> {
         self.champ_info_cache
             .get_or_try_init(|| {
                 let champs_json = self.client.request(ClientRequestType::Champions)?;
@@ -61,7 +61,7 @@ impl DataManager {
             })
             .map(|champ_info| &champ_info.skins)
     }
-    pub fn get_chromas(&self) -> Result<&Vec<Chroma>, DataRetrievalError> {
+    pub fn get_chromas(&self) -> DataRetrievalResult<&Vec<Chroma>> {
         self.champ_info_cache
             .get_or_try_init(|| {
                 let champs_json = self.client.request(ClientRequestType::Champions)?;
@@ -71,7 +71,7 @@ impl DataManager {
             .map(|champ_info| &champ_info.chromas)
     }
 
-    pub fn get_masteries(&self) -> Result<&Vec<Mastery>, DataRetrievalError> {
+    pub fn get_masteries(&self) -> DataRetrievalResult<&Vec<Mastery>> {
         self.masteries_cache.get_or_try_init(|| {
             let masteries_json = self.client.request(ClientRequestType::Masteries)?;
             let masteries = parse_masteries(masteries_json)?;
@@ -79,7 +79,7 @@ impl DataManager {
         })
     }
 
-    pub fn get_loot(&self) -> Result<&LootItems, DataRetrievalError> {
+    pub fn get_loot(&self) -> DataRetrievalResult<&LootItems> {
         self.loot_cache.get_or_try_init(|| {
             let loot_json = self.client.request(ClientRequestType::Loot)?;
             let loot = parse_loot(loot_json)?;
@@ -87,23 +87,25 @@ impl DataManager {
         })
     }
 
-    pub fn refresh(&mut self) -> Result<(), DataRetrievalError> {
+    pub fn refresh(&mut self) -> DataRetrievalResult<()> {
         self.client.refresh();
         let summoner = DataManager::retrieve_summoner(&mut self.client)?;
         self.client.set_summoner_id(summoner.id.clone());
-        self.summoner = summoner;
+        self.summoner = OnceCell::from(summoner);
         self.champ_info_cache = OnceCell::new();
         self.masteries_cache = OnceCell::new();
         self.loot_cache = OnceCell::new();
         Ok(())
     }
 
-    fn retrieve_summoner(client: &mut ApiClient) -> Result<Summoner, DataRetrievalError> {
+    fn retrieve_summoner(client: &mut ApiClient) -> DataRetrievalResult<Summoner> {
         let summoner_json = client.request(ClientRequestType::Summoner)?;
         let summoner = parse_summoner(summoner_json)?;
         Ok(summoner)
     }
 }
+
+pub type DataRetrievalResult<T> = Result<T, DataRetrievalError>;
 
 #[derive(Debug)]
 pub enum DataManagerInitError {

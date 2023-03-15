@@ -1,6 +1,8 @@
 use json::JsonValue;
 
-use crate::model::loot::{ChampionShard, Credits, JsonLootItem, LootItems, MasteryToken, SkinShard};
+use crate::model::loot::{
+    ChampionShard, Credits, JsonLootItem, LootItems, MasteryToken, SkinShard,
+};
 
 use super::ParsingError;
 
@@ -14,7 +16,10 @@ pub fn parse_loot(json: &JsonValue) -> Result<LootItems, ParsingError> {
     let mut ignored = Vec::new();
 
     for loot_item in items {
-        match (loot_item.display_category.as_str(), loot_item.loot_type.as_str()) {
+        match (
+            loot_item.display_category.as_str(),
+            loot_item.loot_type.as_str(),
+        ) {
             ("CHAMPION", _) => champion_shards.push(parse_champion_shard(loot_item)),
             ("SKIN", _) => skin_shards.push(parse_skin_shard(loot_item)),
             ("CHEST", "CHAMPION_TOKEN") => mastery_tokens.push(parse_mastery_token(loot_item)),
@@ -99,7 +104,7 @@ fn parse_json_to_loot_item(json: &JsonValue) -> Result<Vec<JsonLootItem>, Parsin
 
 fn parse_champion_shard(json_item: JsonLootItem) -> ChampionShard {
     ChampionShard {
-        id: json_item.store_item_id.into(),
+        champ_id: json_item.store_item_id.into(),
         count: json_item.count as u8,
         disenchant_value: json_item.disenchant_value,
     }
@@ -107,14 +112,19 @@ fn parse_champion_shard(json_item: JsonLootItem) -> ChampionShard {
 
 fn parse_skin_shard(json_item: JsonLootItem) -> SkinShard {
     SkinShard {
-        id: json_item.store_item_id.into(),
+        skin_id: json_item.store_item_id.into(),
         count: json_item.count as u8,
     }
 }
 
 fn parse_mastery_token(json_item: JsonLootItem) -> MasteryToken {
     MasteryToken {
-        champ: json_item.ref_id.into(),
+        champ_id: json_item.ref_id.into(),
         count: json_item.count as u8,
+        level: if json_item.loot_name == "CHAMPION_TOKEN_7" {
+            7
+        } else {
+            6
+        },
     }
 }

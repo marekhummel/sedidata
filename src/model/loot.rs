@@ -27,20 +27,21 @@ pub struct Chest {}
 
 #[derive(Debug)]
 pub struct MasteryToken {
-    pub champ: ChampionId,
+    pub champ_id: ChampionId,
     pub count: u8,
+    pub level: u8,
 }
 
 #[derive(Debug)]
 pub struct ChampionShard {
-    pub id: ChampionId,
+    pub champ_id: ChampionId,
     pub count: u8,
     pub disenchant_value: u16,
 }
 
 #[derive(Debug)]
 pub struct SkinShard {
-    pub id: SkinId,
+    pub skin_id: SkinId,
     pub count: u8,
 }
 

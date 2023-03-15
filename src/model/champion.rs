@@ -17,7 +17,7 @@ pub struct Champion {
 #[derive(Debug)]
 pub struct Skin {
     pub id: SkinId,
-    pub champ: ChampionId,
+    pub champ_id: ChampionId,
     pub name: String,
     pub is_base: bool,
     pub owned: bool,
@@ -26,6 +26,6 @@ pub struct Skin {
 #[derive(Debug)]
 pub struct Chroma {
     pub id: ChromaId,
-    pub skin: SkinId,
+    pub skin_id: SkinId,
     pub owned: bool,
 }

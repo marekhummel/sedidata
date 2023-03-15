@@ -163,7 +163,7 @@ pub enum ClientRequestType {
 pub enum ClientInitError {
     CertMissing(io::Error),
     CertInvalid(reqwest::Error),
-    LockfileMissing(io::Error),
+    LeagueClientNotStarted(io::Error),
     LockfileAuthStringInvalid(io::Error),
     LockfileAuthHeaderInvalid(InvalidHeaderValue),
     ClientError(reqwest::Error),
@@ -181,7 +181,7 @@ impl From<CertificateError> for ClientInitError {
 impl From<LockfileError> for ClientInitError {
     fn from(lf_error: LockfileError) -> Self {
         match lf_error {
-            LockfileError::Missing(err) => Self::LockfileMissing(err),
+            LockfileError::Missing(err) => Self::LeagueClientNotStarted(err),
         }
     }
 }

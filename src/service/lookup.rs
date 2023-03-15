@@ -5,12 +5,12 @@ use crate::model::{
     ids::{ChampionId, SkinId},
 };
 
-pub struct Dictionary<'a> {
+pub struct LookupService<'a> {
     champs: HashMap<ChampionId, &'a Champion>,
     skins: HashMap<SkinId, &'a Skin>,
 }
 
-impl<'a> Dictionary<'a> {
+impl<'a> LookupService<'a> {
     pub fn new(champions: &'a Vec<Champion>, skins: &'a Vec<Skin>) -> Self {
         Self {
             champs: champions.iter().map(|c| (c.id.clone(), c)).collect(),
@@ -18,23 +18,23 @@ impl<'a> Dictionary<'a> {
         }
     }
 
-    pub fn get_champion(&self, id: ChampionId) -> Result<&'a Champion, DictionaryError> {
+    pub fn get_champion(&self, id: ChampionId) -> Result<&'a Champion, LookupError> {
         match self.champs.get(&id) {
             Some(champ) => Ok(*champ),
-            None => Err(DictionaryError::ChampIdNotFound(id)),
+            None => Err(LookupError::ChampIdNotFound(id)),
         }
     }
 
-    pub fn get_skin(&self, id: SkinId) -> Result<&'a Skin, DictionaryError> {
+    pub fn get_skin(&self, id: SkinId) -> Result<&'a Skin, LookupError> {
         match self.skins.get(&id) {
             Some(skin) => Ok(*skin),
-            None => Err(DictionaryError::SkinIdNotFound(id)),
+            None => Err(LookupError::SkinIdNotFound(id)),
         }
     }
 }
 
 #[derive(Debug)]
-pub enum DictionaryError {
+pub enum LookupError {
     ChampIdNotFound(ChampionId),
     SkinIdNotFound(SkinId),
 }

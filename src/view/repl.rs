@@ -1,18 +1,20 @@
 use std::io::{stdin, stdout, Write};
 
 use crate::{
-    service::{data_manager::DataManager, dictionary::Dictionary},
-    view::inventory::InventoryView,
+    service::{data_manager::DataManager, lookup::LookupService, util::UtilService},
+    view::subviews::{basic::BasicView, inventory::InventoryView, loot::LootView},
 };
 
-use super::ViewError;
-
 pub fn run(manager: DataManager) {
-    let dictionary = get_dictionary(&manager);
-    let inventory_view = InventoryView::new(&manager, &dictionary);
+    let lookup = get_lookup_service(&manager);
+    let util = UtilService::new(&manager);
+
+    let basic_view = BasicView::new(&manager, &lookup, &util);
+    let inventory_view = InventoryView::new(&manager, &lookup, &util);
+    let loot_view = LootView::new(&manager, &lookup, &util);
 
     println!("Welcome!");
-    let _ = print_summoner(&manager);
+    let _ = basic_view.print_summoner();
     println!("===========================\n");
 
     loop {
@@ -20,11 +22,13 @@ pub fn run(manager: DataManager) {
         let choice = get_choice();
         println!("~~~");
         let result = match choice {
-            1 => print_summoner(&manager),
-            2 => inventory_view.champions_without_skin(),
-            3 => inventory_view.chromas_without_skin(),
-            // 8 => {}
-            9 => break,
+            0 => break,
+            1 => basic_view.print_summoner(),
+            10 => inventory_view.champions_without_skin(),
+            11 => inventory_view.chromas_without_skin(),
+            // 8 => manager.refresh().map_err(|err| err.into()),
+            20 => loot_view.level_four_champs(),
+            21 => loot_view.mastery_tokens(),
             _ => unreachable!(),
         };
 
@@ -37,25 +41,21 @@ pub fn run(manager: DataManager) {
     }
 }
 
-fn print_summoner(manager: &DataManager) -> Result<(), ViewError> {
-    let summoner = manager.get_summoner();
-    println!("{:?}\n", summoner);
-    Ok(())
-}
-
-fn get_dictionary(manager: &DataManager) -> Dictionary {
+fn get_lookup_service(manager: &DataManager) -> LookupService {
     let champions = manager.get_champions().unwrap();
     let skins = manager.get_skins().unwrap();
 
-    Dictionary::new(champions, skins)
+    LookupService::new(champions, skins)
 }
 
 fn print_options() {
     println!("(1) Summoner Info");
-    println!("(2) Champions Without A Skin");
-    println!("(3) Chromas Without A Skin");
+    println!("(10) Champions Without A Skin");
+    println!("(11) Chromas Without A Skin");
+    println!("(20) Level Four Champions");
+    println!("(21) Mastery Token Info");
     // println!("(8) Refresh");
-    println!("(9) Quit");
+    println!("(0) Quit");
 }
 
 fn get_choice() -> u8 {

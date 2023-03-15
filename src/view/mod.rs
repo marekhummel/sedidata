@@ -1,12 +1,17 @@
-use crate::service::{data_manager::DataRetrievalError, dictionary::DictionaryError};
+use crate::service::{
+    data_manager::{DataRetrievalError, DataRetrievalResult},
+    lookup::LookupError,
+};
 
-mod inventory;
 pub mod repl;
+mod subviews;
+
+type ViewResult = Result<(), ViewError>;
 
 #[derive(Debug)]
 pub enum ViewError {
     ManagerFailed(DataRetrievalError),
-    DictionaryFailed(DictionaryError),
+    LookupFailed(LookupError),
 }
 
 impl From<DataRetrievalError> for ViewError {
@@ -15,8 +20,8 @@ impl From<DataRetrievalError> for ViewError {
     }
 }
 
-impl From<DictionaryError> for ViewError {
-    fn from(error: DictionaryError) -> Self {
-        ViewError::DictionaryFailed(error)
+impl From<LookupError> for ViewError {
+    fn from(error: LookupError) -> Self {
+        ViewError::LookupFailed(error)
     }
 }
