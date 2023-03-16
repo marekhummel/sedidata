@@ -28,12 +28,19 @@ impl From<LookupError> for ViewError {
 #[derive(Debug)]
 pub enum ReplError {
     InitFailed(DataRetrievalError),
+    ViewFailed(ViewError),
     ConsoleFailed(io::Error),
 }
 
 impl From<DataRetrievalError> for ReplError {
     fn from(error: DataRetrievalError) -> Self {
         ReplError::InitFailed(error)
+    }
+}
+
+impl From<ViewError> for ReplError {
+    fn from(error: ViewError) -> Self {
+        ReplError::ViewFailed(error)
     }
 }
 

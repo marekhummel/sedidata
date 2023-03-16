@@ -24,8 +24,8 @@ pub struct DataManager {
 }
 
 impl DataManager {
-    pub fn new(league_path: &str) -> Result<Self, DataManagerInitError> {
-        let mut client = ApiClient::new(league_path)?;
+    pub fn new() -> Result<Self, DataManagerInitError> {
+        let mut client = ApiClient::new()?;
         let summoner = DataManager::retrieve_summoner(&mut client)?;
         client.set_summoner_id(summoner.id.clone());
 
@@ -88,7 +88,7 @@ impl DataManager {
     }
 
     pub fn refresh(&mut self) -> DataRetrievalResult<()> {
-        self.client.refresh();
+        self.client.refresh()?;
         let summoner = DataManager::retrieve_summoner(&mut self.client)?;
         self.client.set_summoner_id(summoner.id.clone());
         self.summoner = OnceCell::from(summoner);
@@ -128,12 +128,19 @@ impl From<DataRetrievalError> for DataManagerInitError {
 #[derive(Debug)]
 pub enum DataRetrievalError {
     ClientFailed(RequestError),
+    ClientRefreshFailed(ClientInitError),
     ParsingFailed(ParsingError),
 }
 
 impl From<RequestError> for DataRetrievalError {
     fn from(error: RequestError) -> Self {
         Self::ClientFailed(error)
+    }
+}
+
+impl From<ClientInitError> for DataRetrievalError {
+    fn from(error: ClientInitError) -> Self {
+        Self::ClientRefreshFailed(error)
     }
 }
 

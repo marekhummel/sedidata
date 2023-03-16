@@ -14,9 +14,7 @@ mod test;
 fn main() {
     // test::main();
 
-    let league_path = r"C:\Program Files\Riot Games\League of Legends\";
-
-    match DataManager::new(league_path) {
+    match DataManager::new() {
         Ok(manager) => match repl::run(manager) {
             Ok(_) => return,
             Err(error) => println!("Error occured while running REPL:\n{:#?}\n", error),

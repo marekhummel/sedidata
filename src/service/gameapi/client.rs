@@ -31,12 +31,33 @@ pub struct ApiClient {
 }
 
 impl ApiClient {
-    pub fn new(league_path: &str) -> Result<Self, ClientInitError> {
+    pub fn new() -> Result<Self, ClientInitError> {
+        let (client, base_url) = ApiClient::setup_client()?;
+
+        // Create
+        let cache = vec![
+            (ClientRequestType::Summoner, OnceCell::new()),
+            (ClientRequestType::Champions, OnceCell::new()),
+            (ClientRequestType::Masteries, OnceCell::new()),
+            (ClientRequestType::Loot, OnceCell::new()),
+        ]
+        .into_iter()
+        .collect();
+
+        Ok(Self {
+            client,
+            cache,
+            base_url,
+            summoner_id: None,
+        })
+    }
+
+    fn setup_client() -> Result<(Client, String), ClientInitError> {
         // Read certificate
         let cert = ApiClient::read_certificate()?;
 
         // Read lockfile and create basic auth secret
-        let lockfile = ApiClient::read_lockfile(league_path)?;
+        let lockfile = ApiClient::read_lockfile()?;
         let basic_auth = format!("{}:{}", lockfile.username, lockfile.password);
         let mut base64_enc = EncoderStringWriter::new(&general_purpose::STANDARD);
         base64_enc.write_all(basic_auth.as_bytes())?;
@@ -52,21 +73,7 @@ impl ApiClient {
             .default_headers(headers)
             .build()?;
 
-        // Create
-        let cache = vec![
-            (ClientRequestType::Summoner, OnceCell::new()),
-            (ClientRequestType::Champions, OnceCell::new()),
-            (ClientRequestType::Masteries, OnceCell::new()),
-            (ClientRequestType::Loot, OnceCell::new()),
-        ]
-        .into_iter()
-        .collect();
-        Ok(Self {
-            client,
-            cache,
-            base_url: lockfile.base_url,
-            summoner_id: None,
-        })
+        Ok((client, lockfile.base_url))
     }
 
     fn read_certificate() -> Result<Certificate, CertificateError> {
@@ -77,16 +84,24 @@ impl ApiClient {
         Ok(cert)
     }
 
-    fn read_lockfile(league_path: &str) -> Result<LockFileContent, LockfileError> {
-        let lol_path = Path::new(league_path);
-        let lol_lockfile = File::open(lol_path.join("lockfile"))?;
+    fn read_lockfile() -> Result<LockFileContent, LockfileError> {
+        // read config file
+        let config_path_file = File::open("config/league_path.txt")?;
+        let league_path = io::BufReader::new(config_path_file)
+            .lines()
+            .next()
+            .ok_or(LockfileError::CantBeRead)??;
 
+        // read lockfile
+        let lol_path = Path::new(league_path.trim());
+        let lol_lockfile = File::open(lol_path.join("lockfile"))?;
         let content = io::BufReader::new(lol_lockfile)
             .lines()
             .next()
             .ok_or(LockfileError::CantBeRead)??;
-        let info = content.split(":").collect::<Vec<_>>();
 
+        // Grab content
+        let info = content.split(":").collect::<Vec<_>>();
         Ok(LockFileContent {
             base_url: format!("{}://127.0.0.1:{}/", info[4], info[2]),
             username: "riot".to_string(),
@@ -140,7 +155,11 @@ impl ApiClient {
         self.summoner_id = Some(sid);
     }
 
-    pub fn refresh(&mut self) -> () {
+    pub fn refresh(&mut self) -> Result<(), ClientInitError> {
+        let (client, base_url) = ApiClient::setup_client()?;
+        self.client = client;
+        self.base_url = base_url;
+
         self.cache.clear();
         self.cache
             .insert(ClientRequestType::Summoner, OnceCell::new());
@@ -149,7 +168,9 @@ impl ApiClient {
         self.cache
             .insert(ClientRequestType::Masteries, OnceCell::new());
         self.cache.insert(ClientRequestType::Loot, OnceCell::new());
+
         self.summoner_id = None;
+        Ok(())
     }
 }
 
@@ -165,7 +186,7 @@ pub enum ClientRequestType {
 pub enum ClientInitError {
     CertMissing(io::Error),
     CertInvalid(reqwest::Error),
-    LeagueClientNotStarted(io::Error),
+    LeagueClientFailed(io::Error),
     LeagueClientInvalid(),
     LockfileAuthStringInvalid(io::Error),
     LockfileAuthHeaderInvalid(InvalidHeaderValue),
@@ -184,7 +205,7 @@ impl From<CertificateError> for ClientInitError {
 impl From<LockfileError> for ClientInitError {
     fn from(lf_error: LockfileError) -> Self {
         match lf_error {
-            LockfileError::Missing(err) => Self::LeagueClientNotStarted(err),
+            LockfileError::Missing(err) => Self::LeagueClientFailed(err),
             LockfileError::CantBeRead => Self::LeagueClientInvalid(),
         }
     }

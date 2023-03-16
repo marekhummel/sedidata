@@ -3,7 +3,6 @@ use std::collections::HashSet;
 use crate::model::{
     champion::{Champion, Chroma, Skin},
     ids::{ChampionId, SkinId},
-    loot::SkinShard,
     mastery::Mastery,
 };
 
