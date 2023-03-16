@@ -1,46 +1,48 @@
-use once_cell::sync::OnceCell;
+use std::{
+    cell::RefCell,
+    collections::{hash_map::Entry, HashMap},
+    rc::Rc,
+};
+
+#[derive(PartialEq, Eq, Hash)]
+enum RequestType {
+    One,
+    Two,
+    Three,
+}
 
 struct Cache {
-    data: OnceCell<i32>,
+    data: RefCell<HashMap<RequestType, Rc<i32>>>,
 }
 
 impl Cache {
-    fn get(&self) -> Result<&i32, String> {
-        self.data.get_or_try_init(request)
-    }
-
-    fn refresh(&mut self) {
-        println!("Refresh");
-        self.data = OnceCell::new();
+    fn get(&self, rt: RequestType) -> Rc<i32> {
+        match self.data.borrow_mut().entry(rt) {
+            Entry::Occupied(oe) => oe.get().clone(),
+            Entry::Vacant(ve) => {
+                let new_value = Rc::new(request(ve.key()).unwrap());
+                ve.insert(new_value.clone());
+                new_value
+            }
+        }
     }
 }
 
-fn request() -> Result<i32, String> {
-    println!("Request");
-    Ok(32)
+fn request(rt: &RequestType) -> Result<i32, String> {
+    Ok(match rt {
+        RequestType::One => 32,
+        RequestType::Two => 129,
+        RequestType::Three => -3,
+    })
 }
 
 pub fn main() {
-    let mut c = Cache {
-        data: OnceCell::new(),
+    let c = Cache {
+        data: RefCell::from(HashMap::new()),
     };
 
-    let mut i = 0;
-    let mut t = 0;
-    while i < 10 && t < 5 {
-        {
-            let data1 = c.get();
-            let data2 = c.get();
-            println!("{i} {t}: {:?} {:?}", data1, data2);
-            i += 1;
-
-            if i < 9 {
-                continue;
-            }
-        }
-
-        c.refresh();
-        t += 1;
-        i = 0;
-    }
+    let data1 = c.get(RequestType::One);
+    let data2 = c.get(RequestType::Two);
+    let data3 = c.get(RequestType::One);
+    println!("{:?} {:?} {:?}", data1, data2, data3);
 }

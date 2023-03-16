@@ -47,34 +47,36 @@ impl<'a, 'b> LootView<'a, 'b> {
     pub fn mastery_tokens(&self) -> ViewResult {
         println!("Mastery tokens and if they can be upgraded:\n");
 
-        let loot = self.manager.get_loot()?;
-        let tokens = &loot.mastery_tokens;
+        let masteries = self.manager.get_masteries()?;
+        let maxed_masteries = masteries
+            .into_iter()
+            .filter(|m| m.level == 5 || m.level == 6);
         let champ_shards_set = self.util.get_champ_shard_set()?;
 
-        let mut full_info = tokens
-            .into_iter()
-            .map(|t| {
+        let mut full_info = maxed_masteries
+            .map(|m| {
                 (
-                    t,
+                    m.level,
+                    m.tokens.unwrap_or(0),
                     self.lookup
-                        .get_champion(t.champ_id.clone())
+                        .get_champion(m.champ_id.clone())
                         .map(|c| c.name.to_string()),
-                    champ_shards_set.contains(&t.champ_id),
+                    champ_shards_set.contains(&m.champ_id),
                 )
             })
             .collect::<Vec<_>>();
 
-        full_info.sort_by_key(|(t, champ_name, upgradable)| {
+        full_info.sort_by_key(|(level, tokens, champ_name, upgradable)| {
             (
-                -(t.level as i16),
-                -(t.count as i16),
+                -(*level as i16),
+                -(*tokens as i16),
                 upgradable.clone(),
                 champ_name.as_ref().map_or("".to_string(), |s| s.clone()),
             )
         });
 
         let mut output = String::new();
-        for (t, champ_name, upgradable) in full_info {
+        for (level, tokens, champ_name, upgradable) in full_info {
             if let Err(err) = champ_name {
                 return Err(err.into());
             }
@@ -83,10 +85,10 @@ impl<'a, 'b> LootView<'a, 'b> {
                 format!(
                     "{:<15} (Level {}): {}/{} tokens{}\n",
                     champ_name.unwrap(),
-                    t.level,
-                    t.count,
-                    t.level - 4,
-                    match (t.count == t.level - 4, upgradable) {
+                    level,
+                    tokens,
+                    level - 3,
+                    match (tokens == level - 3, upgradable) {
                         (true, true) => " - READY FOR UPGRADE",
                         (true, false) => " - MISSING SHARD",
                         _ => "",
@@ -112,9 +114,11 @@ impl<'a, 'b> LootView<'a, 'b> {
             .collect::<Vec<_>>();
         unplayed.sort_by_key(|c| c.name.as_str());
 
-        for c in unplayed {
+        for c in &unplayed {
             println!("{}", c.name);
         }
+
+        println!("\n{} champ(s) total", &unplayed.len());
         Ok(())
     }
 
@@ -163,9 +167,10 @@ impl<'a, 'b> LootView<'a, 'b> {
             .collect::<Vec<_>>();
         missing_cs.sort_by_key(|c| c.name.as_str());
 
-        for c in missing_cs {
+        for c in &missing_cs {
             println!("{}", c.name);
         }
+        println!("\n{} champ(s) total", &missing_cs.len());
         Ok(())
     }
 

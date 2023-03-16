@@ -8,8 +8,8 @@ mod model;
 mod service;
 mod view;
 
-#[allow(dead_code)]
-mod test;
+// #[allow(dead_code)]
+// mod test;
 
 fn main() {
     // test::main();

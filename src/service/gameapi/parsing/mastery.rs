@@ -22,9 +22,10 @@ pub fn parse_masteries(json: &JsonValue) -> Result<Vec<Mastery>, ParsingError> {
                 let tokens = champ_obj["tokensEarned"]
                     .as_u8()
                     .ok_or(ParsingError::InvalidType("tokensEarned".into()))?;
-                let points_to_next_level = champ_obj["championPointsUntilNextLevel"]
-                    .as_u32()
-                    .ok_or(ParsingError::InvalidType("championPointsUntilNextLevel".into()))?;
+                let points_to_next_level =
+                    champ_obj["championPointsUntilNextLevel"].as_u32().ok_or(
+                        ParsingError::InvalidType("championPointsUntilNextLevel".into()),
+                    )?;
                 let chest_granted = champ_obj["chestGranted"]
                     .as_bool()
                     .ok_or(ParsingError::InvalidType("chestGranted".into()))?;
@@ -33,7 +34,11 @@ pub fn parse_masteries(json: &JsonValue) -> Result<Vec<Mastery>, ParsingError> {
                     champ_id: champ_id.into(),
                     level,
                     points,
-                    tokens: if level == 6 || level == 7 { Some(tokens) } else { None },
+                    tokens: if level == 5 || level == 6 {
+                        Some(tokens)
+                    } else {
+                        None
+                    },
                     points_to_next_level,
                     chest_granted,
                 })

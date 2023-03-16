@@ -30,9 +30,11 @@ impl<'a, 'b> InventoryView<'a, 'b> {
             .filter(|c| !champs_with_skin.contains(&c.id))
             .collect::<Vec<_>>();
         champs_no_skin.sort_by_key(|c| c.name.clone());
-        for champ in champs_no_skin {
+        for champ in &champs_no_skin {
             println!("{}", champ.name);
         }
+
+        println!("\n{} champ(s) total", &champs_no_skin.len());
         Ok(())
     }
 
@@ -48,6 +50,7 @@ impl<'a, 'b> InventoryView<'a, 'b> {
             let champ = self.lookup.get_champion(skin.champ_id.clone())?;
             println!("{} ({}): {:?}", skin.name, champ.name, chroma.id);
         }
+
         Ok(())
     }
 }
