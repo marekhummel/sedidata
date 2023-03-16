@@ -1,49 +1,46 @@
-use std::collections::HashMap;
-
 use once_cell::sync::OnceCell;
 
-#[derive(PartialEq, Eq, Hash)]
-enum RequestType {
-    One,
-    Two,
-    Three,
-}
-
 struct Cache {
-    data: HashMap<RequestType, OnceCell<i32>>,
+    data: OnceCell<i32>,
 }
 
 impl Cache {
-    fn get(&self, rt: RequestType) -> &i32 {
-        self.data
-            .get(&rt)
-            .unwrap()
-            .get_or_try_init(|| request(rt))
-            .unwrap()
+    fn get(&self) -> Result<&i32, String> {
+        self.data.get_or_try_init(request)
+    }
+
+    fn refresh(&mut self) {
+        println!("Refresh");
+        self.data = OnceCell::new();
     }
 }
 
-fn request(rt: RequestType) -> Result<i32, String> {
-    Ok(match rt {
-        RequestType::One => 32,
-        RequestType::Two => 129,
-        RequestType::Three => -3,
-    })
+fn request() -> Result<i32, String> {
+    println!("Request");
+    Ok(32)
 }
 
 pub fn main() {
-    let c = Cache {
-        data: vec![
-            (RequestType::One, OnceCell::new()),
-            (RequestType::Two, OnceCell::new()),
-            (RequestType::Three, OnceCell::new()),
-        ]
-        .into_iter()
-        .collect(),
+    let mut c = Cache {
+        data: OnceCell::new(),
     };
 
-    let data1 = c.get(RequestType::One);
-    let data2 = c.get(RequestType::Two);
-    // let data3 = c.get(RequestType::Two);
-    println!("{} {}", data1, data2);
+    let mut i = 0;
+    let mut t = 0;
+    while i < 10 && t < 5 {
+        {
+            let data1 = c.get();
+            let data2 = c.get();
+            println!("{i} {t}: {:?} {:?}", data1, data2);
+            i += 1;
+
+            if i < 9 {
+                continue;
+            }
+        }
+
+        c.refresh();
+        t += 1;
+        i = 0;
+    }
 }

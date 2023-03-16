@@ -1,22 +1,37 @@
 use std::io::{stdin, stdout, Write};
 
+use crossterm::{
+    cursor::{position, MoveTo},
+    execute,
+    terminal::{
+        size, Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen, ScrollUp, SetSize,
+        SetTitle,
+    },
+};
+
 use crate::{
-    service::{data_manager::DataManager, lookup::LookupService, util::UtilService},
+    service::{
+        data_manager::{DataManager, DataRetrievalResult},
+        lookup::LookupService,
+        util::UtilService,
+    },
     view::{
         subviews::{basic::BasicView, inventory::InventoryView, loot::LootView},
         ViewResult,
     },
 };
 
+use super::ReplError;
+
 type CommandFunction = fn(&BasicView, &InventoryView, &LootView) -> ViewResult;
 type Command<'a> = (u8, &'a str, CommandFunction);
 
-pub fn run(manager: DataManager) {
-    let lookup = get_lookup_service(&manager);
+pub fn run(manager: DataManager) -> Result<(), ReplError> {
+    let lookup = get_lookup_service(&manager)?;
     let util = UtilService::new(&manager);
 
     let basic_view = BasicView::new(&manager);
-    let inventory_view = InventoryView::new(&manager, &lookup, &util);
+    let inventory_view = InventoryView::new(&lookup, &util);
     let loot_view = LootView::new(&manager, &lookup, &util);
 
     let available_commands: Vec<Command> = vec![
@@ -53,47 +68,81 @@ pub fn run(manager: DataManager) {
         }),
     ];
 
+    let _ = execute!(
+        stdout(),
+        SetTitle("League Statistics"),
+        Clear(ClearType::All),
+        MoveTo(0, 0),
+    );
     println!("Welcome!");
     let _ = basic_view.print_summoner();
-    println!("===========================\n");
+    println!("==================================\n");
+    print_options(&available_commands);
+    let (cx, cy) = position()?;
+    let (sx, sy) = size()?;
 
     loop {
-        print_options(&available_commands);
-        let choice = get_choice();
-        if choice == 0 {
-            break;
+        let choice = get_command(&available_commands);
+        let _ = execute!(
+            stdout(),
+            EnterAlternateScreen,
+            SetSize(sx, 250),
+            MoveTo(0, 0)
+        );
+        match choice {
+            None => break,
+            Some(command) => {
+                println!("~~~~~\n");
+                let result = command.2(&basic_view, &inventory_view, &loot_view);
+                match result {
+                    Ok(_) => {
+                        println!("\n~~~~~\n");
+                        println!("Press Enter to go back to menu");
+                        let mut s = String::new();
+                        let _ = stdin().read_line(&mut s);
+                        let _ = execute!(
+                            stdout(),
+                            LeaveAlternateScreen,
+                            SetSize(sx, sy),
+                            MoveTo(cx, cy - 1),
+                            Clear(ClearType::FromCursorDown)
+                        );
+                    }
+                    Err(err) => {
+                        println!("Error occured: {:#?}", err);
+                        break;
+                    }
+                }
+            }
         }
-
-        println!("~~~\n");
-        let command = available_commands
-            .iter()
-            .find(|cmd| cmd.0 == choice)
-            .unwrap();
-        let result = command.2(&basic_view, &inventory_view, &loot_view);
-        if let Err(err) = result {
-            println!("Error occured: {:#?}", err);
-            return;
-        }
-
-        println!("\n\n\n---------------------------------------------------\n");
     }
+
+    let _ = execute!(
+        stdout(),
+        LeaveAlternateScreen,
+        SetSize(sx, sy),
+        MoveTo(cx, cy),
+        Clear(ClearType::FromCursorDown)
+    );
+    println!("\nBye bye!");
+    Ok(())
 }
 
-fn get_lookup_service(manager: &DataManager) -> LookupService {
-    let champions = manager.get_champions().unwrap();
-    let skins = manager.get_skins().unwrap();
+fn get_lookup_service(manager: &DataManager) -> DataRetrievalResult<LookupService> {
+    let champions = manager.get_champions()?;
+    let skins = manager.get_skins()?;
 
-    LookupService::new(champions, skins)
+    Ok(LookupService::new(champions, skins))
 }
 
 fn print_options(available_commands: &Vec<Command>) {
     for (id, desc, _) in available_commands {
         println!("({id:>2})  {desc}");
     }
-    println!("( 0)  Quit");
+    println!("( 0)  Quit\n");
 }
 
-fn get_choice() -> u8 {
+fn get_command<'a>(available_commands: &'a Vec<Command>) -> Option<&'a Command<'a>> {
     loop {
         let mut s = String::new();
         print!("> Your choice: ");
@@ -101,7 +150,13 @@ fn get_choice() -> u8 {
         let _ = stdin().read_line(&mut s);
 
         if let Ok(choice) = s.trim().parse::<u8>() {
-            return choice;
+            if choice == 0 {
+                return None;
+            }
+
+            if let Some(command) = available_commands.iter().find(|cmd| cmd.0 == choice) {
+                return Some(command);
+            }
         }
     }
 }

@@ -1,26 +1,23 @@
 use std::collections::HashSet;
 
 use crate::{
-    service::{data_manager::DataManager, lookup::LookupService, util::UtilService},
+    service::{lookup::LookupService, util::UtilService},
     view::ViewResult,
 };
 
 pub struct InventoryView<'a, 'b: 'a> {
-    manager: &'a DataManager,
     lookup: &'a LookupService<'b>,
     util: &'a UtilService<'b>,
 }
 
 impl<'a, 'b> InventoryView<'a, 'b> {
-    pub fn new(manager: &'b DataManager, lookup: &'b LookupService, util: &'b UtilService) -> Self {
-        Self {
-            manager,
-            lookup,
-            util,
-        }
+    pub fn new(lookup: &'b LookupService, util: &'b UtilService) -> Self {
+        Self { lookup, util }
     }
 
     pub fn champions_without_skin(&self) -> ViewResult {
+        println!("Owned champions for which no skin is owned:\n");
+
         let champs = self.util.get_owned_champions()?;
         let skins = self.util.get_owned_nobase_skins()?;
 
@@ -40,6 +37,8 @@ impl<'a, 'b> InventoryView<'a, 'b> {
     }
 
     pub fn chromas_without_skin(&self) -> ViewResult {
+        println!("Owned chromas for which the skin isn't owned:\n");
+
         let skins = self.util.get_owned_skins_set()?;
         let chromas = self.util.get_owned_chromas()?;
 

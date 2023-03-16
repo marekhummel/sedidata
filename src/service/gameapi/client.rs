@@ -81,7 +81,10 @@ impl ApiClient {
         let lol_path = Path::new(league_path);
         let lol_lockfile = File::open(lol_path.join("lockfile"))?;
 
-        let content = io::BufReader::new(lol_lockfile).lines().next().unwrap()?;
+        let content = io::BufReader::new(lol_lockfile)
+            .lines()
+            .next()
+            .ok_or(LockfileError::CantBeRead)??;
         let info = content.split(":").collect::<Vec<_>>();
 
         Ok(LockFileContent {
@@ -126,8 +129,8 @@ impl ApiClient {
 
             // Return json
             let text = response.text()?;
-            let mut file = File::create(format!("data/{:?}.json", request_type)).unwrap();
-            let _ = file.write_all(text.as_bytes());
+            // let mut file = File::create(format!("data/{:?}.json", request_type)).unwrap();
+            // let _ = file.write_all(text.as_bytes());
             let json = json::parse(text.as_str())?;
             Ok(json)
         })
@@ -163,6 +166,7 @@ pub enum ClientInitError {
     CertMissing(io::Error),
     CertInvalid(reqwest::Error),
     LeagueClientNotStarted(io::Error),
+    LeagueClientInvalid(),
     LockfileAuthStringInvalid(io::Error),
     LockfileAuthHeaderInvalid(InvalidHeaderValue),
     ClientError(reqwest::Error),
@@ -181,6 +185,7 @@ impl From<LockfileError> for ClientInitError {
     fn from(lf_error: LockfileError) -> Self {
         match lf_error {
             LockfileError::Missing(err) => Self::LeagueClientNotStarted(err),
+            LockfileError::CantBeRead => Self::LeagueClientInvalid(),
         }
     }
 }
@@ -222,6 +227,7 @@ impl From<reqwest::Error> for CertificateError {
 
 enum LockfileError {
     Missing(io::Error),
+    CantBeRead,
 }
 
 impl From<io::Error> for LockfileError {

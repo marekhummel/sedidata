@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use crate::model::{
     champion::{Champion, Chroma, Skin},
     ids::{ChampionId, SkinId},
+    loot::SkinShard,
     mastery::Mastery,
 };
 
@@ -20,6 +21,31 @@ impl<'a> UtilService<'a> {
     pub fn get_owned_champions(&self) -> DataRetrievalResult<Vec<&Champion>> {
         let champs = self.manager.get_champions()?;
         Ok(champs.iter().filter(|c| c.owned).collect())
+    }
+
+    pub fn get_played_champions_set(&self) -> DataRetrievalResult<HashSet<ChampionId>> {
+        Ok(self
+            .manager
+            .get_masteries()?
+            .iter()
+            .map(|m| m.champ_id.clone())
+            .collect::<HashSet<_>>())
+    }
+
+    pub fn get_champions_sorted_by_mastery(
+        &self,
+        maxpts: Option<u32>,
+        minpts: Option<u32>,
+    ) -> DataRetrievalResult<Vec<ChampionId>> {
+        let mut masteries = self.manager.get_masteries()?.iter().collect::<Vec<_>>();
+        masteries.sort_by_key(|m| m.points);
+        masteries.reverse();
+
+        Ok(masteries
+            .iter()
+            .filter(|m| maxpts.unwrap_or(u32::MAX) >= m.points && m.points >= minpts.unwrap_or(0))
+            .map(|m| m.champ_id.clone())
+            .collect())
     }
 
     pub fn get_owned_skins(&self) -> DataRetrievalResult<Vec<&Skin>> {

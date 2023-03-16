@@ -11,7 +11,7 @@ impl<'a> BasicView<'a> {
 
     pub fn print_summoner(&self) -> ViewResult {
         let summoner = self.manager.get_summoner();
-        println!("{:?}\n", summoner);
+        println!("{:?}", summoner);
         Ok(())
     }
 }
