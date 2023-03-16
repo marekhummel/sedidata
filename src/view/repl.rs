@@ -28,7 +28,7 @@ type CommandEntry<'a> = (u8, &'a str, CommandFunction);
 pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
     let _ = execute!(
         stdout(),
-        SetTitle("League Statistics"),
+        SetTitle("Sedidata - LoL Special Statistics"),
         Clear(ClearType::All),
         MoveTo(0, 0),
     );

@@ -380,17 +380,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
-name = "leagueistics"
-version = "0.1.0"
-dependencies = [
- "base64",
- "crossterm",
- "json",
- "once_cell",
- "reqwest",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -691,6 +680,17 @@ checksum = "31c9bb296072e961fcbd8853511dd39c2d8be2deb1e17c6860b1d30732b323b4"
 dependencies = [
  "core-foundation-sys",
  "libc",
+]
+
+[[package]]
+name = "sedidata"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "crossterm",
+ "json",
+ "once_cell",
+ "reqwest",
 ]
 
 [[package]]
