@@ -16,7 +16,7 @@ pub fn parse_champions(json: &JsonValue) -> Result<AllChampionInfo, ParsingError
         for champ_entry in array {
             if let JsonValue::Object(champ_obj) = &champ_entry {
                 let champ = parse_champ_obj(champ_obj)?;
-                if champ.name != "None" {
+                if champ.id != String::from("-1").into() {
                     champions.push(champ);
                 }
 

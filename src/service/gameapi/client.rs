@@ -14,7 +14,7 @@ use reqwest::{
     Certificate,
 };
 
-use crate::model::ids::SummonerId;
+use crate::model::summoner::Summoner;
 
 #[derive(Debug)]
 struct LockFileContent {
@@ -27,28 +27,18 @@ pub struct ApiClient {
     client: Client,
     cache: HashMap<ClientRequestType, OnceCell<JsonValue>>,
     base_url: String,
-    summoner_id: Option<SummonerId>,
+    summoner: Option<Summoner>,
 }
 
 impl ApiClient {
     pub fn new() -> Result<Self, ClientInitError> {
         let (client, base_url) = ApiClient::setup_client()?;
-
-        // Create
-        let cache = vec![
-            (ClientRequestType::Summoner, OnceCell::new()),
-            (ClientRequestType::Champions, OnceCell::new()),
-            (ClientRequestType::Masteries, OnceCell::new()),
-            (ClientRequestType::Loot, OnceCell::new()),
-        ]
-        .into_iter()
-        .collect();
-
+        let cache = ApiClient::create_cache();
         Ok(Self {
             client,
             cache,
             base_url,
-            summoner_id: None,
+            summoner: None,
         })
     }
 
@@ -117,19 +107,26 @@ impl ApiClient {
                 ClientRequestType::Summoner => {
                     format!("{}lol-summoner/v1/current-summoner", self.base_url)
                 }
-                ClientRequestType::Champions => match &self.summoner_id {
-                    Some(sid) => format!(
+                ClientRequestType::Champions => match &self.summoner {
+                    Some(s) => format!(
                         "{}lol-champions/v1/inventories/{}/champions",
-                        self.base_url, sid
+                        self.base_url, s.id
                     ),
-                    None => return Err(RequestError::SummonerIdNeeded()),
+                    None => return Err(RequestError::SummonerNeeded()),
                 },
-                ClientRequestType::Masteries => match &self.summoner_id {
-                    Some(sid) => format!(
+                ClientRequestType::Masteries => match &self.summoner {
+                    Some(s) => format!(
                         "{}lol-collections/v1/inventories/{}/champion-mastery",
-                        self.base_url, sid
+                        self.base_url, s.id
                     ),
-                    None => return Err(RequestError::SummonerIdNeeded()),
+                    None => return Err(RequestError::SummonerNeeded()),
+                },
+                ClientRequestType::GameStats(season) => match &self.summoner {
+                    Some(s) => format!(
+                        "{}lol-career-stats/v1/summoner-games/{}/season/{}",
+                        self.base_url, s.puuid, season
+                    ),
+                    None => return Err(RequestError::SummonerNeeded()),
                 },
                 ClientRequestType::Loot => {
                     format!("{}lol-loot/v1/player-loot", self.base_url)
@@ -144,15 +141,15 @@ impl ApiClient {
 
             // Return json
             let text = response.text()?;
-            // let mut file = File::create(format!("data/{:?}.json", request_type)).unwrap();
-            // let _ = file.write_all(text.as_bytes());
+            let mut file = File::create(format!("data/{:?}.json", request_type)).unwrap();
+            let _ = file.write_all(text.as_bytes());
             let json = json::parse(text.as_str())?;
             Ok(json)
         })
     }
 
-    pub fn set_summoner_id(&mut self, sid: SummonerId) {
-        self.summoner_id = Some(sid);
+    pub fn set_summoner(&mut self, s: Summoner) {
+        self.summoner = Some(s);
     }
 
     pub fn refresh(&mut self) -> Result<(), ClientInitError> {
@@ -161,16 +158,26 @@ impl ApiClient {
         self.base_url = base_url;
 
         self.cache.clear();
-        self.cache
-            .insert(ClientRequestType::Summoner, OnceCell::new());
-        self.cache
-            .insert(ClientRequestType::Champions, OnceCell::new());
-        self.cache
-            .insert(ClientRequestType::Masteries, OnceCell::new());
-        self.cache.insert(ClientRequestType::Loot, OnceCell::new());
-
-        self.summoner_id = None;
+        self.cache.extend(ApiClient::create_cache());
+        self.summoner = None;
         Ok(())
+    }
+
+    fn create_cache() -> HashMap<ClientRequestType, OnceCell<JsonValue>> {
+        vec![
+            (ClientRequestType::Summoner, OnceCell::new()),
+            (ClientRequestType::Champions, OnceCell::new()),
+            (ClientRequestType::Masteries, OnceCell::new()),
+            (ClientRequestType::GameStats(13), OnceCell::new()),
+            (ClientRequestType::GameStats(12), OnceCell::new()),
+            (ClientRequestType::GameStats(11), OnceCell::new()),
+            (ClientRequestType::GameStats(10), OnceCell::new()),
+            (ClientRequestType::GameStats(9), OnceCell::new()),
+            (ClientRequestType::GameStats(8), OnceCell::new()),
+            (ClientRequestType::Loot, OnceCell::new()),
+        ]
+        .into_iter()
+        .collect()
     }
 }
 
@@ -179,6 +186,7 @@ pub enum ClientRequestType {
     Summoner,
     Champions,
     Masteries,
+    GameStats(u8),
     Loot,
 }
 
@@ -260,7 +268,7 @@ impl From<io::Error> for LockfileError {
 #[derive(Debug)]
 pub enum RequestError {
     ClientFailed(reqwest::Error),
-    SummonerIdNeeded(),
+    SummonerNeeded(),
     InvalidResponse(),
     ParsingFailed(json::Error),
 }

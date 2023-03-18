@@ -2,6 +2,7 @@ use once_cell::sync::OnceCell;
 
 use crate::model::{
     champion::{AllChampionInfo, Champion, Chroma, Skin},
+    games::Game,
     loot::LootItems,
     mastery::Mastery,
     summoner::Summoner,
@@ -10,8 +11,8 @@ use crate::model::{
 use super::gameapi::{
     client::{ApiClient, ClientInitError, ClientRequestType, RequestError},
     parsing::{
-        champion::parse_champions, loot::parse_loot, mastery::parse_masteries,
-        summoner::parse_summoner, ParsingError,
+        champion::parse_champions, games::parse_game_stats, loot::parse_loot,
+        mastery::parse_masteries, summoner::parse_summoner, ParsingError,
     },
 };
 
@@ -20,6 +21,7 @@ pub struct DataManager {
     summoner: OnceCell<Summoner>,
     champ_info_cache: OnceCell<AllChampionInfo>,
     masteries_cache: OnceCell<Vec<Mastery>>,
+    game_stats_cache: OnceCell<Vec<Game>>,
     loot_cache: OnceCell<LootItems>,
 }
 
@@ -27,13 +29,14 @@ impl DataManager {
     pub fn new() -> Result<Self, DataManagerInitError> {
         let mut client = ApiClient::new()?;
         let summoner = DataManager::retrieve_summoner(&mut client)?;
-        client.set_summoner_id(summoner.id.clone());
+        client.set_summoner(summoner.clone());
 
         Ok(Self {
             client,
             summoner: OnceCell::from(summoner),
             champ_info_cache: OnceCell::new(),
             masteries_cache: OnceCell::new(),
+            game_stats_cache: OnceCell::new(),
             loot_cache: OnceCell::new(),
         })
     }
@@ -79,6 +82,18 @@ impl DataManager {
         })
     }
 
+    pub fn get_game_stats(&self) -> DataRetrievalResult<&Vec<Game>> {
+        self.game_stats_cache.get_or_try_init(|| {
+            let mut all_games = Vec::new();
+            for season in 8..=13u8 {
+                let games_json = self.client.request(ClientRequestType::GameStats(season))?;
+                let games = parse_game_stats(games_json)?;
+                all_games.extend(games);
+            }
+            Ok(all_games)
+        })
+    }
+
     pub fn get_loot(&self) -> DataRetrievalResult<&LootItems> {
         self.loot_cache.get_or_try_init(|| {
             let loot_json = self.client.request(ClientRequestType::Loot)?;
@@ -90,7 +105,7 @@ impl DataManager {
     pub fn refresh(&mut self) -> DataRetrievalResult<()> {
         self.client.refresh()?;
         let summoner = DataManager::retrieve_summoner(&mut self.client)?;
-        self.client.set_summoner_id(summoner.id.clone());
+        self.client.set_summoner(summoner.clone());
         self.summoner = OnceCell::from(summoner);
         self.champ_info_cache = OnceCell::new();
         self.masteries_cache = OnceCell::new();

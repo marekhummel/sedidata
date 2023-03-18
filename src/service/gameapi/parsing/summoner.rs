@@ -9,6 +9,9 @@ pub fn parse_summoner(json: &JsonValue) -> Result<Summoner, ParsingError> {
         let summoner_id = obj["summonerId"]
             .as_u64()
             .ok_or(ParsingError::InvalidType("summonerId".into()))?;
+        let puuid = obj["puuid"]
+            .as_str()
+            .ok_or(ParsingError::InvalidType("puuid".into()))?;
         let display_name = obj["displayName"]
             .as_str()
             .ok_or(ParsingError::InvalidType("displayName".into()))?;
@@ -21,6 +24,7 @@ pub fn parse_summoner(json: &JsonValue) -> Result<Summoner, ParsingError> {
 
         return Ok(Summoner {
             id: summoner_id.into(),
+            puuid: puuid.to_string(),
             display_name: display_name.to_string(),
             internal_name: internal_name.to_string(),
             level,

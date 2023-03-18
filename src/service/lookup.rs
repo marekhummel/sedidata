@@ -18,17 +18,17 @@ impl<'a> LookupService<'a> {
         }
     }
 
-    pub fn get_champion(&self, id: ChampionId) -> Result<&'a Champion, LookupError> {
-        match self.champs.get(&id) {
+    pub fn get_champion(&self, id: &ChampionId) -> Result<&'a Champion, LookupError> {
+        match self.champs.get(id) {
             Some(champ) => Ok(*champ),
-            None => Err(LookupError::ChampIdNotFound(id)),
+            None => Err(LookupError::ChampIdNotFound(id.clone())),
         }
     }
 
-    pub fn get_skin(&self, id: SkinId) -> Result<&'a Skin, LookupError> {
-        match self.skins.get(&id) {
+    pub fn get_skin(&self, id: &SkinId) -> Result<&'a Skin, LookupError> {
+        match self.skins.get(id) {
             Some(skin) => Ok(*skin),
-            None => Err(LookupError::SkinIdNotFound(id)),
+            None => Err(LookupError::SkinIdNotFound(id.clone())),
         }
     }
 }

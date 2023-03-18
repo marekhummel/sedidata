@@ -15,14 +15,14 @@ use crate::{
         util::UtilService,
     },
     view::{
-        subviews::{basic::BasicView, inventory::InventoryView, loot::LootView},
+        subviews::{basic::BasicView, games::GamesView, inventory::InventoryView, loot::LootView},
         ViewResult,
     },
 };
 
 use super::ReplError;
 
-type CommandFunction = fn(&BasicView, &InventoryView, &LootView) -> ViewResult;
+type CommandFunction = fn(&BasicView, &InventoryView, &LootView, &GamesView) -> ViewResult;
 type CommandEntry<'a> = (u8, &'a str, CommandFunction);
 
 pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
@@ -41,6 +41,7 @@ pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
         let basic_view = BasicView::new(&manager);
         let inventory_view = InventoryView::new(&lookup, &util);
         let loot_view = LootView::new(&manager, &lookup, &util);
+        let games_view = GamesView::new(&manager, &lookup);
 
         let available_commands = get_commands();
 
@@ -60,8 +61,9 @@ pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
             )?;
             match choice {
                 Command::Execute(command) => {
+                    println!("({:>2})  {}", command.0, command.1);
                     println!("~~~~~\n");
-                    let result = command.2(&basic_view, &inventory_view, &loot_view);
+                    let result = command.2(&basic_view, &inventory_view, &loot_view, &games_view);
                     match result {
                         Ok(_) => {
                             println!("\n~~~~~\n");
@@ -101,37 +103,43 @@ fn get_lookup_service(manager: &DataManager) -> DataRetrievalResult<LookupServic
 
 fn get_commands<'a>() -> Vec<CommandEntry<'a>> {
     vec![
-        (1, "Show Summoner", |bv, _, _| BasicView::print_summoner(bv)),
-        (10, "Champions Without Skin", |_, iv, _| {
+        (1, "Show Summoner", |bv, _, _, _| {
+            BasicView::print_summoner(bv)
+        }),
+        (10, "Champions Without Skin", |_, iv, _, _| {
             InventoryView::champions_without_skin(iv)
         }),
-        (11, "Chromas Without Skin", |_, iv, _| {
+        (11, "Chromas Without Skin", |_, iv, _, _| {
             InventoryView::chromas_without_skin(iv)
         }),
-        (20, "Level Four Champions", |_, _, lv| {
+        (20, "Level Four Champions", |_, _, lv, _| {
             LootView::level_four_champs(lv)
         }),
-        (21, "Mastery Tokens", |_, _, lv| {
+        (21, "Mastery Tokens", |_, _, lv, _| {
             LootView::mastery_tokens(lv)
         }),
-        (22, "Unplayed Champions", |_, _, lv| {
+        (22, "Unplayed Champions", |_, _, lv, _| {
             LootView::unplayed_champs(lv)
         }),
-        (23, "Blue Essence Info", |_, _, lv| {
+        (23, "Blue Essence Info", |_, _, lv, _| {
             LootView::blue_essence_overview(lv)
         }),
-        (24, "Missing Champion Shards", |_, _, lv| {
+        (24, "Missing Champion Shards", |_, _, lv, _| {
             LootView::missing_champ_shards(lv)
         }),
-        (25, "Interesting Skins", |_, _, lv| {
+        (25, "Interesting Skins", |_, _, lv, _| {
             LootView::interesting_skins(lv)
         }),
-        (26, "Skin Shards for First Skin", |_, _, lv| {
+        (26, "Skin Shards for First Skin", |_, _, lv, _| {
             LootView::skin_shards_first_skin(lv)
         }),
-        (27, "Disenchantable Skin Shards", |_, _, lv| {
+        (27, "Disenchantable Skin Shards", |_, _, lv, _| {
             LootView::skin_shards_disenchantable(lv)
         }),
+        (30, "Played Games", |_, _, _, gv| {
+            GamesView::played_games(gv)
+        }),
+        (31, "List Pentas", |_, _, _, gv| GamesView::list_pentas(gv)),
     ]
 }
 

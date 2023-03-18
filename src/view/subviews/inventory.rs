@@ -46,8 +46,8 @@ impl<'a, 'b> InventoryView<'a, 'b> {
 
         let chromas_no_skin = chromas.iter().filter(|ch| !skins.contains(&ch.skin_id));
         for chroma in chromas_no_skin {
-            let skin = self.lookup.get_skin(chroma.skin_id.clone())?;
-            let champ = self.lookup.get_champion(skin.champ_id.clone())?;
+            let skin = self.lookup.get_skin(&chroma.skin_id)?;
+            let champ = self.lookup.get_champion(&skin.champ_id)?;
             println!("{} ({}): {:?}", skin.name, champ.name, chroma.id);
         }
 

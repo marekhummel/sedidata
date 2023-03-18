@@ -32,7 +32,7 @@ impl<'a, 'b> LootView<'a, 'b> {
 
         let champions = masteries
             .iter()
-            .map(|m| self.lookup.get_champion(m.champ_id.clone()))
+            .map(|m| self.lookup.get_champion(&m.champ_id))
             .collect::<Result<Vec<&Champion>, _>>()?;
 
         for (champ, mastery) in champions.iter().zip(masteries) {
@@ -59,7 +59,7 @@ impl<'a, 'b> LootView<'a, 'b> {
                     m.level,
                     m.tokens.unwrap_or(0),
                     self.lookup
-                        .get_champion(m.champ_id.clone())
+                        .get_champion(&m.champ_id)
                         .map(|c| c.name.to_string()),
                     champ_shards_set.contains(&m.champ_id),
                 )
@@ -185,12 +185,12 @@ impl<'a, 'b> LootView<'a, 'b> {
         for c in sorted_champs {
             let shards = skin_shards
                 .iter()
-                .filter(|ss| self.lookup.get_skin(ss.skin_id.clone()).unwrap().champ_id == c);
+                .filter(|ss| self.lookup.get_skin(&ss.skin_id).unwrap().champ_id == c);
 
-            let mut prefix = self.lookup.get_champion(c.clone())?.name.to_string();
+            let mut prefix = self.lookup.get_champion(&c)?.name.to_string();
             prefix.push_str(":");
             for shard in shards {
-                let skin_name = self.lookup.get_skin(shard.skin_id.clone())?.name.as_str();
+                let skin_name = self.lookup.get_skin(&shard.skin_id)?.name.as_str();
                 println!("{:<16}  {}", prefix, skin_name);
 
                 prefix = "".to_string();
@@ -217,12 +217,12 @@ impl<'a, 'b> LootView<'a, 'b> {
         for c in champs_no_skin {
             let shards = skin_shards
                 .iter()
-                .filter(|ss| self.lookup.get_skin(ss.skin_id.clone()).unwrap().champ_id == c);
+                .filter(|ss| self.lookup.get_skin(&ss.skin_id).unwrap().champ_id == c);
 
-            let mut prefix = self.lookup.get_champion(c.clone())?.name.to_string();
+            let mut prefix = self.lookup.get_champion(&c)?.name.to_string();
             prefix.push_str(":");
             for shard in shards {
-                let skin_name = self.lookup.get_skin(shard.skin_id.clone())?.name.as_str();
+                let skin_name = self.lookup.get_skin(&shard.skin_id)?.name.as_str();
                 println!("{:<16}  {}", prefix, skin_name);
 
                 prefix = "".to_string();
@@ -251,15 +251,15 @@ impl<'a, 'b> LootView<'a, 'b> {
         sorted_champs_with_skins.reverse();
 
         for c in sorted_champs_with_skins {
-            let shards = skin_shards.iter().filter(|ss| {
-                self.lookup.get_skin(ss.skin_id.clone()).unwrap().champ_id == c.clone()
-            });
+            let shards = skin_shards
+                .iter()
+                .filter(|ss| self.lookup.get_skin(&ss.skin_id).unwrap().champ_id == c.clone());
 
-            let mut champ_prefix = self.lookup.get_champion(c.clone())?.name.to_string();
+            let mut champ_prefix = self.lookup.get_champion(&c)?.name.to_string();
             champ_prefix.push_str(format!(" ({})", skins_per_champ.get(c).unwrap_or(&0)).as_str());
             champ_prefix.push_str(":");
             for shard in shards {
-                let skin_name = self.lookup.get_skin(shard.skin_id.clone())?.name.as_str();
+                let skin_name = self.lookup.get_skin(&shard.skin_id)?.name.as_str();
                 println!("{:<19}  {}", champ_prefix, skin_name);
 
                 champ_prefix = "".to_string();
