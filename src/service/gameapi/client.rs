@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    fs::File,
+    fs::{create_dir, File},
     io::{self, BufRead, Read, Write},
     path::Path,
 };
@@ -24,6 +24,7 @@ struct LockFileContent {
 }
 
 pub struct ApiClient {
+    debug: bool,
     client: Client,
     cache: HashMap<ClientRequestType, OnceCell<JsonValue>>,
     base_url: String,
@@ -31,10 +32,11 @@ pub struct ApiClient {
 }
 
 impl ApiClient {
-    pub fn new() -> Result<Self, ClientInitError> {
+    pub fn new(write_debug: bool) -> Result<Self, ClientInitError> {
         let (client, base_url) = ApiClient::setup_client()?;
         let cache = ApiClient::create_cache();
         Ok(Self {
+            debug: write_debug,
             client,
             cache,
             base_url,
@@ -141,9 +143,13 @@ impl ApiClient {
 
             // Return json
             let text = response.text()?;
-            let mut file = File::create(format!("data/{:?}.json", request_type)).unwrap();
-            let _ = file.write_all(text.as_bytes());
             let json = json::parse(text.as_str())?;
+
+            if self.debug {
+                let _ = create_dir("data");
+                let mut file = File::create(format!("data/{:?}.json", request_type)).unwrap();
+                let _ = file.write_all(json.pretty(2).as_bytes());
+            }
             Ok(json)
         })
     }

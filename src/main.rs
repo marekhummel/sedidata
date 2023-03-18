@@ -14,7 +14,7 @@ mod view;
 fn main() {
     // test::main();
 
-    match DataManager::new() {
+    match DataManager::new(false) {
         Ok(manager) => match repl::run(manager) {
             Ok(_) => return,
             Err(error) => println!("Error occured while running REPL:\n{:#?}\n", error),
