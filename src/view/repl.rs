@@ -32,7 +32,6 @@ pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
         Clear(ClearType::All),
         MoveTo(0, 0),
     );
-    println!("Welcome!");
 
     loop {
         let lookup = get_lookup_service(&manager)?;
@@ -45,7 +44,7 @@ pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
 
         let available_commands = get_commands();
 
-        basic_view.print_summoner()?;
+        println!("Welcome {}!", manager.get_summoner().display_name);
         println!("==================================\n");
         print_options(&available_commands);
         let (cx, cy) = position()?;
@@ -103,7 +102,7 @@ fn get_lookup_service(manager: &DataManager) -> DataRetrievalResult<LookupServic
 
 fn get_commands<'a>() -> Vec<CommandEntry<'a>> {
     vec![
-        (1, "Show Summoner", |bv, _, _, _| {
+        (1, "Show Summoner Info", |bv, _, _, _| {
             BasicView::print_summoner(bv)
         }),
         (10, "Champions Without Skin", |_, iv, _, _| {

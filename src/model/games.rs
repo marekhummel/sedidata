@@ -8,6 +8,7 @@ pub struct Game {
     pub queue: QueueType,
     pub season: u8,
     pub timestamp: DateTime<Utc>,
+    pub victory: bool,
     pub stats: Statistics,
 }
 
@@ -22,7 +23,7 @@ pub struct Statistics {
     pub pentas: u16,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum QueueType {
     Blind,
     Draft,

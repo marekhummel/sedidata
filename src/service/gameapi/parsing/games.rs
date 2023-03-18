@@ -52,12 +52,13 @@ fn parse_game_obj(obj: &Object) -> Result<Option<Game>, ParsingError> {
     let stats_json = &obj["stats"]["CareerStats.js"];
     match &stats_json {
         JsonValue::Object(stats_obj) => {
-            let stats = parse_game_stats_obj(stats_obj)?;
+            let (stats, victory) = parse_game_stats_obj(stats_obj)?;
             Ok(Some(Game {
                 champ_id: champ_id.into(),
                 queue: queue_type,
                 season,
                 timestamp: Utc.timestamp_millis_opt(timestamp).unwrap(),
+                victory,
                 stats,
             }))
         }
@@ -65,7 +66,7 @@ fn parse_game_obj(obj: &Object) -> Result<Option<Game>, ParsingError> {
     }
 }
 
-fn parse_game_stats_obj(obj: &Object) -> Result<Statistics, ParsingError> {
+fn parse_game_stats_obj(obj: &Object) -> Result<(Statistics, bool), ParsingError> {
     let kills = obj["kills"]
         .as_f32()
         .ok_or(ParsingError::InvalidType("kills".into()))?;
@@ -88,13 +89,20 @@ fn parse_game_stats_obj(obj: &Object) -> Result<Statistics, ParsingError> {
         .as_f32()
         .ok_or(ParsingError::InvalidType("pentaKills".into()))?;
 
-    Ok(Statistics {
-        kills: kills as u16,
-        deaths: deaths as u16,
-        assists: assists as u16,
-        doubles: doubles as u16,
-        triples: triples as u16,
-        quadras: quadras as u16,
-        pentas: pentas as u16,
-    })
+    let victory = obj["victory"]
+        .as_f32()
+        .ok_or(ParsingError::InvalidType("victory".into()))?;
+
+    Ok((
+        Statistics {
+            kills: kills as u16,
+            deaths: deaths as u16,
+            assists: assists as u16,
+            doubles: doubles as u16,
+            triples: triples as u16,
+            quadras: quadras as u16,
+            pentas: pentas as u16,
+        },
+        victory > 0.0,
+    ))
 }

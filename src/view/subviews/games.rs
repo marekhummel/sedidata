@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     service::{data_manager::DataManager, lookup::LookupService},
     view::ViewResult,
@@ -14,11 +16,28 @@ impl<'a, 'b> GamesView<'a, 'b> {
     }
 
     pub fn played_games(&self) -> ViewResult {
-        println!("Games played in season 13:\n");
+        println!("Games winrate since season 8:\n");
 
         let games = self.manager.get_game_stats()?;
+        let games_by_queue = games.iter().fold(HashMap::new(), |mut map, game| {
+            map.entry(&game.queue).or_insert(Vec::new()).push(game);
+            map
+        });
 
-        print!("{}", games.len());
+        for (queue, games) in games_by_queue {
+            println!("Queue: {:?}", queue);
+
+            let won = games.iter().filter(|g| g.victory).count();
+            let total = games.len();
+            println!("  Played:  {}", total);
+            println!(
+                "  Won:     {} (wr: {:.3}%)",
+                won,
+                (won as f32) / (total as f32) * 100.0
+            );
+            println!();
+        }
+
         Ok(())
     }
 
