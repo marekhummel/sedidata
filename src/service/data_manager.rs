@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use once_cell::sync::OnceCell;
 
 use crate::model::{
@@ -49,7 +51,7 @@ impl DataManager {
         self.champ_info_cache
             .get_or_try_init(|| {
                 let champs_json = self.client.request(ClientRequestType::Champions)?;
-                let champ_info = parse_champions(champs_json)?;
+                let champ_info = parse_champions(Rc::as_ref(&champs_json))?;
                 Ok(champ_info)
             })
             .map(|champ_info| &champ_info.champions)
@@ -59,7 +61,7 @@ impl DataManager {
         self.champ_info_cache
             .get_or_try_init(|| {
                 let champs_json = self.client.request(ClientRequestType::Champions)?;
-                let champ_info = parse_champions(champs_json)?;
+                let champ_info = parse_champions(Rc::as_ref(&champs_json))?;
                 Ok(champ_info)
             })
             .map(|champ_info| &champ_info.skins)
@@ -68,7 +70,7 @@ impl DataManager {
         self.champ_info_cache
             .get_or_try_init(|| {
                 let champs_json = self.client.request(ClientRequestType::Champions)?;
-                let champ_info = parse_champions(champs_json)?;
+                let champ_info = parse_champions(Rc::as_ref(&champs_json))?;
                 Ok(champ_info)
             })
             .map(|champ_info| &champ_info.chromas)
@@ -77,7 +79,7 @@ impl DataManager {
     pub fn get_masteries(&self) -> DataRetrievalResult<&Vec<Mastery>> {
         self.masteries_cache.get_or_try_init(|| {
             let masteries_json = self.client.request(ClientRequestType::Masteries)?;
-            let masteries = parse_masteries(masteries_json)?;
+            let masteries = parse_masteries(Rc::as_ref(&masteries_json))?;
             Ok(masteries)
         })
     }
@@ -87,7 +89,7 @@ impl DataManager {
             let mut all_games = Vec::new();
             for season in 8..=13u8 {
                 let games_json = self.client.request(ClientRequestType::GameStats(season))?;
-                let games = parse_game_stats(games_json)?;
+                let games = parse_game_stats(Rc::as_ref(&games_json))?;
                 all_games.extend(games);
             }
             Ok(all_games)
@@ -97,7 +99,7 @@ impl DataManager {
     pub fn get_loot(&self) -> DataRetrievalResult<&LootItems> {
         self.loot_cache.get_or_try_init(|| {
             let loot_json = self.client.request(ClientRequestType::Loot)?;
-            let loot = parse_loot(loot_json)?;
+            let loot = parse_loot(Rc::as_ref(&loot_json))?;
             Ok(loot)
         })
     }
@@ -115,7 +117,7 @@ impl DataManager {
 
     fn retrieve_summoner(client: &mut ApiClient) -> DataRetrievalResult<Summoner> {
         let summoner_json = client.request(ClientRequestType::Summoner)?;
-        let summoner = parse_summoner(summoner_json)?;
+        let summoner = parse_summoner(Rc::as_ref(&summoner_json))?;
         Ok(summoner)
     }
 }

@@ -1,13 +1,14 @@
 use std::{
-    collections::HashMap,
+    cell::RefCell,
+    collections::{hash_map::Entry, HashMap},
     fs::{create_dir, File},
     io::{self, BufRead, Read, Write},
     path::Path,
+    rc::Rc,
 };
 
 use base64::{engine::general_purpose, write::EncoderStringWriter};
 use json::JsonValue;
-use once_cell::sync::OnceCell;
 use reqwest::{
     blocking::Client,
     header::{self, HeaderMap, HeaderValue, InvalidHeaderValue},
@@ -26,7 +27,7 @@ struct LockFileContent {
 pub struct ApiClient {
     debug: bool,
     client: Client,
-    cache: HashMap<ClientRequestType, OnceCell<JsonValue>>,
+    cache: RefCell<HashMap<ClientRequestType, Rc<JsonValue>>>,
     base_url: String,
     summoner: Option<Summoner>,
 }
@@ -34,7 +35,7 @@ pub struct ApiClient {
 impl ApiClient {
     pub fn new(write_debug: bool) -> Result<Self, ClientInitError> {
         let (client, base_url) = ApiClient::setup_client()?;
-        let cache = ApiClient::create_cache();
+        let cache = RefCell::from(HashMap::new());
         Ok(Self {
             debug: write_debug,
             client,
@@ -101,57 +102,62 @@ impl ApiClient {
         })
     }
 
-    pub fn request(&self, request_type: ClientRequestType) -> Result<&JsonValue, RequestError> {
-        // Check for cache
-        self.cache.get(&request_type).unwrap().get_or_try_init(|| {
-            // Get url
-            let url = match request_type {
-                ClientRequestType::Summoner => {
-                    format!("{}lol-summoner/v1/current-summoner", self.base_url)
+    pub fn request(&self, request_type: ClientRequestType) -> Result<Rc<JsonValue>, RequestError> {
+        match self.cache.borrow_mut().entry(request_type) {
+            Entry::Occupied(oe) => Ok(oe.get().clone()),
+            Entry::Vacant(ve) => {
+                // Get url
+                let url = match request_type {
+                    ClientRequestType::Summoner => {
+                        format!("{}lol-summoner/v1/current-summoner", self.base_url)
+                    }
+                    ClientRequestType::Champions => match &self.summoner {
+                        Some(s) => format!(
+                            "{}lol-champions/v1/inventories/{}/champions",
+                            self.base_url, s.id
+                        ),
+                        None => return Err(RequestError::SummonerNeeded()),
+                    },
+                    ClientRequestType::Masteries => match &self.summoner {
+                        Some(s) => format!(
+                            "{}lol-collections/v1/inventories/{}/champion-mastery",
+                            self.base_url, s.id
+                        ),
+                        None => return Err(RequestError::SummonerNeeded()),
+                    },
+                    ClientRequestType::GameStats(season) => match &self.summoner {
+                        Some(s) => format!(
+                            "{}lol-career-stats/v1/summoner-games/{}/season/{}",
+                            self.base_url, s.puuid, season
+                        ),
+                        None => return Err(RequestError::SummonerNeeded()),
+                    },
+                    ClientRequestType::Loot => {
+                        format!("{}lol-loot/v1/player-loot", self.base_url)
+                    }
+                };
+
+                // Send request
+                let response = self.client.get(url).send()?;
+                if !response.status().is_success() {
+                    return Err(RequestError::InvalidResponse());
                 }
-                ClientRequestType::Champions => match &self.summoner {
-                    Some(s) => format!(
-                        "{}lol-champions/v1/inventories/{}/champions",
-                        self.base_url, s.id
-                    ),
-                    None => return Err(RequestError::SummonerNeeded()),
-                },
-                ClientRequestType::Masteries => match &self.summoner {
-                    Some(s) => format!(
-                        "{}lol-collections/v1/inventories/{}/champion-mastery",
-                        self.base_url, s.id
-                    ),
-                    None => return Err(RequestError::SummonerNeeded()),
-                },
-                ClientRequestType::GameStats(season) => match &self.summoner {
-                    Some(s) => format!(
-                        "{}lol-career-stats/v1/summoner-games/{}/season/{}",
-                        self.base_url, s.puuid, season
-                    ),
-                    None => return Err(RequestError::SummonerNeeded()),
-                },
-                ClientRequestType::Loot => {
-                    format!("{}lol-loot/v1/player-loot", self.base_url)
+
+                // Return json
+                let text = response.text()?;
+                let json = json::parse(text.as_str())?;
+
+                if self.debug {
+                    let _ = create_dir("data");
+                    let mut file = File::create(format!("data/{:?}.json", request_type)).unwrap();
+                    let _ = file.write_all(json.pretty(2).as_bytes());
                 }
-            };
 
-            // Send request
-            let response = self.client.get(url).send()?;
-            if !response.status().is_success() {
-                return Err(RequestError::InvalidResponse());
+                let rc_json = Rc::new(json);
+                ve.insert(rc_json.clone());
+                Ok(rc_json)
             }
-
-            // Return json
-            let text = response.text()?;
-            let json = json::parse(text.as_str())?;
-
-            if self.debug {
-                let _ = create_dir("data");
-                let mut file = File::create(format!("data/{:?}.json", request_type)).unwrap();
-                let _ = file.write_all(json.pretty(2).as_bytes());
-            }
-            Ok(json)
-        })
+        }
     }
 
     pub fn set_summoner(&mut self, s: Summoner) {
@@ -163,27 +169,9 @@ impl ApiClient {
         self.client = client;
         self.base_url = base_url;
 
-        self.cache.clear();
-        self.cache.extend(ApiClient::create_cache());
+        self.cache.borrow_mut().clear();
         self.summoner = None;
         Ok(())
-    }
-
-    fn create_cache() -> HashMap<ClientRequestType, OnceCell<JsonValue>> {
-        vec![
-            (ClientRequestType::Summoner, OnceCell::new()),
-            (ClientRequestType::Champions, OnceCell::new()),
-            (ClientRequestType::Masteries, OnceCell::new()),
-            (ClientRequestType::GameStats(13), OnceCell::new()),
-            (ClientRequestType::GameStats(12), OnceCell::new()),
-            (ClientRequestType::GameStats(11), OnceCell::new()),
-            (ClientRequestType::GameStats(10), OnceCell::new()),
-            (ClientRequestType::GameStats(9), OnceCell::new()),
-            (ClientRequestType::GameStats(8), OnceCell::new()),
-            (ClientRequestType::Loot, OnceCell::new()),
-        ]
-        .into_iter()
-        .collect()
     }
 }
 
