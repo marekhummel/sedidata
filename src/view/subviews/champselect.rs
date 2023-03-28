@@ -19,16 +19,16 @@ impl<'a, 'b> ChampSelectView<'a, 'b> {
             Some(champ_select_info) => {
                 println!("Currently selected champ:");
                 let current_champ = champ_select_info.current_champ_id;
-                self.print_selectable_champ(&current_champ, true)?;
+                self.print_selectable_champ(&current_champ)?;
 
                 println!("\nBenched Champions:");
                 for bench_champ in champ_select_info.benched_champs {
-                    self.print_selectable_champ(&bench_champ.id, bench_champ.selectable)?;
+                    self.print_selectable_champ(&bench_champ)?;
                 }
 
                 println!("\nTradable Champions:");
                 for team_champ in champ_select_info.team_champs {
-                    self.print_selectable_champ(&team_champ.id, team_champ.selectable)?;
+                    self.print_selectable_champ(&team_champ)?;
                 }
             }
             None => println!("Not in champ select!"),
@@ -37,24 +37,27 @@ impl<'a, 'b> ChampSelectView<'a, 'b> {
         Ok(())
     }
 
-    fn print_selectable_champ(&self, champ: &ChampionId, selectable: bool) -> ViewResult {
+    fn print_selectable_champ(&self, champ: &ChampionId) -> ViewResult {
         let champion = self.lookup.get_champion(&champ)?;
         print!("  {:<16}", format!("{}:", champion.name));
-        match self.lookup.get_mastery(&champ) {
-            Ok(mastery) if selectable => {
-                print!("  Level {}", mastery.level);
+        match champion.owned {
+            true => match self.lookup.get_mastery(&champ) {
+                Ok(mastery) => {
+                    print!("  Level {}", mastery.level);
 
-                match mastery.tokens {
-                    Some(tokens) => print!(
-                        " ({}/{} tokens, {} pts)",
-                        tokens,
-                        mastery.level - 3,
-                        mastery.points
-                    ),
-                    None => print!(" ({} pts)", mastery.points),
+                    match mastery.tokens {
+                        Some(tokens) => print!(
+                            " ({}/{} tokens, {} pts)",
+                            tokens,
+                            mastery.level - 3,
+                            mastery.points
+                        ),
+                        None => print!(" ({} pts)", mastery.points),
+                    }
                 }
-            }
-            _ => print!(" - not owned / not played!"),
+                Err(_) => print!(" Level 0 (not played!)"),
+            },
+            false => print!(" not owned!"),
         }
 
         println!();

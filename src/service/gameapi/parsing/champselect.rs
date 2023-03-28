@@ -2,10 +2,7 @@ use std::collections::HashMap;
 
 use json::JsonValue;
 
-use crate::model::{
-    champselect::{ChampSelectInfo, SelectableChamp},
-    ids::ChampionId,
-};
+use crate::model::{champselect::ChampSelectInfo, ids::ChampionId};
 
 use super::ParsingError;
 
@@ -17,7 +14,6 @@ pub fn parse_champselect_info(json: &JsonValue) -> Result<ChampSelectInfo, Parsi
 
         // Picked
         let mut my_team = parse_my_team(&obj["myTeam"])?;
-        let mut trades = parse_trades(&obj["trades"])?;
 
         let local_player_cell_id = obj["localPlayerCellId"]
             .as_u8()
@@ -26,13 +22,7 @@ pub fn parse_champselect_info(json: &JsonValue) -> Result<ChampSelectInfo, Parsi
             .remove(&local_player_cell_id)
             .ok_or(ParsingError::InvalidType("localPlayerCellId".into()))?;
 
-        let team_champs = my_team
-            .into_iter()
-            .map(|(cell, champ)| SelectableChamp {
-                id: champ,
-                selectable: trades.remove(&cell).unwrap_or(false),
-            })
-            .collect();
+        let team_champs = my_team.values().cloned().collect();
 
         return Ok(ChampSelectInfo {
             current_champ_id,
@@ -44,7 +34,7 @@ pub fn parse_champselect_info(json: &JsonValue) -> Result<ChampSelectInfo, Parsi
     Err(ParsingError::InvalidType("root".into()))
 }
 
-fn parse_bench_champions(bench_json: &JsonValue) -> Result<Vec<SelectableChamp>, ParsingError> {
+fn parse_bench_champions(bench_json: &JsonValue) -> Result<Vec<ChampionId>, ParsingError> {
     let mut bench = Vec::new();
 
     if let JsonValue::Array(bench_array) = bench_json {
@@ -53,12 +43,7 @@ fn parse_bench_champions(bench_json: &JsonValue) -> Result<Vec<SelectableChamp>,
                 let cid = bench_champ["championId"]
                     .as_i32()
                     .ok_or(ParsingError::InvalidType("championId".into()))?;
-
-                let champ = SelectableChamp {
-                    id: cid.into(),
-                    selectable: true,
-                };
-                bench.push(champ)
+                bench.push(cid.into())
             } else {
                 return Err(ParsingError::InvalidType("benchChampions entry".into()));
             }
@@ -90,29 +75,5 @@ fn parse_my_team(my_team_json: &JsonValue) -> Result<HashMap<u8, ChampionId>, Pa
         Ok(team)
     } else {
         Err(ParsingError::InvalidType("myTeam".into()))
-    }
-}
-
-fn parse_trades(trades_json: &JsonValue) -> Result<HashMap<u8, bool>, ParsingError> {
-    let mut team = HashMap::new();
-
-    if let JsonValue::Array(trades_array) = trades_json {
-        for trade_json in trades_array {
-            if let JsonValue::Object(trade) = trade_json {
-                let cell_id = trade["cellId"]
-                    .as_u8()
-                    .ok_or(ParsingError::InvalidType("cellId".into()))?;
-                let state = trade["state"]
-                    .as_str()
-                    .ok_or(ParsingError::InvalidType("state".into()))?;
-
-                team.insert(cell_id, state == "AVAILABLE");
-            } else {
-                return Err(ParsingError::InvalidType("trades entry".into()));
-            }
-        }
-        Ok(team)
-    } else {
-        Err(ParsingError::InvalidType("trades".into()))
     }
 }
