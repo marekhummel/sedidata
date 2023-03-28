@@ -27,7 +27,7 @@ impl<'a, 'b> LootView<'a, 'b> {
     pub fn level_four_champs(&self) -> ViewResult {
         println!("Champions that are mastery level 4:\n");
 
-        let mut masteries = self.util.get_masteries_with_level(4)?;
+        let mut masteries = self.util.get_masteries_with_level(vec![4])?;
         masteries.sort_by_key(|m| m.points_to_next_level);
 
         let champions = masteries
@@ -46,14 +46,11 @@ impl<'a, 'b> LootView<'a, 'b> {
 
     pub fn mastery_tokens(&self) -> ViewResult {
         println!("Mastery tokens and if they can be upgraded:\n");
-
-        let masteries = self.manager.get_masteries()?;
-        let maxed_masteries = masteries
-            .into_iter()
-            .filter(|m| m.level == 5 || m.level == 6);
+        let maxed_masteries = self.util.get_masteries_with_level(vec![5, 6])?;
         let champ_shards_set = self.util.get_champ_shard_set()?;
 
         let mut full_info = maxed_masteries
+            .into_iter()
             .map(|m| {
                 (
                     m.level,

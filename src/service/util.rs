@@ -67,9 +67,12 @@ impl<'a> UtilService<'a> {
         Ok(owned_skins.iter().map(|s| s.id.clone()).collect())
     }
 
-    pub fn get_masteries_with_level(&self, level: u8) -> DataRetrievalResult<Vec<&Mastery>> {
+    pub fn get_masteries_with_level(&self, levels: Vec<u8>) -> DataRetrievalResult<Vec<&Mastery>> {
         let masteries = self.manager.get_masteries()?;
-        Ok(masteries.iter().filter(|c| c.level == level).collect())
+        Ok(masteries
+            .iter()
+            .filter(|c| levels.contains(&c.level))
+            .collect())
     }
 
     pub fn get_champ_shard_set(&self) -> DataRetrievalResult<HashSet<ChampionId>> {
