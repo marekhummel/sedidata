@@ -39,16 +39,24 @@ impl<'a, 'b> ChampSelectView<'a, 'b> {
 
     fn print_selectable_champ(&self, champ: &ChampionId, selectable: bool) -> ViewResult {
         let champion = self.lookup.get_champion(&champ)?;
-        let mastery = self.lookup.get_mastery(&champ)?;
-        print!(
-            "  {:<16}  Level {} ({} pts)",
-            format!("{}:", champion.name),
-            mastery.level,
-            mastery.points
-        );
-        if !selectable {
-            print!(" - not owned!");
+        print!("  {:<16}", format!("{}:", champion.name));
+        match self.lookup.get_mastery(&champ) {
+            Ok(mastery) if selectable => {
+                print!("  Level {}", mastery.level);
+
+                match mastery.tokens {
+                    Some(tokens) => print!(
+                        " ({}/{} tokens, {} pts)",
+                        tokens,
+                        mastery.level - 3,
+                        mastery.points
+                    ),
+                    None => print!(" ({} pts)", mastery.points),
+                }
+            }
+            _ => print!(" - not owned / not played!"),
         }
+
         println!();
         Ok(())
     }
