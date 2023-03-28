@@ -15,14 +15,18 @@ use crate::{
         util::UtilService,
     },
     view::{
-        subviews::{basic::BasicView, games::GamesView, inventory::InventoryView, loot::LootView},
+        subviews::{
+            basic::BasicView, champselect::ChampSelectView, games::GamesView,
+            inventory::InventoryView, loot::LootView,
+        },
         ViewResult,
     },
 };
 
 use super::ReplError;
 
-type CommandFunction = fn(&BasicView, &InventoryView, &LootView, &GamesView) -> ViewResult;
+type CommandFunction =
+    fn(&BasicView, &InventoryView, &LootView, &GamesView, &ChampSelectView) -> ViewResult;
 type CommandEntry<'a> = (u8, &'a str, CommandFunction);
 
 pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
@@ -41,6 +45,7 @@ pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
         let inventory_view = InventoryView::new(&lookup, &util);
         let loot_view = LootView::new(&manager, &lookup, &util);
         let games_view = GamesView::new(&manager, &lookup);
+        let champ_select_view = ChampSelectView::new(&manager, &lookup);
 
         let available_commands = get_commands();
 
@@ -62,7 +67,13 @@ pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
                 Command::Execute(command) => {
                     println!("({:>2})  {}", command.0, command.1);
                     println!("~~~~~\n");
-                    let result = command.2(&basic_view, &inventory_view, &loot_view, &games_view);
+                    let result = command.2(
+                        &basic_view,
+                        &inventory_view,
+                        &loot_view,
+                        &games_view,
+                        &champ_select_view,
+                    );
                     match result {
                         Ok(_) => {
                             println!("\n~~~~~\n");
@@ -96,49 +107,55 @@ pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
 fn get_lookup_service(manager: &DataManager) -> DataRetrievalResult<LookupService> {
     let champions = manager.get_champions()?;
     let skins = manager.get_skins()?;
+    let masteries = manager.get_masteries()?;
 
-    Ok(LookupService::new(champions, skins))
+    Ok(LookupService::new(champions, skins, masteries))
 }
 
 fn get_commands<'a>() -> Vec<CommandEntry<'a>> {
     vec![
-        (1, "Show Summoner Info", |bv, _, _, _| {
+        (1, "Show Summoner Info", |bv, _, _, _, _| {
             BasicView::print_summoner(bv)
         }),
-        (10, "Champions Without Skin", |_, iv, _, _| {
+        (10, "Champions Without Skin", |_, iv, _, _, _| {
             InventoryView::champions_without_skin(iv)
         }),
-        (11, "Chromas Without Skin", |_, iv, _, _| {
+        (11, "Chromas Without Skin", |_, iv, _, _, _| {
             InventoryView::chromas_without_skin(iv)
         }),
-        (20, "Level Four Champions", |_, _, lv, _| {
+        (20, "Level Four Champions", |_, _, lv, _, _| {
             LootView::level_four_champs(lv)
         }),
-        (21, "Mastery Tokens", |_, _, lv, _| {
+        (21, "Mastery Tokens", |_, _, lv, _, _| {
             LootView::mastery_tokens(lv)
         }),
-        (22, "Unplayed Champions", |_, _, lv, _| {
+        (22, "Unplayed Champions", |_, _, lv, _, _| {
             LootView::unplayed_champs(lv)
         }),
-        (23, "Blue Essence Info", |_, _, lv, _| {
+        (23, "Blue Essence Info", |_, _, lv, _, _| {
             LootView::blue_essence_overview(lv)
         }),
-        (24, "Missing Champion Shards", |_, _, lv, _| {
+        (24, "Missing Champion Shards", |_, _, lv, _, _| {
             LootView::missing_champ_shards(lv)
         }),
-        (25, "Interesting Skins", |_, _, lv, _| {
+        (25, "Interesting Skins", |_, _, lv, _, _| {
             LootView::interesting_skins(lv)
         }),
-        (26, "Skin Shards for First Skin", |_, _, lv, _| {
+        (26, "Skin Shards for First Skin", |_, _, lv, _, _| {
             LootView::skin_shards_first_skin(lv)
         }),
-        (27, "Disenchantable Skin Shards", |_, _, lv, _| {
+        (27, "Disenchantable Skin Shards", |_, _, lv, _, _| {
             LootView::skin_shards_disenchantable(lv)
         }),
-        (30, "Played Games", |_, _, _, gv| {
+        (30, "Played Games", |_, _, _, gv, _| {
             GamesView::played_games(gv)
         }),
-        (31, "List Pentas", |_, _, _, gv| GamesView::list_pentas(gv)),
+        (31, "List Pentas", |_, _, _, gv, _| {
+            GamesView::list_pentas(gv)
+        }),
+        (40, "Champ Select Info", |_, _, _, _, csv| {
+            ChampSelectView::current_champ_info(csv)
+        }),
     ]
 }
 

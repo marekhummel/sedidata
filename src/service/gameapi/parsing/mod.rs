@@ -1,4 +1,5 @@
 pub mod champion;
+pub mod champselect;
 pub mod games;
 pub mod loot;
 pub mod mastery;

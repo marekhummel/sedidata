@@ -4,6 +4,7 @@ use once_cell::sync::OnceCell;
 
 use crate::model::{
     champion::{AllChampionInfo, Champion, Chroma, Skin},
+    champselect::ChampSelectInfo,
     games::Game,
     loot::LootItems,
     mastery::Mastery,
@@ -13,8 +14,8 @@ use crate::model::{
 use super::gameapi::{
     client::{ApiClient, ClientInitError, ClientRequestType, RequestError},
     parsing::{
-        champion::parse_champions, games::parse_game_stats, loot::parse_loot,
-        mastery::parse_masteries, summoner::parse_summoner, ParsingError,
+        champion::parse_champions, champselect::parse_champselect_info, games::parse_game_stats,
+        loot::parse_loot, mastery::parse_masteries, summoner::parse_summoner, ParsingError,
     },
 };
 
@@ -50,7 +51,7 @@ impl DataManager {
     pub fn get_champions(&self) -> DataRetrievalResult<&Vec<Champion>> {
         self.champ_info_cache
             .get_or_try_init(|| {
-                let champs_json = self.client.request(ClientRequestType::Champions)?;
+                let champs_json = self.client.request(ClientRequestType::Champions, true)?;
                 let champ_info = parse_champions(Rc::as_ref(&champs_json))?;
                 Ok(champ_info)
             })
@@ -60,7 +61,7 @@ impl DataManager {
     pub fn get_skins(&self) -> DataRetrievalResult<&Vec<Skin>> {
         self.champ_info_cache
             .get_or_try_init(|| {
-                let champs_json = self.client.request(ClientRequestType::Champions)?;
+                let champs_json = self.client.request(ClientRequestType::Champions, true)?;
                 let champ_info = parse_champions(Rc::as_ref(&champs_json))?;
                 Ok(champ_info)
             })
@@ -69,7 +70,7 @@ impl DataManager {
     pub fn get_chromas(&self) -> DataRetrievalResult<&Vec<Chroma>> {
         self.champ_info_cache
             .get_or_try_init(|| {
-                let champs_json = self.client.request(ClientRequestType::Champions)?;
+                let champs_json = self.client.request(ClientRequestType::Champions, true)?;
                 let champ_info = parse_champions(Rc::as_ref(&champs_json))?;
                 Ok(champ_info)
             })
@@ -78,7 +79,7 @@ impl DataManager {
 
     pub fn get_masteries(&self) -> DataRetrievalResult<&Vec<Mastery>> {
         self.masteries_cache.get_or_try_init(|| {
-            let masteries_json = self.client.request(ClientRequestType::Masteries)?;
+            let masteries_json = self.client.request(ClientRequestType::Masteries, true)?;
             let masteries = parse_masteries(Rc::as_ref(&masteries_json))?;
             Ok(masteries)
         })
@@ -88,7 +89,9 @@ impl DataManager {
         self.game_stats_cache.get_or_try_init(|| {
             let mut all_games = Vec::new();
             for season in 8..=13u8 {
-                let games_json = self.client.request(ClientRequestType::GameStats(season))?;
+                let games_json = self
+                    .client
+                    .request(ClientRequestType::GameStats(season), true)?;
                 let games = parse_game_stats(Rc::as_ref(&games_json))?;
                 all_games.extend(games);
             }
@@ -98,10 +101,21 @@ impl DataManager {
 
     pub fn get_loot(&self) -> DataRetrievalResult<&LootItems> {
         self.loot_cache.get_or_try_init(|| {
-            let loot_json = self.client.request(ClientRequestType::Loot)?;
+            let loot_json = self.client.request(ClientRequestType::Loot, true)?;
             let loot = parse_loot(Rc::as_ref(&loot_json))?;
             Ok(loot)
         })
+    }
+
+    pub fn get_champ_select_info(&self) -> DataRetrievalResult<Option<ChampSelectInfo>> {
+        match self.client.request(ClientRequestType::ChampSelect, false) {
+            Ok(champ_select_json) => {
+                let champ_select_info = parse_champselect_info(Rc::as_ref(&champ_select_json))?;
+                Ok(Some(champ_select_info))
+            }
+            Err(RequestError::InvalidResponse) => Ok(None),
+            Err(err) => Err(err.into()),
+        }
     }
 
     pub fn refresh(&mut self) -> DataRetrievalResult<()> {
@@ -116,7 +130,7 @@ impl DataManager {
     }
 
     fn retrieve_summoner(client: &mut ApiClient) -> DataRetrievalResult<Summoner> {
-        let summoner_json = client.request(ClientRequestType::Summoner)?;
+        let summoner_json = client.request(ClientRequestType::Summoner, true)?;
         let summoner = parse_summoner(Rc::as_ref(&summoner_json))?;
         Ok(summoner)
     }

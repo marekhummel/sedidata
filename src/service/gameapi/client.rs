@@ -102,7 +102,11 @@ impl ApiClient {
         })
     }
 
-    pub fn request(&self, request_type: ClientRequestType) -> Result<Rc<JsonValue>, RequestError> {
+    pub fn request(
+        &self,
+        request_type: ClientRequestType,
+        cache: bool,
+    ) -> Result<Rc<JsonValue>, RequestError> {
         match self.cache.borrow_mut().entry(request_type) {
             Entry::Occupied(oe) => Ok(oe.get().clone()),
             Entry::Vacant(ve) => {
@@ -116,31 +120,34 @@ impl ApiClient {
                             "{}lol-champions/v1/inventories/{}/champions",
                             self.base_url, s.id
                         ),
-                        None => return Err(RequestError::SummonerNeeded()),
+                        None => return Err(RequestError::SummonerNeeded),
                     },
                     ClientRequestType::Masteries => match &self.summoner {
                         Some(s) => format!(
                             "{}lol-collections/v1/inventories/{}/champion-mastery",
                             self.base_url, s.id
                         ),
-                        None => return Err(RequestError::SummonerNeeded()),
+                        None => return Err(RequestError::SummonerNeeded),
                     },
                     ClientRequestType::GameStats(season) => match &self.summoner {
                         Some(s) => format!(
                             "{}lol-career-stats/v1/summoner-games/{}/season/{}",
                             self.base_url, s.puuid, season
                         ),
-                        None => return Err(RequestError::SummonerNeeded()),
+                        None => return Err(RequestError::SummonerNeeded),
                     },
                     ClientRequestType::Loot => {
                         format!("{}lol-loot/v1/player-loot", self.base_url)
+                    }
+                    ClientRequestType::ChampSelect => {
+                        format!("{}lol-champ-select/v1/session", self.base_url)
                     }
                 };
 
                 // Send request
                 let response = self.client.get(url).send()?;
                 if !response.status().is_success() {
-                    return Err(RequestError::InvalidResponse());
+                    return Err(RequestError::InvalidResponse);
                 }
 
                 // Return json
@@ -154,7 +161,9 @@ impl ApiClient {
                 }
 
                 let rc_json = Rc::new(json);
-                ve.insert(rc_json.clone());
+                if cache {
+                    ve.insert(rc_json.clone());
+                }
                 Ok(rc_json)
             }
         }
@@ -182,6 +191,7 @@ pub enum ClientRequestType {
     Masteries,
     GameStats(u8),
     Loot,
+    ChampSelect,
 }
 
 #[derive(Debug)]
@@ -262,8 +272,8 @@ impl From<io::Error> for LockfileError {
 #[derive(Debug)]
 pub enum RequestError {
     ClientFailed(reqwest::Error),
-    SummonerNeeded(),
-    InvalidResponse(),
+    SummonerNeeded,
+    InvalidResponse,
     ParsingFailed(json::Error),
 }
 

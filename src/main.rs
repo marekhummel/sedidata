@@ -13,6 +13,7 @@ mod view;
 
 fn main() {
     // test::main();
+    // return;
 
     match DataManager::new(false) {
         Ok(manager) => match repl::run(manager) {
