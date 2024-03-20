@@ -17,11 +17,7 @@ pub struct LootView<'a, 'b: 'a> {
 
 impl<'a, 'b> LootView<'a, 'b> {
     pub fn new(manager: &'b DataManager, lookup: &'b LookupService, util: &'b UtilService) -> Self {
-        Self {
-            manager,
-            lookup,
-            util,
-        }
+        Self { manager, lookup, util }
     }
 
     pub fn level_four_champs(&self) -> ViewResult {
@@ -36,10 +32,7 @@ impl<'a, 'b> LootView<'a, 'b> {
             .collect::<Result<Vec<&Champion>, _>>()?;
 
         for (champ, mastery) in champions.iter().zip(masteries) {
-            println!(
-                "{:<15} ({} pts missing)",
-                champ.name, mastery.points_to_next_level
-            );
+            println!("{:<15} ({} pts missing)", champ.name, mastery.points_to_next_level);
         }
         Ok(())
     }
@@ -55,9 +48,7 @@ impl<'a, 'b> LootView<'a, 'b> {
                 (
                     m.level,
                     m.tokens.unwrap_or(0),
-                    self.lookup
-                        .get_champion(&m.champ_id)
-                        .map(|c| c.name.to_string()),
+                    self.lookup.get_champion(&m.champ_id).map(|c| c.name.to_string()),
                     champ_shards_set.contains(&m.champ_id),
                 )
             })
@@ -67,7 +58,7 @@ impl<'a, 'b> LootView<'a, 'b> {
             (
                 -(*level as i16),
                 -(*tokens as i16),
-                upgradable.clone(),
+                *upgradable,
                 champ_name.as_ref().map_or("".to_string(), |s| s.clone()),
             )
         });
@@ -174,9 +165,7 @@ impl<'a, 'b> LootView<'a, 'b> {
     pub fn interesting_skins(&self) -> ViewResult {
         println!("Owned skin shards for champs with 10k or more mastery points (sorted by mastery points):\n");
 
-        let sorted_champs = self
-            .util
-            .get_champions_sorted_by_mastery(None, Some(10_000))?;
+        let sorted_champs = self.util.get_champions_sorted_by_mastery(None, Some(10_000))?;
         let skin_shards = &self.manager.get_loot()?.skin_shards;
 
         for c in sorted_champs {
@@ -185,7 +174,7 @@ impl<'a, 'b> LootView<'a, 'b> {
                 .filter(|ss| self.lookup.get_skin(&ss.skin_id).unwrap().champ_id == c);
 
             let mut prefix = self.lookup.get_champion(&c)?.name.to_string();
-            prefix.push_str(":");
+            prefix.push(':');
             for shard in shards {
                 let skin_name = self.lookup.get_skin(&shard.skin_id)?.name.as_str();
                 println!("{:<16}  {}", prefix, skin_name);
@@ -201,15 +190,10 @@ impl<'a, 'b> LootView<'a, 'b> {
 
         let skin_shards = &self.manager.get_loot()?.skin_shards;
         let skins = self.util.get_owned_nobase_skins()?;
-        let champs_with_skin = skins
-            .iter()
-            .map(|s| s.champ_id.clone())
-            .collect::<HashSet<_>>();
+        let champs_with_skin = skins.iter().map(|s| s.champ_id.clone()).collect::<HashSet<_>>();
 
         let sorted_champs = self.util.get_champions_sorted_by_mastery(None, None)?;
-        let champs_no_skin = sorted_champs
-            .into_iter()
-            .filter(|cid| !champs_with_skin.contains(&cid));
+        let champs_no_skin = sorted_champs.into_iter().filter(|cid| !champs_with_skin.contains(cid));
 
         for c in champs_no_skin {
             let shards = skin_shards
@@ -217,7 +201,7 @@ impl<'a, 'b> LootView<'a, 'b> {
                 .filter(|ss| self.lookup.get_skin(&ss.skin_id).unwrap().champ_id == c);
 
             let mut prefix = self.lookup.get_champion(&c)?.name.to_string();
-            prefix.push_str(":");
+            prefix.push(':');
             for shard in shards {
                 let skin_name = self.lookup.get_skin(&shard.skin_id)?.name.as_str();
                 println!("{:<16}  {}", prefix, skin_name);
@@ -238,9 +222,7 @@ impl<'a, 'b> LootView<'a, 'b> {
             map
         });
 
-        let champs_by_mastery = self
-            .util
-            .get_champions_sorted_by_mastery(Some(12_000), None)?;
+        let champs_by_mastery = self.util.get_champions_sorted_by_mastery(Some(12_000), None)?;
         let mut sorted_champs_with_skins = champs_by_mastery
             .iter()
             .filter(|cid| skins_per_champ.contains_key(cid))
@@ -252,9 +234,9 @@ impl<'a, 'b> LootView<'a, 'b> {
                 .iter()
                 .filter(|ss| self.lookup.get_skin(&ss.skin_id).unwrap().champ_id == c.clone());
 
-            let mut champ_prefix = self.lookup.get_champion(&c)?.name.to_string();
+            let mut champ_prefix = self.lookup.get_champion(c)?.name.to_string();
             champ_prefix.push_str(format!(" ({})", skins_per_champ.get(c).unwrap_or(&0)).as_str());
-            champ_prefix.push_str(":");
+            champ_prefix.push(':');
             for shard in shards {
                 let skin_name = self.lookup.get_skin(&shard.skin_id)?.name.as_str();
                 println!("{:<19}  {}", champ_prefix, skin_name);

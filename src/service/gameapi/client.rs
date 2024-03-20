@@ -94,7 +94,7 @@ impl ApiClient {
             .ok_or(LockfileError::CantBeRead)??;
 
         // Grab content
-        let info = content.split(":").collect::<Vec<_>>();
+        let info = content.split(':').collect::<Vec<_>>();
         Ok(LockFileContent {
             base_url: format!("{}://127.0.0.1:{}/", info[4], info[2]),
             username: "riot".to_string(),
@@ -102,11 +102,7 @@ impl ApiClient {
         })
     }
 
-    pub fn request(
-        &self,
-        request_type: ClientRequestType,
-        cache: bool,
-    ) -> Result<Rc<JsonValue>, RequestError> {
+    pub fn request(&self, request_type: ClientRequestType, cache: bool) -> Result<Rc<JsonValue>, RequestError> {
         match self.cache.borrow_mut().entry(request_type) {
             Entry::Occupied(oe) => Ok(oe.get().clone()),
             Entry::Vacant(ve) => {
@@ -116,10 +112,7 @@ impl ApiClient {
                         format!("{}lol-summoner/v1/current-summoner", self.base_url)
                     }
                     ClientRequestType::Champions => match &self.summoner {
-                        Some(s) => format!(
-                            "{}lol-champions/v1/inventories/{}/champions",
-                            self.base_url, s.id
-                        ),
+                        Some(s) => format!("{}lol-champions/v1/inventories/{}/champions", self.base_url, s.id),
                         None => return Err(RequestError::SummonerNeeded),
                     },
                     ClientRequestType::Masteries => match &self.summoner {

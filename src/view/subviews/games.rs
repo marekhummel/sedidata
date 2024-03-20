@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
+    model::games::{Game, QueueType},
     service::{data_manager::DataManager, lookup::LookupService},
     view::ViewResult,
 };
@@ -19,8 +20,8 @@ impl<'a, 'b> GamesView<'a, 'b> {
         println!("Games winrate since season 8:\n");
 
         let games = self.manager.get_game_stats()?;
-        let games_by_queue = games.iter().fold(HashMap::new(), |mut map, game| {
-            map.entry(&game.queue).or_insert(Vec::new()).push(game);
+        let games_by_queue: HashMap<&QueueType, Vec<&Game>> = games.iter().fold(HashMap::new(), |mut map, game| {
+            map.entry(&game.queue).or_default().push(game);
             map
         });
 
@@ -30,11 +31,7 @@ impl<'a, 'b> GamesView<'a, 'b> {
             let won = games.iter().filter(|g| g.victory).count();
             let total = games.len();
             println!("  Played:  {}", total);
-            println!(
-                "  Won:     {} (wr: {:.3}%)",
-                won,
-                (won as f32) / (total as f32) * 100.0
-            );
+            println!("  Won:     {} (wr: {:.3}%)", won, (won as f32) / (total as f32) * 100.0);
             println!();
         }
 
@@ -45,10 +42,7 @@ impl<'a, 'b> GamesView<'a, 'b> {
         println!("Penta kills since season 8 (only on rift, not aram):\n");
 
         let games = self.manager.get_game_stats()?;
-        let mut penta_games = games
-            .iter()
-            .filter(|g| g.stats.pentas > 0)
-            .collect::<Vec<_>>();
+        let mut penta_games = games.iter().filter(|g| g.stats.pentas > 0).collect::<Vec<_>>();
         penta_games.sort_by_key(|g| g.timestamp);
         penta_games.reverse();
 

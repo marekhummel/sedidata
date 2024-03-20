@@ -45,6 +45,7 @@ fn parse_game_obj(obj: &Object) -> Result<Option<Game>, ParsingError> {
         "draft5" => QueueType::Draft,
         "rank5flex" => QueueType::RankedFlex,
         "rank5solo" => QueueType::RankedSolo,
+        "quickplay5" => QueueType::Quickplay,
         "rank3flex" => return Ok(None),
         _ => return Err(ParsingError::InvalidType(format!("queueType '{}'", queue))),
     };
@@ -67,9 +68,7 @@ fn parse_game_obj(obj: &Object) -> Result<Option<Game>, ParsingError> {
 }
 
 fn parse_game_stats_obj(obj: &Object) -> Result<(Statistics, bool), ParsingError> {
-    let kills = obj["kills"]
-        .as_f32()
-        .ok_or(ParsingError::InvalidType("kills".into()))?;
+    let kills = obj["kills"].as_f32().ok_or(ParsingError::InvalidType("kills".into()))?;
     let deaths = obj["deaths"]
         .as_f32()
         .ok_or(ParsingError::InvalidType("deaths".into()))?;

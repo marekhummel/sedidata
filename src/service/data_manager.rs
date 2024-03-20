@@ -14,8 +14,8 @@ use crate::model::{
 use super::gameapi::{
     client::{ApiClient, ClientInitError, ClientRequestType, RequestError},
     parsing::{
-        champion::parse_champions, champselect::parse_champselect_info, games::parse_game_stats,
-        loot::parse_loot, mastery::parse_masteries, summoner::parse_summoner, ParsingError,
+        champion::parse_champions, champselect::parse_champselect_info, games::parse_game_stats, loot::parse_loot,
+        mastery::parse_masteries, summoner::parse_summoner, ParsingError,
     },
 };
 
@@ -88,10 +88,8 @@ impl DataManager {
     pub fn get_game_stats(&self) -> DataRetrievalResult<&Vec<Game>> {
         self.game_stats_cache.get_or_try_init(|| {
             let mut all_games = Vec::new();
-            for season in 8..=13u8 {
-                let games_json = self
-                    .client
-                    .request(ClientRequestType::GameStats(season), true)?;
+            for season in 8..=14u8 {
+                let games_json = self.client.request(ClientRequestType::GameStats(season), true)?;
                 let games = parse_game_stats(Rc::as_ref(&games_json))?;
                 all_games.extend(games);
             }
@@ -158,25 +156,25 @@ impl From<DataRetrievalError> for DataManagerInitError {
 
 #[derive(Debug)]
 pub enum DataRetrievalError {
-    ClientFailed(RequestError),
-    ClientRefreshFailed(ClientInitError),
-    ParsingFailed(ParsingError),
+    Client(RequestError),
+    ClientRefresh(ClientInitError),
+    Parsing(ParsingError),
 }
 
 impl From<RequestError> for DataRetrievalError {
     fn from(error: RequestError) -> Self {
-        Self::ClientFailed(error)
+        Self::Client(error)
     }
 }
 
 impl From<ClientInitError> for DataRetrievalError {
     fn from(error: ClientInitError) -> Self {
-        Self::ClientRefreshFailed(error)
+        Self::ClientRefresh(error)
     }
 }
 
 impl From<ParsingError> for DataRetrievalError {
     fn from(error: ParsingError) -> Self {
-        Self::ParsingFailed(error)
+        Self::Parsing(error)
     }
 }

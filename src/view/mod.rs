@@ -27,25 +27,25 @@ impl From<LookupError> for ViewError {
 
 #[derive(Debug)]
 pub enum ReplError {
-    InitFailed(DataRetrievalError),
-    ViewFailed(ViewError),
-    ConsoleFailed(io::Error),
+    Init(DataRetrievalError),
+    View(ViewError),
+    Console(io::Error),
 }
 
 impl From<DataRetrievalError> for ReplError {
     fn from(error: DataRetrievalError) -> Self {
-        ReplError::InitFailed(error)
+        ReplError::Init(error)
     }
 }
 
 impl From<ViewError> for ReplError {
     fn from(error: ViewError) -> Self {
-        ReplError::ViewFailed(error)
+        ReplError::View(error)
     }
 }
 
 impl From<io::Error> for ReplError {
     fn from(error: io::Error) -> Self {
-        ReplError::ConsoleFailed(error)
+        ReplError::Console(error)
     }
 }

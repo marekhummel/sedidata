@@ -26,6 +26,7 @@ pub struct Statistics {
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum QueueType {
     Blind,
+    Quickplay,
     Draft,
     RankedSolo,
     RankedFlex,

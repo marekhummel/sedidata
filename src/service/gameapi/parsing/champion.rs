@@ -35,9 +35,7 @@ pub fn parse_champions(json: &JsonValue) -> Result<AllChampionInfo, ParsingError
                                         let chroma = parse_chroma_obj(chroma_obj, skin_id.clone())?;
                                         chromas.push(chroma);
                                     } else {
-                                        return Err(ParsingError::InvalidType(
-                                            "chroma entry".into(),
-                                        ));
+                                        return Err(ParsingError::InvalidType("chroma entry".into()));
                                     }
                                 }
                             } else {
@@ -66,12 +64,8 @@ pub fn parse_champions(json: &JsonValue) -> Result<AllChampionInfo, ParsingError
 }
 
 fn parse_champ_obj(obj: &Object) -> Result<Champion, ParsingError> {
-    let champ_id = obj["id"]
-        .as_i32()
-        .ok_or(ParsingError::InvalidType("id".into()))?;
-    let name = obj["name"]
-        .as_str()
-        .ok_or(ParsingError::InvalidType("name".into()))?;
+    let champ_id = obj["id"].as_i32().ok_or(ParsingError::InvalidType("id".into()))?;
+    let name = obj["name"].as_str().ok_or(ParsingError::InvalidType("name".into()))?;
     let owned = obj["ownership"]["owned"]
         .as_bool()
         .ok_or(ParsingError::InvalidType("ownership/owned".into()))?;
@@ -84,15 +78,11 @@ fn parse_champ_obj(obj: &Object) -> Result<Champion, ParsingError> {
 }
 
 fn parse_skin_obj(obj: &Object) -> Result<Skin, ParsingError> {
-    let skin_id = obj["id"]
-        .as_i32()
-        .ok_or(ParsingError::InvalidType("id".into()))?;
+    let skin_id = obj["id"].as_i32().ok_or(ParsingError::InvalidType("id".into()))?;
     let champion_id = obj["championId"]
         .as_i32()
         .ok_or(ParsingError::InvalidType("championId".into()))?;
-    let name = obj["name"]
-        .as_str()
-        .ok_or(ParsingError::InvalidType("name".into()))?;
+    let name = obj["name"].as_str().ok_or(ParsingError::InvalidType("name".into()))?;
     let is_base = obj["isBase"]
         .as_bool()
         .ok_or(ParsingError::InvalidType("isBase".into()))?;
@@ -110,9 +100,7 @@ fn parse_skin_obj(obj: &Object) -> Result<Skin, ParsingError> {
 }
 
 fn parse_chroma_obj(obj: &Object, skin_id: SkinId) -> Result<Chroma, ParsingError> {
-    let chroma_id = obj["id"]
-        .as_i32()
-        .ok_or(ParsingError::InvalidType("id".into()))?;
+    let chroma_id = obj["id"].as_i32().ok_or(ParsingError::InvalidType("id".into()))?;
     let owned = obj["ownership"]["owned"]
         .as_bool()
         .ok_or(ParsingError::InvalidType("ownership/owned".into()))?;

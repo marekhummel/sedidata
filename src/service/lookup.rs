@@ -13,11 +13,7 @@ pub struct LookupService<'a> {
 }
 
 impl<'a> LookupService<'a> {
-    pub fn new(
-        champions: &'a Vec<Champion>,
-        skins: &'a Vec<Skin>,
-        masteries: &'a Vec<Mastery>,
-    ) -> Self {
+    pub fn new(champions: &'a [Champion], skins: &'a [Skin], masteries: &'a [Mastery]) -> Self {
         Self {
             champs: champions.iter().map(|c| (c.id.clone(), c)).collect(),
             skins: skins.iter().map(|c| (c.id.clone(), c)).collect(),

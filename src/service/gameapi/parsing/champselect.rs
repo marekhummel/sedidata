@@ -22,7 +22,7 @@ pub fn parse_champselect_info(json: &JsonValue) -> Result<ChampSelectInfo, Parsi
             .remove(&local_player_cell_id)
             .ok_or(ParsingError::InvalidType("localPlayerCellId".into()))?;
 
-        let team_champs = my_team.values().cloned().collect();
+        let team_champs = my_team.into_values().collect();
 
         return Ok(ChampSelectInfo {
             current_champ_id,

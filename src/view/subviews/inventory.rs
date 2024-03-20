@@ -21,10 +21,7 @@ impl<'a, 'b> InventoryView<'a, 'b> {
         let champs = self.util.get_owned_champions()?;
         let skins = self.util.get_owned_nobase_skins()?;
 
-        let champs_with_skin = skins
-            .iter()
-            .map(|s| s.champ_id.clone())
-            .collect::<HashSet<_>>();
+        let champs_with_skin = skins.iter().map(|s| s.champ_id.clone()).collect::<HashSet<_>>();
         let mut champs_no_skin = champs
             .iter()
             .filter(|c| !champs_with_skin.contains(&c.id))

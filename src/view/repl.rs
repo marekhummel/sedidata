@@ -3,9 +3,7 @@ use std::io::{self, stdin, stdout, Write};
 use crossterm::{
     cursor::{position, MoveTo},
     execute,
-    terminal::{
-        size, Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen, SetSize, SetTitle,
-    },
+    terminal::{size, Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen, SetSize, SetTitle},
 };
 
 use crate::{
@@ -16,8 +14,7 @@ use crate::{
     },
     view::{
         subviews::{
-            basic::BasicView, champselect::ChampSelectView, games::GamesView,
-            inventory::InventoryView, loot::LootView,
+            basic::BasicView, champselect::ChampSelectView, games::GamesView, inventory::InventoryView, loot::LootView,
         },
         ViewResult,
     },
@@ -25,8 +22,7 @@ use crate::{
 
 use super::ReplError;
 
-type CommandFunction =
-    fn(&BasicView, &InventoryView, &LootView, &GamesView, &ChampSelectView) -> ViewResult;
+type CommandFunction = fn(&BasicView, &InventoryView, &LootView, &GamesView, &ChampSelectView) -> ViewResult;
 type CommandEntry<'a> = (u8, &'a str, CommandFunction);
 
 pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
@@ -57,12 +53,7 @@ pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
 
         loop {
             let choice = get_command(&available_commands);
-            execute!(
-                stdout(),
-                EnterAlternateScreen,
-                SetSize(sx, 250),
-                MoveTo(0, 0)
-            )?;
+            execute!(stdout(), EnterAlternateScreen, SetSize(sx, 250), MoveTo(0, 0))?;
             match choice {
                 Command::Execute(command) => {
                     println!("({:>2})  {}", command.0, command.1);
@@ -114,9 +105,7 @@ fn get_lookup_service(manager: &DataManager) -> DataRetrievalResult<LookupServic
 
 fn get_commands<'a>() -> Vec<CommandEntry<'a>> {
     vec![
-        (1, "Show Summoner Info", |bv, _, _, _, _| {
-            BasicView::print_summoner(bv)
-        }),
+        (1, "Show Summoner Info", |bv, _, _, _, _| BasicView::print_summoner(bv)),
         (10, "Champions Without Skin", |_, iv, _, _, _| {
             InventoryView::champions_without_skin(iv)
         }),
@@ -126,12 +115,8 @@ fn get_commands<'a>() -> Vec<CommandEntry<'a>> {
         (20, "Level Four Champions", |_, _, lv, _, _| {
             LootView::level_four_champs(lv)
         }),
-        (21, "Mastery Tokens", |_, _, lv, _, _| {
-            LootView::mastery_tokens(lv)
-        }),
-        (22, "Unplayed Champions", |_, _, lv, _, _| {
-            LootView::unplayed_champs(lv)
-        }),
+        (21, "Mastery Tokens", |_, _, lv, _, _| LootView::mastery_tokens(lv)),
+        (22, "Unplayed Champions", |_, _, lv, _, _| LootView::unplayed_champs(lv)),
         (23, "Blue Essence Info", |_, _, lv, _, _| {
             LootView::blue_essence_overview(lv)
         }),
@@ -147,19 +132,15 @@ fn get_commands<'a>() -> Vec<CommandEntry<'a>> {
         (27, "Disenchantable Skin Shards", |_, _, lv, _, _| {
             LootView::skin_shards_disenchantable(lv)
         }),
-        (30, "Played Games", |_, _, _, gv, _| {
-            GamesView::played_games(gv)
-        }),
-        (31, "List Pentas", |_, _, _, gv, _| {
-            GamesView::list_pentas(gv)
-        }),
+        (30, "Played Games", |_, _, _, gv, _| GamesView::played_games(gv)),
+        (31, "List Pentas", |_, _, _, gv, _| GamesView::list_pentas(gv)),
         (40, "Champ Select Info", |_, _, _, _, csv| {
             ChampSelectView::current_champ_info(csv)
         }),
     ]
 }
 
-fn print_options(available_commands: &Vec<CommandEntry>) {
+fn print_options(available_commands: &[CommandEntry]) {
     for (id, desc, _) in available_commands {
         println!("({id:>2})  {desc}");
     }
@@ -167,7 +148,7 @@ fn print_options(available_commands: &Vec<CommandEntry>) {
     println!("(q)  Quit\n");
 }
 
-fn get_command<'a>(available_commands: &'a Vec<CommandEntry>) -> Command<'a> {
+fn get_command<'a>(available_commands: &'a [CommandEntry]) -> Command<'a> {
     loop {
         let mut s = String::new();
         print!("> Your choice: ");
