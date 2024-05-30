@@ -6,6 +6,6 @@ pub struct Mastery {
     pub level: u8,
     pub points: u32,
     pub tokens: Option<u8>,
-    pub points_to_next_level: u32,
+    pub points_to_next_level: i32,
     pub chest_granted: bool,
 }

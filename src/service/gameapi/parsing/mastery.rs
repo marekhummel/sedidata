@@ -23,7 +23,7 @@ pub fn parse_masteries(json: &JsonValue) -> Result<Vec<Mastery>, ParsingError> {
                     .as_u8()
                     .ok_or(ParsingError::InvalidType("tokensEarned".into()))?;
                 let points_to_next_level = champ_obj["championPointsUntilNextLevel"]
-                    .as_u32()
+                    .as_i32()
                     .ok_or(ParsingError::InvalidType("championPointsUntilNextLevel".into()))?;
                 let chest_granted = champ_obj["chestGranted"]
                     .as_bool()
