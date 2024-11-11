@@ -116,10 +116,7 @@ impl ApiClient {
                         None => return Err(RequestError::SummonerNeeded),
                     },
                     ClientRequestType::Masteries => match &self.summoner {
-                        Some(s) => format!(
-                            "{}lol-collections/v1/inventories/{}/champion-mastery",
-                            self.base_url, s.id
-                        ),
+                        Some(_) => format!("{}lol-champion-mastery/v1/local-player/champion-mastery", self.base_url),
                         None => return Err(RequestError::SummonerNeeded),
                     },
                     ClientRequestType::GameStats(season) => match &self.summoner {
@@ -140,6 +137,7 @@ impl ApiClient {
                 // Send request
                 let response = self.client.get(url).send()?;
                 if !response.status().is_success() {
+                    eprintln!("Request failed ({:?}): {:?}.", request_type, response);
                     return Err(RequestError::InvalidResponse);
                 }
 
