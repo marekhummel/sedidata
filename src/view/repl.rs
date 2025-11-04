@@ -1,9 +1,18 @@
-use std::io::{self, stdin, stdout, Write};
+use std::io::{stdout, Read};
 
 use crossterm::{
-    cursor::{position, MoveTo},
+    event::{self, Event, KeyCode, KeyEventKind},
     execute,
-    terminal::{size, Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen, SetSize, SetTitle},
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
+use gag::BufferRedirect;
+use ratatui::{
+    backend::CrosstermBackend,
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Modifier, Style},
+    text::Line,
+    widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Wrap},
+    Terminal,
 };
 
 use crate::{
@@ -25,173 +34,292 @@ use super::ReplError;
 
 type CommandFunction =
     fn(&BasicView, &InventoryView, &LootView, &GamesView, &ChampSelectView, &ChallengesView) -> ViewResult;
-type CommandEntry<'a> = (u8, &'a str, CommandFunction);
+type CommandEntry = (&'static str, CommandFunction);
 
-pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
-    let _ = execute!(
-        stdout(),
-        SetTitle("Sedidata - LoL Special Statistics"),
-        Clear(ClearType::All),
-        MoveTo(0, 0),
-    );
+struct App {
+    commands: Vec<CommandEntry>,
+    selected: usize,
+    should_quit: bool,
+    should_refresh: bool,
+    in_output_view: bool,
+    output_content: Vec<String>,
+    output_title: String,
+    scroll_offset: u16,
+}
 
-    loop {
-        let lookup = get_lookup_service(&manager)?;
-        let util = UtilService::new(&manager);
+impl App {
+    fn new() -> Self {
+        Self {
+            commands: App::get_commands(),
+            selected: 0,
+            should_quit: false,
+            should_refresh: false,
+            in_output_view: false,
+            output_content: Vec::new(),
+            output_title: String::new(),
+            scroll_offset: 0,
+        }
+    }
 
-        let basic_view = BasicView::new(&manager);
-        let inventory_view = InventoryView::new(&lookup, &util);
-        let loot_view = LootView::new(&manager, &lookup, &util);
-        let games_view = GamesView::new(&manager, &lookup);
-        let champ_select_view = ChampSelectView::new(&manager, &lookup);
-        let challenges_view = ChallengesView::new(&manager, &lookup);
+    fn next(&mut self) {
+        if self.in_output_view {
+            self.scroll_offset = self.scroll_offset.saturating_add(1);
+        } else {
+            self.selected = (self.selected + 1) % self.commands.len();
+        }
+    }
 
-        let available_commands = get_commands();
+    fn previous(&mut self) {
+        if self.in_output_view {
+            self.scroll_offset = self.scroll_offset.saturating_sub(1);
+        } else {
+            self.selected = if self.selected == 0 {
+                self.commands.len() - 1
+            } else {
+                self.selected - 1
+            };
+        }
+    }
 
-        println!("Welcome {}!", manager.get_summoner().display_name);
-        println!("==================================\n");
-        print_options(&available_commands);
-        let (cx, cy) = position()?;
-        let (sx, sy) = size()?;
+    fn page_down(&mut self, amount: u16) {
+        if self.in_output_view {
+            self.scroll_offset = self.scroll_offset.saturating_add(amount);
+        }
+    }
 
+    fn page_up(&mut self, amount: u16) {
+        if self.in_output_view {
+            self.scroll_offset = self.scroll_offset.saturating_sub(amount);
+        }
+    }
+
+    fn run(
+        &mut self,
+        terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+        manager: &mut DataManager,
+    ) -> Result<(), ReplError> {
         loop {
-            let choice = get_command(&available_commands);
-            execute!(stdout(), EnterAlternateScreen, SetSize(sx, 250), MoveTo(0, 0))?;
-            match choice {
-                Command::Execute(command) => {
-                    println!("({:>2})  {}", command.0, command.1);
-                    println!("~~~~~\n");
-                    let result = command.2(
-                        &basic_view,
-                        &inventory_view,
-                        &loot_view,
-                        &games_view,
-                        &champ_select_view,
-                        &challenges_view,
+            let lookup = App::get_lookup_service(manager)?;
+            let util = UtilService::new(manager);
+
+            let basic_view = BasicView::new(manager);
+            let inventory_view = InventoryView::new(&lookup, &util);
+            let loot_view = LootView::new(manager, &lookup, &util);
+            let games_view = GamesView::new(manager, &lookup);
+            let champ_select_view = ChampSelectView::new(manager, &lookup);
+            let challenges_view = ChallengesView::new(manager, &lookup);
+
+            loop {
+                let summoner_name = manager.get_summoner().display_name.clone();
+
+                terminal.draw(|f| {
+                    let chunks = Layout::default()
+                        .direction(Direction::Vertical)
+                        .constraints([Constraint::Length(3), Constraint::Min(0)])
+                        .split(f.size());
+
+                    // Title
+                    let title = Paragraph::new(format!("Welcome {}!", summoner_name)).block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .title("Sedidata - LoL Special Statistics"),
                     );
-                    match result {
-                        Ok(_) => {
-                            println!("\n~~~~~\n");
-                            println!("Press Enter to go back to menu");
-                            let mut s = String::new();
-                            let _ = stdin().read_line(&mut s);
-                            reset_screen_buffer(sx, sy, cx, cy)?;
+                    f.render_widget(title, chunks[0]);
+
+                    if self.in_output_view {
+                        // Scrollable output view
+                        let text: Vec<Line> = self.output_content.iter().map(|s| Line::from(s.as_str())).collect();
+                        let paragraph = Paragraph::new(text)
+                            .block(Block::default().borders(Borders::ALL).title(format!(
+                                "{} (↑/↓ or PgUp/PgDown to scroll, Esc to return)",
+                                self.output_title
+                            )))
+                            .wrap(Wrap { trim: false })
+                            .scroll((self.scroll_offset, 0));
+                        f.render_widget(paragraph, chunks[1]);
+                    } else {
+                        // Menu
+                        let mut items: Vec<ListItem> =
+                            self.commands.iter().map(|(desc, _)| ListItem::new(*desc)).collect();
+
+                        items.push(ListItem::new(""));
+                        items.push(ListItem::new("Refresh data (r)"));
+                        items.push(ListItem::new("Quit (q)"));
+
+                        let mut list_state = ListState::default();
+                        list_state.select(Some(self.selected));
+
+                        let list = List::new(items)
+                            .block(
+                                Block::default()
+                                    .borders(Borders::ALL)
+                                    .title("Commands (↑/↓ to navigate, Enter to select, r: refresh, q: quit)"),
+                            )
+                            .highlight_style(Style::default().bg(Color::DarkGray).add_modifier(Modifier::BOLD))
+                            .highlight_symbol(">> ");
+                        f.render_stateful_widget(list, chunks[1], &mut list_state);
+                    }
+                })?;
+
+                if event::poll(std::time::Duration::from_millis(100))? {
+                    if let Event::Key(key) = event::read()? {
+                        if key.kind != KeyEventKind::Press {
+                            continue;
                         }
-                        Err(err) => {
-                            reset_screen_buffer(sx, sy, cx, cy)?;
-                            return Err(err.into());
+
+                        match key.code {
+                            KeyCode::Char('q') if !self.in_output_view => {
+                                self.should_quit = true;
+                                break;
+                            }
+                            KeyCode::Char('r') if !self.in_output_view => {
+                                self.should_refresh = true;
+                                break;
+                            }
+                            KeyCode::Up => self.previous(),
+                            KeyCode::Down => self.next(),
+                            KeyCode::PageUp => self.page_up(10),
+                            KeyCode::PageDown => self.page_down(10),
+                            KeyCode::Esc if self.in_output_view => {
+                                self.in_output_view = false;
+                                self.scroll_offset = 0;
+                                self.output_content.clear();
+                                self.output_title.clear();
+                            }
+                            KeyCode::Enter if !self.in_output_view => {
+                                let command = &self.commands[self.selected];
+
+                                // Capture stdout while running the command
+                                let (result, mut output_lines) = {
+                                    // Temporarily exit raw mode but stay in alternate screen
+                                    disable_raw_mode()?;
+
+                                    // Capture stdout
+                                    let mut buf = BufferRedirect::stdout().unwrap();
+
+                                    let result = command.1(
+                                        &basic_view,
+                                        &inventory_view,
+                                        &loot_view,
+                                        &games_view,
+                                        &champ_select_view,
+                                        &challenges_view,
+                                    );
+
+                                    // Read captured output
+                                    let mut captured_output = String::new();
+                                    buf.read_to_string(&mut captured_output).ok();
+                                    drop(buf);
+
+                                    // Convert to lines
+                                    let lines: Vec<String> = captured_output.lines().map(|s| s.to_string()).collect();
+
+                                    // Re-enable raw mode
+                                    enable_raw_mode()?;
+
+                                    (result, lines)
+                                };
+
+                                match result {
+                                    Ok(_) => {
+                                        if output_lines.is_empty() {
+                                            output_lines.push("Command executed successfully.".to_string());
+                                            output_lines.push("(No output produced)".to_string());
+                                        }
+                                    }
+                                    Err(err) => {
+                                        output_lines =
+                                            vec!["Error occurred:".to_string(), "".to_string(), format!("{:?}", err)];
+                                    }
+                                }
+
+                                terminal.clear()?;
+                                self.output_title = command.0.to_string();
+                                self.output_content = output_lines;
+                                self.in_output_view = true;
+                                self.scroll_offset = 0;
+                            }
+                            _ => {}
                         }
                     }
                 }
-                Command::Refresh => {
-                    reset_screen_buffer(sx, sy, 0, 2)?;
-                    break;
-                }
-                Command::Quit => {
-                    reset_screen_buffer(sx, sy, cx, cy)?;
-                    println!("\nBye bye!");
-                    return Ok(());
-                }
+            }
+
+            if self.should_quit {
+                return Ok(());
+            }
+
+            if self.should_refresh {
+                self.should_refresh = false;
+                manager.refresh()?;
             }
         }
+    }
 
-        manager.refresh()?;
+    fn get_lookup_service(manager: &DataManager) -> DataRetrievalResult<LookupService> {
+        let champions = manager.get_champions()?;
+        let skins = manager.get_skins()?;
+        let masteries = manager.get_masteries()?;
+
+        Ok(LookupService::new(champions, skins, masteries))
+    }
+
+    fn get_commands() -> Vec<CommandEntry> {
+        vec![
+            ("Show Summoner Info", |bv, _, _, _, _, _| BasicView::print_summoner(bv)),
+            ("Champions Without Skin", |_, iv, _, _, _, _| {
+                InventoryView::champions_without_skin(iv)
+            }),
+            ("Chromas Without Skin", |_, iv, _, _, _, _| {
+                InventoryView::chromas_without_skin(iv)
+            }),
+            ("Level Four Champions", |_, _, lv, _, _, _| {
+                LootView::level_four_champs(lv)
+            }),
+            ("Mastery Tokens", |_, _, lv, _, _, _| LootView::mastery_tokens(lv)),
+            ("Unplayed Champions", |_, _, lv, _, _, _| LootView::unplayed_champs(lv)),
+            ("Blue Essence Info", |_, _, lv, _, _, _| {
+                LootView::blue_essence_overview(lv)
+            }),
+            ("Missing Champion Shards", |_, _, lv, _, _, _| {
+                LootView::missing_champ_shards(lv)
+            }),
+            ("Interesting Skins", |_, _, lv, _, _, _| LootView::interesting_skins(lv)),
+            ("Skin Shards for First Skin", |_, _, lv, _, _, _| {
+                LootView::skin_shards_first_skin(lv)
+            }),
+            ("Disenchantable Skin Shards", |_, _, lv, _, _, _| {
+                LootView::skin_shards_disenchantable(lv)
+            }),
+            ("Played Games", |_, _, _, gv, _, _| GamesView::played_games(gv)),
+            ("List Pentas", |_, _, _, gv, _, _| GamesView::list_pentas(gv)),
+            ("Champ Select Info", |_, _, _, _, csv, _| {
+                ChampSelectView::current_champ_info(csv)
+            }),
+            ("Challenges Overview", |_, _, _, _, _, cv| {
+                ChallengesView::open_challenges_view(cv)
+            }),
+        ]
     }
 }
 
-fn get_lookup_service(manager: &DataManager) -> DataRetrievalResult<LookupService> {
-    let champions = manager.get_champions()?;
-    let skins = manager.get_skins()?;
-    let masteries = manager.get_masteries()?;
+pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
+    enable_raw_mode()?;
+    let mut stdout = stdout();
+    execute!(stdout, EnterAlternateScreen)?;
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
 
-    Ok(LookupService::new(champions, skins, masteries))
-}
+    let mut app = App::new();
+    let result = app.run(&mut terminal, &mut manager);
 
-fn get_commands<'a>() -> Vec<CommandEntry<'a>> {
-    vec![
-        (1, "Show Summoner Info", |bv, _, _, _, _, _| {
-            BasicView::print_summoner(bv)
-        }),
-        (10, "Champions Without Skin", |_, iv, _, _, _, _| {
-            InventoryView::champions_without_skin(iv)
-        }),
-        (11, "Chromas Without Skin", |_, iv, _, _, _, _| {
-            InventoryView::chromas_without_skin(iv)
-        }),
-        (20, "Level Four Champions", |_, _, lv, _, _, _| {
-            LootView::level_four_champs(lv)
-        }),
-        (21, "Mastery Tokens", |_, _, lv, _, _, _| LootView::mastery_tokens(lv)),
-        (22, "Unplayed Champions", |_, _, lv, _, _, _| {
-            LootView::unplayed_champs(lv)
-        }),
-        (23, "Blue Essence Info", |_, _, lv, _, _, _| {
-            LootView::blue_essence_overview(lv)
-        }),
-        (24, "Missing Champion Shards", |_, _, lv, _, _, _| {
-            LootView::missing_champ_shards(lv)
-        }),
-        (25, "Interesting Skins", |_, _, lv, _, _, _| {
-            LootView::interesting_skins(lv)
-        }),
-        (26, "Skin Shards for First Skin", |_, _, lv, _, _, _| {
-            LootView::skin_shards_first_skin(lv)
-        }),
-        (27, "Disenchantable Skin Shards", |_, _, lv, _, _, _| {
-            LootView::skin_shards_disenchantable(lv)
-        }),
-        (30, "Played Games", |_, _, _, gv, _, _| GamesView::played_games(gv)),
-        (31, "List Pentas", |_, _, _, gv, _, _| GamesView::list_pentas(gv)),
-        (40, "Champ Select Info", |_, _, _, _, csv, _| {
-            ChampSelectView::current_champ_info(csv)
-        }),
-        (50, "Challenges Overview", |_, _, _, _, _, cv| {
-            ChallengesView::open_challenges_view(cv)
-        }),
-    ]
-}
+    disable_raw_mode()?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    terminal.show_cursor()?;
 
-fn print_options(available_commands: &[CommandEntry]) {
-    for (id, desc, _) in available_commands {
-        println!("({id:>2})  {desc}");
+    if let Err(err) = &result {
+        eprintln!("Error: {:?}", err);
     }
-    println!("\n(r)  Refresh data");
-    println!("(q)  Quit\n");
-}
 
-fn get_command<'a>(available_commands: &'a [CommandEntry]) -> Command<'a> {
-    loop {
-        let mut s = String::new();
-        print!("> Your choice: ");
-        let _ = stdout().flush();
-        let _ = stdin().read_line(&mut s);
-
-        match s.trim() {
-            "q" => return Command::Quit,
-            "r" => return Command::Refresh,
-            ts => {
-                if let Ok(choice) = ts.parse::<u8>() {
-                    if let Some(command) = available_commands.iter().find(|cmd| cmd.0 == choice) {
-                        return Command::Execute(command);
-                    }
-                }
-            }
-        };
-    }
-}
-
-fn reset_screen_buffer(sx: u16, sy: u16, cx: u16, cy: u16) -> Result<(), io::Error> {
-    execute!(
-        stdout(),
-        LeaveAlternateScreen,
-        SetSize(sx, sy),
-        MoveTo(cx, cy - 1),
-        Clear(ClearType::FromCursorDown)
-    )
-}
-
-enum Command<'a> {
-    Quit,
-    Refresh,
-    Execute(&'a CommandEntry<'a>),
+    result
 }

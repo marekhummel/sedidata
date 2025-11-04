@@ -16,10 +16,11 @@ pub fn parse_champions(json: &JsonValue) -> Result<AllChampionInfo, ParsingError
         for champ_entry in array {
             if let JsonValue::Object(champ_obj) = &champ_entry {
                 let champ = parse_champ_obj(champ_obj)?;
-                if champ.id != String::from("-1").into() {
-                    champions.push(champ);
+                if champ.id == String::from("-1").into() || champ.name.contains("Doom Bot") {
+                    continue;
                 }
 
+                champions.push(champ);
                 let champ_skins = &champ_obj["skins"];
                 if let JsonValue::Array(skin_array) = champ_skins {
                     for skin_entry in skin_array {
