@@ -15,7 +15,7 @@ fn main() {
     // test::main();
     // return;
 
-    match DataManager::new(false) {
+    match DataManager::new(true) {
         Ok(manager) => match repl::run(manager) {
             Ok(_) => return,
             Err(error) => println!("Error occured while running REPL:\n{:#?}\n", error),

@@ -132,6 +132,9 @@ impl ApiClient {
                     ClientRequestType::ChampSelect => {
                         format!("{}lol-champ-select/v1/session", self.base_url)
                     }
+                    ClientRequestType::Challenges => {
+                        format!("{}lol-challenges/v1/challenges/local-player", self.base_url)
+                    }
                 };
 
                 // Send request
@@ -183,6 +186,7 @@ pub enum ClientRequestType {
     GameStats(u8),
     Loot,
     ChampSelect,
+    Challenges,
 }
 
 #[derive(Debug)]

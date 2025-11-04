@@ -2,13 +2,17 @@ use std::rc::Rc;
 
 use once_cell::sync::OnceCell;
 
-use crate::model::{
-    champion::{AllChampionInfo, Champion, Chroma, Skin},
-    champselect::ChampSelectInfo,
-    games::Game,
-    loot::LootItems,
-    mastery::Mastery,
-    summoner::Summoner,
+use crate::{
+    model::{
+        challenge::ChallengeCategory,
+        champion::{AllChampionInfo, Champion, Chroma, Skin},
+        champselect::ChampSelectInfo,
+        games::Game,
+        loot::LootItems,
+        mastery::Mastery,
+        summoner::Summoner,
+    },
+    service::gameapi::parsing::challenge::parse_challenges,
 };
 
 use super::gameapi::{
@@ -26,6 +30,7 @@ pub struct DataManager {
     masteries_cache: OnceCell<Vec<Mastery>>,
     game_stats_cache: OnceCell<Vec<Game>>,
     loot_cache: OnceCell<LootItems>,
+    challenges_cache: OnceCell<Vec<ChallengeCategory>>,
 }
 
 impl DataManager {
@@ -41,6 +46,7 @@ impl DataManager {
             masteries_cache: OnceCell::new(),
             game_stats_cache: OnceCell::new(),
             loot_cache: OnceCell::new(),
+            challenges_cache: OnceCell::new(),
         })
     }
 
@@ -116,6 +122,14 @@ impl DataManager {
         }
     }
 
+    pub fn get_challenges(&self) -> DataRetrievalResult<&Vec<ChallengeCategory>> {
+        self.challenges_cache.get_or_try_init(|| {
+            let challenges_json = self.client.request(ClientRequestType::Challenges, true)?;
+            let challenges = parse_challenges(Rc::as_ref(&challenges_json))?;
+            Ok(challenges)
+        })
+    }
+
     pub fn refresh(&mut self) -> DataRetrievalResult<()> {
         self.client.refresh()?;
         let summoner = DataManager::retrieve_summoner(&mut self.client)?;
@@ -124,6 +138,7 @@ impl DataManager {
         self.champ_info_cache = OnceCell::new();
         self.masteries_cache = OnceCell::new();
         self.loot_cache = OnceCell::new();
+        self.challenges_cache = OnceCell::new();
         Ok(())
     }
 

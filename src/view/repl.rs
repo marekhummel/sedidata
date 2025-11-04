@@ -14,7 +14,8 @@ use crate::{
     },
     view::{
         subviews::{
-            basic::BasicView, champselect::ChampSelectView, games::GamesView, inventory::InventoryView, loot::LootView,
+            basic::BasicView, challenges::ChallengesView, champselect::ChampSelectView, games::GamesView,
+            inventory::InventoryView, loot::LootView,
         },
         ViewResult,
     },
@@ -22,7 +23,8 @@ use crate::{
 
 use super::ReplError;
 
-type CommandFunction = fn(&BasicView, &InventoryView, &LootView, &GamesView, &ChampSelectView) -> ViewResult;
+type CommandFunction =
+    fn(&BasicView, &InventoryView, &LootView, &GamesView, &ChampSelectView, &ChallengesView) -> ViewResult;
 type CommandEntry<'a> = (u8, &'a str, CommandFunction);
 
 pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
@@ -42,6 +44,7 @@ pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
         let loot_view = LootView::new(&manager, &lookup, &util);
         let games_view = GamesView::new(&manager, &lookup);
         let champ_select_view = ChampSelectView::new(&manager, &lookup);
+        let challenges_view = ChallengesView::new(&manager, &lookup);
 
         let available_commands = get_commands();
 
@@ -64,6 +67,7 @@ pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
                         &loot_view,
                         &games_view,
                         &champ_select_view,
+                        &challenges_view,
                     );
                     match result {
                         Ok(_) => {
@@ -105,37 +109,44 @@ fn get_lookup_service(manager: &DataManager) -> DataRetrievalResult<LookupServic
 
 fn get_commands<'a>() -> Vec<CommandEntry<'a>> {
     vec![
-        (1, "Show Summoner Info", |bv, _, _, _, _| BasicView::print_summoner(bv)),
-        (10, "Champions Without Skin", |_, iv, _, _, _| {
+        (1, "Show Summoner Info", |bv, _, _, _, _, _| {
+            BasicView::print_summoner(bv)
+        }),
+        (10, "Champions Without Skin", |_, iv, _, _, _, _| {
             InventoryView::champions_without_skin(iv)
         }),
-        (11, "Chromas Without Skin", |_, iv, _, _, _| {
+        (11, "Chromas Without Skin", |_, iv, _, _, _, _| {
             InventoryView::chromas_without_skin(iv)
         }),
-        (20, "Level Four Champions", |_, _, lv, _, _| {
+        (20, "Level Four Champions", |_, _, lv, _, _, _| {
             LootView::level_four_champs(lv)
         }),
-        (21, "Mastery Tokens", |_, _, lv, _, _| LootView::mastery_tokens(lv)),
-        (22, "Unplayed Champions", |_, _, lv, _, _| LootView::unplayed_champs(lv)),
-        (23, "Blue Essence Info", |_, _, lv, _, _| {
+        (21, "Mastery Tokens", |_, _, lv, _, _, _| LootView::mastery_tokens(lv)),
+        (22, "Unplayed Champions", |_, _, lv, _, _, _| {
+            LootView::unplayed_champs(lv)
+        }),
+        (23, "Blue Essence Info", |_, _, lv, _, _, _| {
             LootView::blue_essence_overview(lv)
         }),
-        (24, "Missing Champion Shards", |_, _, lv, _, _| {
+        (24, "Missing Champion Shards", |_, _, lv, _, _, _| {
             LootView::missing_champ_shards(lv)
         }),
-        (25, "Interesting Skins", |_, _, lv, _, _| {
+        (25, "Interesting Skins", |_, _, lv, _, _, _| {
             LootView::interesting_skins(lv)
         }),
-        (26, "Skin Shards for First Skin", |_, _, lv, _, _| {
+        (26, "Skin Shards for First Skin", |_, _, lv, _, _, _| {
             LootView::skin_shards_first_skin(lv)
         }),
-        (27, "Disenchantable Skin Shards", |_, _, lv, _, _| {
+        (27, "Disenchantable Skin Shards", |_, _, lv, _, _, _| {
             LootView::skin_shards_disenchantable(lv)
         }),
-        (30, "Played Games", |_, _, _, gv, _| GamesView::played_games(gv)),
-        (31, "List Pentas", |_, _, _, gv, _| GamesView::list_pentas(gv)),
-        (40, "Champ Select Info", |_, _, _, _, csv| {
+        (30, "Played Games", |_, _, _, gv, _, _| GamesView::played_games(gv)),
+        (31, "List Pentas", |_, _, _, gv, _, _| GamesView::list_pentas(gv)),
+        (40, "Champ Select Info", |_, _, _, _, csv, _| {
             ChampSelectView::current_champ_info(csv)
+        }),
+        (50, "Challenges Overview", |_, _, _, _, _, cv| {
+            ChallengesView::open_challenges_view(cv)
         }),
     ]
 }
