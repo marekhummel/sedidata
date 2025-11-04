@@ -32,7 +32,7 @@ pub fn parse_masteries(json: &JsonValue) -> Result<Vec<Mastery>, ParsingError> {
                     points,
                     tokens: if level == 5 || level == 6 { Some(tokens) } else { None },
                     points_to_next_level,
-                    chest_granted: false,
+                    // chest_granted: false,
                 })
             } else {
                 return Err(ParsingError::InvalidType("mastery entry".into()));

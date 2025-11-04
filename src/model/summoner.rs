@@ -4,7 +4,7 @@ use super::ids::SummonerId;
 pub struct Summoner {
     pub id: SummonerId,
     pub puuid: String,
-    pub display_name: String,
-    pub internal_name: String,
+    pub game_name: String,
+    pub tag_line: String,
     pub level: u16,
 }

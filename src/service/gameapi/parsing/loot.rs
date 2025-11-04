@@ -33,11 +33,11 @@ pub fn parse_loot(json: &JsonValue) -> Result<LootItems, ParsingError> {
     }
 
     Ok(LootItems {
-        mastery_tokens,
+        _mastery_tokens: mastery_tokens,
         champion_shards,
         skin_shards,
         credits,
-        ignored,
+        _ignored: ignored,
     })
 }
 
@@ -62,7 +62,7 @@ fn parse_json_to_loot_item(json: &JsonValue) -> Result<Vec<JsonLootItem>, Parsin
                 let store_item_id = item_obj["storeItemId"]
                     .as_i32()
                     .ok_or(ParsingError::InvalidType("storeItemId".into()))?;
-                let parent_store_item_id = item_obj["parentStoreItemId"]
+                let _parent_store_item_id = item_obj["parentStoreItemId"]
                     .as_i32()
                     .ok_or(ParsingError::InvalidType("parentStoreItemId".into()))?;
                 let loot_name = item_obj["lootName"]
@@ -81,9 +81,9 @@ fn parse_json_to_loot_item(json: &JsonValue) -> Result<Vec<JsonLootItem>, Parsin
                     count,
                     ref_id: ref_id.to_string(),
                     store_item_id,
-                    parent_store_item_id,
+                    _parent_store_item_id,
                     loot_name: loot_name.to_string(),
-                    item_desc: item_desc.to_string(),
+                    _item_desc: item_desc.to_string(),
                     disenchant_value,
                 })
             } else {
@@ -108,15 +108,15 @@ fn parse_champion_shard(json_item: JsonLootItem) -> ChampionShard {
 fn parse_skin_shard(json_item: JsonLootItem) -> SkinShard {
     SkinShard {
         skin_id: json_item.store_item_id.into(),
-        count: json_item.count as u8,
+        _count: json_item.count as u8,
     }
 }
 
 fn parse_mastery_token(json_item: JsonLootItem) -> MasteryToken {
     MasteryToken {
-        champ_id: json_item.ref_id.into(),
-        count: json_item.count as u8,
-        level: if json_item.loot_name == "CHAMPION_TOKEN_7" {
+        _champ_id: json_item.ref_id.into(),
+        _count: json_item.count as u8,
+        _level: if json_item.loot_name == "CHAMPION_TOKEN_7" {
             7
         } else {
             6

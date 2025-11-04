@@ -13,6 +13,7 @@ pub struct Game {
 }
 
 #[derive(Debug)]
+#[allow(unused)]
 pub struct Statistics {
     pub kills: u16,
     pub deaths: u16,

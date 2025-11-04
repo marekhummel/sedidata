@@ -45,7 +45,7 @@ impl<'a, 'b> InventoryView<'a, 'b> {
         for chroma in chromas_no_skin {
             let skin = self.lookup.get_skin(&chroma.skin_id)?;
             let champ = self.lookup.get_champion(&skin.champ_id)?;
-            println!("{} ({}): {:?}", skin.name, champ.name, chroma.id);
+            println!("{} ({}): {}", skin.name, champ.name, chroma.id);
         }
 
         Ok(())

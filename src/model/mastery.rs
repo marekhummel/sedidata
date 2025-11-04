@@ -7,7 +7,7 @@ pub struct Mastery {
     pub points: u32,
     pub tokens: Option<u16>,
     pub points_to_next_level: i32,
-    pub chest_granted: bool,
+    // pub chest_granted: bool,
 }
 
 //   {

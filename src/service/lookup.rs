@@ -52,8 +52,8 @@ pub enum LookupError {
 impl fmt::Display for LookupError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            LookupError::ChampIdNotFound(id) => write!(f, "Champion ID not found: {:?}", id),
-            LookupError::SkinIdNotFound(id) => write!(f, "Skin ID not found: {:?}", id),
+            LookupError::ChampIdNotFound(id) => write!(f, "Champion ID not found: {}", id),
+            LookupError::SkinIdNotFound(id) => write!(f, "Skin ID not found: {}", id),
         }
     }
 }

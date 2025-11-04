@@ -7,29 +7,29 @@ pub struct JsonLootItem {
     pub count: u32,
     pub ref_id: String,
     pub store_item_id: i32,
-    pub parent_store_item_id: i32,
+    pub _parent_store_item_id: i32,
     pub loot_name: String,
-    pub item_desc: String,
+    pub _item_desc: String,
     pub disenchant_value: u16,
 }
 
 #[derive(Debug)]
 pub struct LootItems {
-    pub mastery_tokens: Vec<MasteryToken>,
+    pub _mastery_tokens: Vec<MasteryToken>,
     pub champion_shards: Vec<ChampionShard>,
     pub skin_shards: Vec<SkinShard>,
     pub credits: Credits,
-    pub ignored: Vec<JsonLootItem>,
+    pub _ignored: Vec<JsonLootItem>,
 }
 
 #[derive(Debug)]
-pub struct Chest {}
+pub struct _Chest {}
 
 #[derive(Debug)]
 pub struct MasteryToken {
-    pub champ_id: ChampionId,
-    pub count: u8,
-    pub level: u8,
+    pub _champ_id: ChampionId,
+    pub _count: u8,
+    pub _level: u8,
 }
 
 #[derive(Debug)]
@@ -42,7 +42,7 @@ pub struct ChampionShard {
 #[derive(Debug)]
 pub struct SkinShard {
     pub skin_id: SkinId,
-    pub count: u8,
+    pub _count: u8,
 }
 
 #[derive(Debug)]

@@ -110,7 +110,7 @@ impl App {
             let challenges_view = ChallengesView::new(manager, &lookup);
 
             loop {
-                let summoner_name = manager.get_summoner().display_name.clone();
+                let summoner_name = manager.get_summoner().game_name.clone();
 
                 terminal.draw(|f| {
                     let chunks = Layout::default()
@@ -256,7 +256,7 @@ impl App {
         }
     }
 
-    fn get_lookup_service(manager: &DataManager) -> DataRetrievalResult<LookupService> {
+    fn get_lookup_service<'a>(manager: &'a DataManager) -> DataRetrievalResult<LookupService<'a>> {
         let champions = manager.get_champions()?;
         let skins = manager.get_skins()?;
         let masteries = manager.get_masteries()?;
