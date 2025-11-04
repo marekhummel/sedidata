@@ -4,7 +4,7 @@ use once_cell::sync::OnceCell;
 
 use crate::{
     model::{
-        challenge::ChallengeCategory,
+        challenge::Challenge,
         champion::{AllChampionInfo, Champion, Chroma, Skin},
         champselect::ChampSelectInfo,
         games::Game,
@@ -30,7 +30,7 @@ pub struct DataManager {
     masteries_cache: OnceCell<Vec<Mastery>>,
     game_stats_cache: OnceCell<Vec<Game>>,
     loot_cache: OnceCell<LootItems>,
-    challenges_cache: OnceCell<Vec<ChallengeCategory>>,
+    challenges_cache: OnceCell<Vec<Challenge>>,
 }
 
 impl DataManager {
@@ -122,7 +122,7 @@ impl DataManager {
         }
     }
 
-    pub fn get_challenges(&self) -> DataRetrievalResult<&Vec<ChallengeCategory>> {
+    pub fn get_challenges(&self) -> DataRetrievalResult<&Vec<Challenge>> {
         self.challenges_cache.get_or_try_init(|| {
             let challenges_json = self.client.request(ClientRequestType::Challenges, true)?;
             let challenges = parse_challenges(Rc::as_ref(&challenges_json))?;

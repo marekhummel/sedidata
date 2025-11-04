@@ -3,45 +3,40 @@ use crate::{
     view::ViewResult,
 };
 
+use itertools::Itertools;
+
 pub struct ChallengesView<'a, 'b: 'a> {
     manager: &'a DataManager,
-    lookup: &'a LookupService<'b>,
+    _lookup: &'a LookupService<'b>,
 }
 
 impl<'a, 'b> ChallengesView<'a, 'b> {
-    pub fn new(manager: &'b DataManager, lookup: &'b LookupService) -> Self {
-        Self { manager, lookup }
+    pub fn new(manager: &'a DataManager, lookup: &'b LookupService) -> Self {
+        Self {
+            manager,
+            _lookup: lookup,
+        }
     }
 
     pub fn open_challenges_view(&self) -> ViewResult {
-        let challenge_categories = self.manager.get_challenges()?;
+        let mut challenges = self.manager.get_challenges()?.to_vec();
+        challenges.retain(|c| !c.is_capstone && !c.is_completed() && c.category != "LEGACY");
+        challenges.sort_by_key(|c| (c.category.clone(), -(c.points_to_next() as i16)));
 
-        println!("Challenges Overview:");
-        for category in challenge_categories {
-            println!("Category: {}", category.name);
-            // for challenge in &category.children {
-            //     println!("  Challenge: {}", challenge.name);
-            // }
+        for (category, iterator) in &challenges.iter().chunk_by(|c| c.category.clone()) {
+            println!("\nCategory: {}", category);
+            for challenge in iterator {
+                println!(
+                    "({: >3}) {: <30}: {} ([{}]) ({}/{})",
+                    challenge.points_to_next(),
+                    challenge.name,
+                    challenge.description,
+                    challenge.gamemodes.join(", "),
+                    challenge.current_value,
+                    challenge.threshold_value
+                );
+            }
         }
-
-        //     Some(champ_select_info) => {
-        //         println!("Currently selected champ:");
-        //         let current_champ = champ_select_info.current_champ_id;
-        //         self.print_selectable_champ(&current_champ)?;
-
-        //         println!("\nBenched Champions:");
-        //         for bench_champ in champ_select_info.benched_champs {
-        //             self.print_selectable_champ(&bench_champ)?;
-        //         }
-
-        //         println!("\nTradable Champions:");
-        //         for team_champ in champ_select_info.team_champs {
-        //             self.print_selectable_champ(&team_champ)?;
-        //         }
-        //     }
-        //     None => println!("Not in champ select!"),
-        // };
-
         Ok(())
     }
 }

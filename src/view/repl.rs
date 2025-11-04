@@ -11,7 +11,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::Line,
-    widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Wrap},
+    widgets::{Block, Borders, List, ListItem, ListState, Padding, Paragraph, Wrap},
     Terminal,
 };
 
@@ -130,10 +130,15 @@ impl App {
                         // Scrollable output view
                         let text: Vec<Line> = self.output_content.iter().map(|s| Line::from(s.as_str())).collect();
                         let paragraph = Paragraph::new(text)
-                            .block(Block::default().borders(Borders::ALL).title(format!(
-                                "{} (↑/↓ or PgUp/PgDown to scroll, Esc to return)",
-                                self.output_title
-                            )))
+                            .block(
+                                Block::default()
+                                    .borders(Borders::ALL)
+                                    .padding(Padding::horizontal(1))
+                                    .title(format!(
+                                        "{} (↑/↓ or PgUp/PgDown to scroll, Esc to return)",
+                                        self.output_title
+                                    )),
+                            )
                             .wrap(Wrap { trim: false })
                             .scroll((self.scroll_offset, 0));
                         f.render_widget(paragraph, chunks[1]);
@@ -180,7 +185,7 @@ impl App {
                             KeyCode::Down => self.next(),
                             KeyCode::PageUp => self.page_up(10),
                             KeyCode::PageDown => self.page_down(10),
-                            KeyCode::Esc if self.in_output_view => {
+                            KeyCode::Esc | KeyCode::Char('q') if self.in_output_view => {
                                 self.in_output_view = false;
                                 self.scroll_offset = 0;
                                 self.output_content.clear();
@@ -260,8 +265,9 @@ impl App {
         let champions = manager.get_champions()?;
         let skins = manager.get_skins()?;
         let masteries = manager.get_masteries()?;
+        let challenges = manager.get_challenges()?;
 
-        Ok(LookupService::new(champions, skins, masteries))
+        Ok(LookupService::new(champions, skins, masteries, challenges))
     }
 
     fn get_commands() -> Vec<CommandEntry> {

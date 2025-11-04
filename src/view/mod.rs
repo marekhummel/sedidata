@@ -1,6 +1,6 @@
 use std::{fmt, io};
 
-use crate::service::{data_manager::DataRetrievalError, lookup::LookupError};
+use crate::service::{data_manager::DataRetrievalError, lookup::IdNotFoundError};
 
 pub mod repl;
 mod subviews;
@@ -10,7 +10,7 @@ type ViewResult = Result<(), ViewError>;
 #[derive(Debug)]
 pub enum ViewError {
     ManagerFailed(DataRetrievalError),
-    LookupFailed(LookupError),
+    LookupFailed(IdNotFoundError),
 }
 
 impl fmt::Display for ViewError {
@@ -28,8 +28,8 @@ impl From<DataRetrievalError> for ViewError {
     }
 }
 
-impl From<LookupError> for ViewError {
-    fn from(error: LookupError) -> Self {
+impl From<IdNotFoundError> for ViewError {
+    fn from(error: IdNotFoundError) -> Self {
         ViewError::LookupFailed(error)
     }
 }
