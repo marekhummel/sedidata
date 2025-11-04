@@ -229,7 +229,7 @@ impl App {
                                     }
                                     Err(err) => {
                                         output_lines =
-                                            vec!["Error occurred:".to_string(), "".to_string(), format!("{:?}", err)];
+                                            vec!["Error occurred:".to_string(), "".to_string(), format!("{}", err)];
                                     }
                                 }
 
@@ -318,7 +318,7 @@ pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
     terminal.show_cursor()?;
 
     if let Err(err) = &result {
-        eprintln!("Error: {:?}", err);
+        eprintln!("Error: {}", err);
     }
 
     result

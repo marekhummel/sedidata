@@ -1,4 +1,4 @@
-use std::io;
+use std::{fmt, io};
 
 use crate::service::{data_manager::DataRetrievalError, lookup::LookupError};
 
@@ -11,6 +11,15 @@ type ViewResult = Result<(), ViewError>;
 pub enum ViewError {
     ManagerFailed(DataRetrievalError),
     LookupFailed(LookupError),
+}
+
+impl fmt::Display for ViewError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ViewError::ManagerFailed(err) => write!(f, "Data manager error: {}", err),
+            ViewError::LookupFailed(err) => write!(f, "Lookup service error: {}", err),
+        }
+    }
 }
 
 impl From<DataRetrievalError> for ViewError {
@@ -30,6 +39,16 @@ pub enum ReplError {
     Init(DataRetrievalError),
     View(ViewError),
     Console(io::Error),
+}
+
+impl fmt::Display for ReplError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ReplError::Init(err) => write!(f, "Init error: {}", err),
+            ReplError::View(err) => write!(f, "View error: {}", err),
+            ReplError::Console(err) => write!(f, "Console error: {}", err),
+        }
+    }
 }
 
 impl From<DataRetrievalError> for ReplError {

@@ -1,6 +1,7 @@
 use std::{
     cell::RefCell,
     collections::{hash_map::Entry, HashMap},
+    fmt,
     fs::{create_dir, File},
     io::{self, BufRead, Read, Write},
     path::Path,
@@ -200,6 +201,20 @@ pub enum ClientInitError {
     ClientError(reqwest::Error),
 }
 
+impl fmt::Display for ClientInitError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ClientInitError::CertMissing(err) => write!(f, "Certificate missing: {}", err),
+            ClientInitError::CertInvalid(err) => write!(f, "Certificate invalid: {}", err),
+            ClientInitError::LeagueClientFailed(err) => write!(f, "League client failed: {}", err),
+            ClientInitError::LeagueClientInvalid() => write!(f, "League client invalid lockfile."),
+            ClientInitError::LockfileAuthStringInvalid(err) => write!(f, "Lockfile auth string invalid: {}", err),
+            ClientInitError::LockfileAuthHeaderInvalid(err) => write!(f, "Lockfile auth header invalid: {}", err),
+            ClientInitError::ClientError(err) => write!(f, "Client error: {}", err),
+        }
+    }
+}
+
 impl From<CertificateError> for ClientInitError {
     fn from(cert_err: CertificateError) -> Self {
         match cert_err {
@@ -270,6 +285,17 @@ pub enum RequestError {
     SummonerNeeded,
     InvalidResponse,
     ParsingFailed(json::Error),
+}
+
+impl fmt::Display for RequestError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RequestError::ClientFailed(err) => write!(f, "Client error: {}", err),
+            RequestError::SummonerNeeded => write!(f, "Summoner information is needed for this request."),
+            RequestError::InvalidResponse => write!(f, "The server returned an invalid response."),
+            RequestError::ParsingFailed(err) => write!(f, "Parsing error: {}", err),
+        }
+    }
 }
 
 impl From<reqwest::Error> for RequestError {

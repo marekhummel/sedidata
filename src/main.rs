@@ -18,9 +18,9 @@ fn main() {
     match DataManager::new(true) {
         Ok(manager) => match repl::run(manager) {
             Ok(_) => return,
-            Err(error) => println!("Error occured while running REPL:\n{:#?}\n", error),
+            Err(error) => println!("Error occured while running REPL:\n{}\n", error),
         },
-        Err(error) => println!("Error occured while initializing:\n{:#?}\n", error),
+        Err(error) => println!("Error occured while initializing:\n{}\n", error),
     };
 
     let mut s = String::new();

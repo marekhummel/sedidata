@@ -1,5 +1,4 @@
 use crate::{
-    model::ids::ChampionId,
     service::{data_manager::DataManager, lookup::LookupService},
     view::ViewResult,
 };

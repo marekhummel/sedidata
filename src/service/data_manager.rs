@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{fmt, rc::Rc};
 
 use once_cell::sync::OnceCell;
 
@@ -157,6 +157,15 @@ pub enum DataManagerInitError {
     SummonerNotFound(DataRetrievalError),
 }
 
+impl fmt::Display for DataManagerInitError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            DataManagerInitError::ClientFailed(err) => write!(f, "Client initialization error: {}", err),
+            DataManagerInitError::SummonerNotFound(err) => write!(f, "Summoner retrieval error: {}", err),
+        }
+    }
+}
+
 impl From<ClientInitError> for DataManagerInitError {
     fn from(error: ClientInitError) -> Self {
         Self::ClientFailed(error)
@@ -174,6 +183,16 @@ pub enum DataRetrievalError {
     Client(RequestError),
     ClientRefresh(ClientInitError),
     Parsing(ParsingError),
+}
+
+impl fmt::Display for DataRetrievalError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            DataRetrievalError::Client(err) => write!(f, "Client error: {}", err),
+            DataRetrievalError::ClientRefresh(err) => write!(f, "Refresh error: {}", err),
+            DataRetrievalError::Parsing(err) => write!(f, "Parsing error: {}", err),
+        }
+    }
 }
 
 impl From<RequestError> for DataRetrievalError {
