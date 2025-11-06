@@ -1,11 +1,27 @@
 use std::{fmt, io};
 
+use ratatui::{layout::Rect, Frame};
+
+use crate::service::{data_manager::DataManager, lookup::LookupService, util::UtilService};
 use crate::service::{data_manager::DataRetrievalError, lookup::IdNotFoundError};
 
 pub mod repl;
-mod subviews;
+pub mod views;
 
+pub type TextCreationResult = Result<String, ViewError>;
 type ViewResult = Result<(), ViewError>;
+
+pub struct Controller<'a> {
+    pub manager: &'a DataManager,
+    pub lookup: &'a LookupService<'a>,
+    pub util: &'a UtilService<'a>,
+}
+
+pub struct RenderContext<'a, 'b> {
+    pub frame: &'a mut Frame<'b>,
+    pub area: Rect,
+    pub scroll_offset: u16,
+}
 
 #[derive(Debug)]
 pub enum ViewError {

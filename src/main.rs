@@ -1,12 +1,12 @@
 use std::io::stdin;
 
-use view::repl;
+use ui::repl;
 
 use crate::service::data_manager::DataManager;
 
 mod model;
 mod service;
-mod view;
+mod ui;
 
 // #[allow(dead_code)]
 // mod test;
