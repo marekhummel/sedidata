@@ -53,6 +53,18 @@ impl Challenge {
         next.value - current.value
     }
 
+    pub fn gamemode_short(&self) -> &str {
+        if self.gamemodes.iter().any(|g| g == "CLASSIC") {
+            "SR"
+        } else if self.gamemodes.iter().any(|g| g == "ARAM") {
+            "HA"
+        } else if self.gamemodes.iter().any(|g| g == "URF") {
+            "URF"
+        } else {
+            "-"
+        }
+    }
+
     fn get_threshold(&self, level: &str) -> Threshold {
         if level == "NONE" {
             return Threshold {
