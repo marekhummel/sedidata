@@ -58,7 +58,7 @@ fn champ_select_info_view(ctrl: &Controller) -> TextCreationResult {
                 lines.push(styled_line!("{}", format_selectable_champ(ctrl.lookup, &team_champ)?));
             }
         }
-        None => lines.push(styled_line!("Not in champ select!"; Red)),
+        None => lines.extend(vec![styled_line!(), styled_line!("  Not in champ select!"; Red)]),
     };
     Ok(lines)
 }

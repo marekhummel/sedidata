@@ -13,10 +13,10 @@ fn summoner_info_view(ctrl: &Controller) -> TextCreationResult {
         styled_line!(),
         styled_line!("Game Name:      {}", summoner.game_name),
         styled_line!("Tag Line:       {}", summoner.tag_line),
-        styled_line!("Level:      {}", summoner.level),
+        styled_line!("Level:          {}", summoner.level),
         styled_line!(),
-        styled_line!("ID:         {}",summoner.id; DarkGray),
-        styled_line!("PUUID:      {}", summoner.puuid; DarkGray),
+        styled_line!("ID:             {}",summoner.id; DarkGray),
+        styled_line!("PUUID:          {}", summoner.puuid; DarkGray),
     ];
     Ok(lines)
 }

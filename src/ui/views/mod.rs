@@ -22,18 +22,6 @@ pub trait RenderableView {
     fn title(&self) -> &str;
 }
 
-/// Helper macro to create a single Span with optional color and bold
-/// Internal use only - called by styled_text!
-///
-/// Usage:
-/// ```
-/// styled_span!("text")
-/// styled_span!("text", arg1, arg2)
-/// styled_span!("text"; Color::Cyan)
-/// styled_span!("text", arg; Color::Cyan)
-/// styled_span!("text"; Color::Cyan Bold)
-/// styled_span!("text", arg; Color::Cyan Bold)
-/// ```
 #[macro_export]
 macro_rules! styled_span {
     // More specific patterns FIRST
@@ -108,17 +96,6 @@ macro_rules! styled_span {
     };
 }
 
-/// Macro to create styled text lines easily
-///
-/// Usage:
-/// ```
-/// // Single span (forwarded to styled_span!):
-/// styled_line!("Plain text")
-/// styled_line!("Plain {}", variable)
-/// styled_line!("Red text"; Color::Red)
-/// styled_line!("Green bold text"; Color::Green Bold)
-/// styled_line!(value; Color::Cyan Bold)
-/// ```
 #[macro_export]
 macro_rules! styled_line {
     // Empty line

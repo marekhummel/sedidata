@@ -141,7 +141,7 @@ impl App {
                 // Group header - cyan bold
                 items.push(
                     ListItem::new(format!("━━ {} ━━", entry.description))
-                        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+                        .style(Style::default().fg(Color::LightCyan).add_modifier(Modifier::BOLD)),
                 );
             } else {
                 // Regular menu item - subtle indicator for selected item
@@ -331,15 +331,21 @@ impl App {
             // Basic
             menu_entry!(group: "Basic"),
             menu_entry!(item: "Show Summoner Info", SummonerInfoView),
-            // Inventory
-            menu_entry!(group: "Inventory"),
-            menu_entry!(item: "Champions Without Skin", ChampionsWithoutSkinView),
-            menu_entry!(item: "Chromas Without Skin", ChromasWithoutSkinView),
+            // Live game
+            menu_entry!(group: "Live Game"),
+            menu_entry!(item: "Champ Select Info", ChampSelectInfoView),
             // Mastery
             menu_entry!(group: "Mastery"),
             menu_entry!(item: "Level Four Champions", LevelFourChampsView),
             menu_entry!(item: "Mastery Tokens", MasteryTokensView),
             menu_entry!(item: "Unplayed Champions", UnplayedChampsView),
+            // Progress
+            menu_entry!(group: "Progress"),
+            menu_entry!(item: "Challenges Overview", ChallengesOverviewView),
+            // Inventory
+            menu_entry!(group: "Inventory"),
+            menu_entry!(item: "Champions Without Skin", ChampionsWithoutSkinView),
+            menu_entry!(item: "Chromas Without Skin", ChromasWithoutSkinView),
             // Loot
             menu_entry!(group: "Loot"),
             menu_entry!(item: "Blue Essence Info", BlueEssenceOverviewView),
@@ -347,12 +353,6 @@ impl App {
             menu_entry!(item: "Interesting Skins", InterestingSkinsView),
             menu_entry!(item: "Skin Shards for First Skin", SkinShardsFirstSkinView),
             menu_entry!(item: "Disenchantable Skin Shards", SkinShardsDisenchantableView),
-            // Progress
-            menu_entry!(group: "Progress"),
-            menu_entry!(item: "Challenges Overview", ChallengesOverviewView),
-            // Live game
-            menu_entry!(group: "Live Game"),
-            menu_entry!(item: "Champ Select Info", ChampSelectInfoView),
         ]
     }
 }

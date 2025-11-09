@@ -28,8 +28,17 @@ impl ChallengesOverviewView {
             },
             Err(e) => Self {
                 categories: Vec::new(),
-                error: Some(format!("{}", e)),
+                error: Some(format!("Failed to load challenges: {}", e)),
             },
+        }
+    }
+
+    fn truncate_with_ellipsis(text: &str, max_len: usize) -> String {
+        if text.chars().count() <= max_len {
+            text.to_string()
+        } else {
+            let truncated: String = text.chars().take(max_len.saturating_sub(3)).collect();
+            format!("{}...", truncated)
         }
     }
 
@@ -58,6 +67,16 @@ impl ChallengesOverviewView {
         }
 
         Ok(categories)
+    }
+
+    fn widths(&self) -> [Constraint; 5] {
+        [
+            Constraint::Length(32), // Name
+            Constraint::Min(40),    // Description (takes remaining space)
+            Constraint::Length(6),  // Game mode
+            Constraint::Length(6),  // Points to next
+            Constraint::Length(12), // Progress (current/threshold)
+        ]
     }
 }
 
@@ -148,9 +167,14 @@ impl crate::ui::views::RenderableView for ChallengesOverviewView {
                     Color::White // 0-40%: White
                 };
 
+                // Calculate available width for description
+                // Total terminal width minus: Name (32) + Gamemode (6) + Points (6) + Progress (12) + borders/padding (~8)
+                let desc_width = rc.area.width.saturating_sub(32 + 6 + 6 + 12 + 12).max(40) as usize;
+                let truncated_desc = Self::truncate_with_ellipsis(&challenge.description, desc_width);
+
                 rows.push(Row::new(vec![
                     Cell::from(challenge.name.clone()),
-                    Cell::from(challenge.description.clone()),
+                    Cell::from(truncated_desc),
                     gamemode_cell,
                     Cell::from(Span::styled(
                         format!("{}", points_to_next),
@@ -173,18 +197,10 @@ impl crate::ui::views::RenderableView for ChallengesOverviewView {
             ]));
         }
 
-        let widths = [
-            Constraint::Length(32), // Name
-            Constraint::Min(40),    // Description (takes remaining space)
-            Constraint::Length(6),  // Game mode
-            Constraint::Length(6),  // Points to next
-            Constraint::Length(12), // Progress (current/threshold)
-        ];
-
         // Skip rows based on scroll offset for manual scrolling
         let visible_rows: Vec<_> = rows.into_iter().skip(rc.scroll_offset as usize).collect();
 
-        let table = Table::new(visible_rows, widths)
+        let table = Table::new(visible_rows, self.widths())
             .header(
                 Row::new(vec![
                     Cell::from("Challenge"),

@@ -114,7 +114,10 @@ fn interesting_skins_view(ctrl: &Controller) -> TextCreationResult {
         for shard in shards {
             let skin_name = ctrl.lookup.get_skin(&shard.skin_id)?.name.as_str();
             if first {
-                lines.push(styled_line!("{:<16}  {}", format!("{}:", champ_name), skin_name));
+                lines.push(styled_line!(LIST [
+                    styled_span!(format!("{:<16}  ", format!("{}:", champ_name)); White Bold),
+                    styled_span!(skin_name),
+                ]));
                 first = false;
             } else {
                 lines.push(styled_line!("{:<16}  {}", "", skin_name));
@@ -158,7 +161,10 @@ fn skin_shards_first_skin_view(ctrl: &Controller) -> TextCreationResult {
         for shard in shards {
             let skin_name = ctrl.lookup.get_skin(&shard.skin_id)?.name.as_str();
             if first {
-                lines.push(styled_line!("{:<16}  {}", format!("{}:", champ_name), skin_name));
+                lines.push(styled_line!(LIST [
+                    styled_span!(format!("{:<16}  ", format!("{}:", champ_name)); White Bold),
+                    styled_span!(skin_name),
+                ]));
                 first = false;
             } else {
                 lines.push(styled_line!("{:<16}  {}", "", skin_name));
@@ -210,11 +216,10 @@ fn skin_shards_disenchantable_view(ctrl: &Controller) -> TextCreationResult {
         for shard in shards {
             let skin_name = ctrl.lookup.get_skin(&shard.skin_id)?.name.as_str();
             if first {
-                lines.push(styled_line!(
-                    "{:<19}  {}",
-                    format!("{} ({}):", champ_name, skin_count),
-                    skin_name
-                ));
+                lines.push(styled_line!(LIST [
+                    styled_span!(format!("{:<19}  ", format!("{} ({}):", champ_name, skin_count)); White Bold),
+                    styled_span!(skin_name),
+                ]));
                 first = false;
             } else {
                 lines.push(styled_line!("{:<19}  {}", "", skin_name));

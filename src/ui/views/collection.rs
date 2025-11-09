@@ -57,7 +57,8 @@ fn chromas_without_skin_view(ctrl: &Controller) -> TextCreationResult {
     for chroma in chromas_no_skin {
         let skin = ctrl.lookup.get_skin(&chroma.skin_id)?;
         let champ = ctrl.lookup.get_champion(&skin.champ_id)?;
-        lines.push(styled_line!("{} ({}): {}", skin.name, champ.name, chroma.id));
+        let chroma_str = format!("{} ({}):", skin.name, champ.name);
+        lines.push(styled_line!("  • {:<30} {}", chroma_str, chroma.id));
     }
 
     Ok(lines)
