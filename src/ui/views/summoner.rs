@@ -1,5 +1,5 @@
 use crate::{
-    impl_text_view,
+    impl_text_view, styled_text,
     ui::{Controller, TextCreationResult},
 };
 
@@ -9,16 +9,16 @@ use crate::{
 
 fn summoner_info_view(ctrl: &Controller) -> TextCreationResult {
     let summoner = ctrl.manager.get_summoner();
-    let lines = [
-        String::new(),
-        format!("Game Name:  {}", summoner.game_name),
-        format!("Tag Line:   {}", summoner.tag_line),
-        format!("Level:      {}", summoner.level),
-        String::new(),
-        format!("ID:         {}", summoner.id),
-        format!("PUUID:      {}", summoner.puuid),
+    let lines = vec![
+        styled_text!(),
+        styled_text!("Game Name:      {}", summoner.game_name),
+        styled_text!("Tag Line:       {}", summoner.tag_line),
+        styled_text!("Level:          {}", summoner.level),
+        styled_text!(),
+        styled_text!(Color::DarkGray, "ID:             {}", summoner.id),
+        styled_text!(Color::DarkGray, "PUUID:          {}", summoner.puuid),
     ];
-    Ok(lines.join("\n"))
+    Ok(lines)
 }
 
 impl_text_view!(

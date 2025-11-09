@@ -1,5 +1,5 @@
 use crate::{
-    impl_text_view,
+    impl_text_view, styled_text,
     ui::{Controller, TextCreationResult},
 };
 use std::collections::HashSet;
@@ -17,12 +17,20 @@ fn champions_without_skin_view(ctrl: &Controller) -> TextCreationResult {
         .filter(|c| !champs_with_skin.contains(&c.id))
         .collect::<Vec<_>>();
     champs_no_skin.sort_by_key(|c| c.name.clone());
-    let mut result = String::from("Owned champions for which no skin is owned:\n\n");
+
+    let mut lines = vec![
+        styled_text!("Owned champions for which no skin is owned:"),
+        styled_text!(),
+    ];
+
     for champ in &champs_no_skin {
-        result.push_str(&format!("{}\n", champ.name));
+        lines.push(styled_text!("  • {}", champ.name));
     }
-    result.push_str(&format!("\n{} champ(s) total", champs_no_skin.len()));
-    Ok(result)
+
+    lines.push(styled_text!());
+    lines.push(styled_text!(Color::Cyan, "{} champion(s) total", champs_no_skin.len()));
+
+    Ok(lines)
 }
 
 impl_text_view!(
@@ -41,13 +49,18 @@ fn chromas_without_skin_view(ctrl: &Controller) -> TextCreationResult {
     let chromas = ctrl.util.get_owned_chromas()?;
     let chromas_no_skin = chromas.iter().filter(|ch| !skins.contains(&ch.skin_id));
 
-    let mut result = String::from("Owned chromas for which the skin isn't owned:\n\n");
+    let mut lines = vec![
+        styled_text!("Owned chromas for which the skin isn't owned:"),
+        styled_text!(),
+    ];
+
     for chroma in chromas_no_skin {
         let skin = ctrl.lookup.get_skin(&chroma.skin_id)?;
         let champ = ctrl.lookup.get_champion(&skin.champ_id)?;
-        result.push_str(&format!("{} ({}): {}\n", skin.name, champ.name, chroma.id));
+        lines.push(styled_text!("{} ({}): {}", skin.name, champ.name, chroma.id));
     }
-    Ok(result)
+
+    Ok(lines)
 }
 
 impl_text_view!(

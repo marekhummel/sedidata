@@ -120,13 +120,6 @@ impl ApiClient {
                         Some(_) => format!("{}lol-champion-mastery/v1/local-player/champion-mastery", self.base_url),
                         None => return Err(RequestError::SummonerNeeded),
                     },
-                    ClientRequestType::GameStats(season) => match &self.summoner {
-                        Some(s) => format!(
-                            "{}lol-career-stats/v1/summoner-games/{}/season/{}",
-                            self.base_url, s.puuid, season
-                        ),
-                        None => return Err(RequestError::SummonerNeeded),
-                    },
                     ClientRequestType::Loot => {
                         format!("{}lol-loot/v1/player-loot", self.base_url)
                     }
@@ -184,7 +177,6 @@ pub enum ClientRequestType {
     Summoner,
     Champions,
     Masteries,
-    GameStats(u8),
     Loot,
     ChampSelect,
     Challenges,

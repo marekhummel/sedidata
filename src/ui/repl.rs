@@ -136,18 +136,17 @@ impl App {
 
         // Build list items; headers (factory == None) are styled and non-selectable.
         let mut items: Vec<ListItem> = Vec::with_capacity(self.menu_entries.len());
-        for entry in &self.menu_entries {
+        for (i, entry) in self.menu_entries.iter().enumerate() {
             if entry.factory.is_none() {
-                // Header: bold and dimmed
+                // Group header - cyan bold
                 items.push(
-                    ListItem::new(entry.description).style(
-                        Style::default()
-                            .add_modifier(Modifier::BOLD)
-                            .add_modifier(Modifier::DIM),
-                    ),
+                    ListItem::new(format!("━━ {} ━━", entry.description))
+                        .style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
                 );
             } else {
-                items.push(ListItem::new(format!("  {}", entry.description)));
+                // Regular menu item - subtle indicator for selected item
+                let prefix = if i == self.selected { "  ► " } else { "    " };
+                items.push(ListItem::new(format!("{}{}", prefix, entry.description)));
             }
         }
 
@@ -170,16 +169,21 @@ impl App {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .title("Commands (↑/↓ to navigate, Enter to select, r: refresh, q: quit)"),
+                    .border_style(Style::default().fg(Color::Cyan))
+                    .padding(ratatui::widgets::Padding::uniform(1))
+                    .title("Commands (↑/↓ to navigate, Enter to select)")
+                    .title_style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
             )
-            .highlight_style(Style::default().bg(Color::DarkGray).add_modifier(Modifier::BOLD))
-            .highlight_symbol(">> ");
+            .highlight_style(Style::default().bg(Color::White).fg(Color::Black))
+            .highlight_symbol("");
 
         // Render the selectable menu in the top chunk
         frame.render_stateful_widget(list, chunks[0], &mut list_state);
 
-        // Render the footer (non-selectable) with the refresh/quit hints
-        let footer = Paragraph::new("Refresh data: (r)    Quit: (q)").block(Block::default().borders(Borders::NONE));
+        // Render the footer with subtle instructions
+        let footer = Paragraph::new("Refresh data: (r)    Quit: (q)")
+            .style(Style::default().fg(Color::DarkGray))
+            .block(Block::default().borders(Borders::NONE));
         frame.render_widget(footer, chunks[1]);
     }
 
@@ -201,12 +205,16 @@ impl App {
                         .constraints([Constraint::Length(3), Constraint::Min(0)])
                         .split(f.size());
 
-                    // Title
-                    let title = Paragraph::new(format!(" Welcome {}!", summoner_name)).block(
-                        Block::default()
-                            .borders(Borders::ALL)
-                            .title("Sedidata - LoL Special Statistics"),
-                    );
+                    // Title with subtle welcome message
+                    let title = Paragraph::new(format!(" Welcome, {}!", summoner_name))
+                        .style(Style::default().add_modifier(Modifier::BOLD))
+                        .block(
+                            Block::default()
+                                .borders(Borders::ALL)
+                                .border_style(Style::default().fg(Color::Cyan))
+                                .title("Sedidata - LoL Special Statistics")
+                                .title_style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+                        );
                     f.render_widget(title, chunks[0]);
 
                     // Render current state
@@ -215,12 +223,26 @@ impl App {
                             self.render_menu(f, chunks[1]);
                         }
                         AppState::ViewingOutput(view) => {
+                            let block = Block::default()
+                                .borders(ratatui::widgets::Borders::ALL)
+                                .padding(ratatui::widgets::Padding::horizontal(1))
+                                .title(format!(
+                                    "{} (↑/↓ or PgUp/PgDown to scroll, Esc/q to return)",
+                                    view.title()
+                                ))
+                                .title_style(
+                                    Style::default()
+                                        .fg(Color::Cyan)
+                                        .add_modifier(ratatui::style::Modifier::BOLD),
+                                )
+                                .border_style(Style::default().fg(Color::Cyan));
+
                             let rc = RenderContext {
                                 frame: f,
                                 area: chunks[1],
                                 scroll_offset: self.scroll_offset,
+                                block,
                             };
-                            // If rendering fails, the error is already displayed in the view
                             let _ = view.render(rc);
                         }
                     }
@@ -327,8 +349,6 @@ impl App {
             menu_entry!(item: "Disenchantable Skin Shards", SkinShardsDisenchantableView),
             // Progress
             menu_entry!(group: "Progress"),
-            menu_entry!(item: "Played Games", PlayedGamesView),
-            menu_entry!(item: "List Pentas", ListPentasView),
             menu_entry!(item: "Challenges Overview", ChallengesOverviewView),
             // Live game
             menu_entry!(group: "Live Game"),

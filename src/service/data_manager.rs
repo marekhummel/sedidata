@@ -7,7 +7,6 @@ use crate::{
         challenge::Challenge,
         champion::{AllChampionInfo, Champion, Chroma, Skin},
         champselect::ChampSelectInfo,
-        games::Game,
         loot::LootItems,
         mastery::Mastery,
         summoner::Summoner,
@@ -18,8 +17,8 @@ use crate::{
 use super::gameapi::{
     client::{ApiClient, ClientInitError, ClientRequestType, RequestError},
     parsing::{
-        champion::parse_champions, champselect::parse_champselect_info, games::parse_game_stats, loot::parse_loot,
-        mastery::parse_masteries, summoner::parse_summoner, ParsingError,
+        champion::parse_champions, champselect::parse_champselect_info, loot::parse_loot, mastery::parse_masteries,
+        summoner::parse_summoner, ParsingError,
     },
 };
 
@@ -28,7 +27,6 @@ pub struct DataManager {
     summoner: OnceCell<Summoner>,
     champ_info_cache: OnceCell<AllChampionInfo>,
     masteries_cache: OnceCell<Vec<Mastery>>,
-    game_stats_cache: OnceCell<Vec<Game>>,
     loot_cache: OnceCell<LootItems>,
     challenges_cache: OnceCell<Vec<Challenge>>,
 }
@@ -44,7 +42,6 @@ impl DataManager {
             summoner: OnceCell::from(summoner),
             champ_info_cache: OnceCell::new(),
             masteries_cache: OnceCell::new(),
-            game_stats_cache: OnceCell::new(),
             loot_cache: OnceCell::new(),
             challenges_cache: OnceCell::new(),
         })
@@ -88,18 +85,6 @@ impl DataManager {
             let masteries_json = self.client.request(ClientRequestType::Masteries, true)?;
             let masteries = parse_masteries(Rc::as_ref(&masteries_json))?;
             Ok(masteries)
-        })
-    }
-
-    pub fn get_game_stats(&self) -> DataRetrievalResult<&Vec<Game>> {
-        self.game_stats_cache.get_or_try_init(|| {
-            let mut all_games = Vec::new();
-            for season in 8..=14u8 {
-                let games_json = self.client.request(ClientRequestType::GameStats(season), true)?;
-                let games = parse_game_stats(Rc::as_ref(&games_json))?;
-                all_games.extend(games);
-            }
-            Ok(all_games)
         })
     }
 

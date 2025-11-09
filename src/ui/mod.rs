@@ -1,6 +1,7 @@
 use std::{fmt, io};
 
-use ratatui::{layout::Rect, Frame};
+use ratatui::widgets::Block;
+use ratatui::{layout::Rect, text::Line, Frame};
 
 use crate::service::{data_manager::DataManager, lookup::LookupService, util::UtilService};
 use crate::service::{data_manager::DataRetrievalError, lookup::IdNotFoundError};
@@ -8,7 +9,7 @@ use crate::service::{data_manager::DataRetrievalError, lookup::IdNotFoundError};
 pub mod repl;
 pub mod views;
 
-pub type TextCreationResult = Result<String, ViewError>;
+pub type TextCreationResult = Result<Vec<Line<'static>>, ViewError>;
 type ViewResult = Result<(), ViewError>;
 
 pub struct Controller<'a> {
@@ -21,6 +22,7 @@ pub struct RenderContext<'a, 'b> {
     pub frame: &'a mut Frame<'b>,
     pub area: Rect,
     pub scroll_offset: u16,
+    pub block: Block<'b>,
 }
 
 #[derive(Debug)]

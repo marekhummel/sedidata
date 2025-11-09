@@ -20,9 +20,9 @@ pub fn parse_challenges(json: &JsonValue) -> Result<Vec<Challenge>, ParsingError
                     .as_str()
                     .ok_or(ParsingError::InvalidType("name".into()))?
                     .to_string();
-                let description = challenge_obj["descriptionShort"]
+                let description = challenge_obj["description"]
                     .as_str()
-                    .ok_or(ParsingError::InvalidType("descriptionShort".into()))?
+                    .ok_or(ParsingError::InvalidType("description".into()))?
                     .replace("<em>", "")
                     .replace("</em>", "")
                     .to_string();

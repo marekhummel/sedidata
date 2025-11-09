@@ -1,6 +1,7 @@
 use crate::{
     impl_text_view,
     model::champion::Champion,
+    styled_text,
     ui::{Controller, TextCreationResult},
 };
 
@@ -17,14 +18,16 @@ fn level_four_champs_view(ctrl: &Controller) -> TextCreationResult {
         .map(|m| ctrl.lookup.get_champion(&m.champ_id))
         .collect::<Result<Vec<&Champion>, _>>()?;
 
-    let mut result = String::from("Champions that are mastery level 4:\n\n");
+    let mut lines = vec![styled_text!()];
+
     for (champ, mastery) in champions.iter().zip(masteries) {
-        result.push_str(&format!(
-            "{:<15} ({} pts missing)\n",
-            champ.name, mastery.points_to_next_level
+        lines.push(styled_text!(
+            "{:<15} ({} pts missing)",
+            champ.name,
+            mastery.points_to_next_level
         ));
     }
-    Ok(result)
+    Ok(lines)
 }
 
 impl_text_view!(
@@ -63,23 +66,35 @@ fn mastery_tokens_view(ctrl: &Controller) -> TextCreationResult {
         )
     });
 
-    let mut result = String::from("Mastery tokens and if they can be upgraded:\n\n");
+    let mut lines = vec![styled_text!()];
+
     for (level, tokens, champ_name, upgradable) in full_info {
         let champ_name = champ_name?;
-        result.push_str(&format!(
-            "{:<15} (Level {}): {}/{} tokens{}\n",
-            champ_name,
-            level,
-            tokens,
-            level - 3,
-            match (tokens == level - 3, upgradable) {
-                (true, true) => " - READY FOR UPGRADE",
-                (true, false) => " - MISSING SHARD",
-                _ => "",
-            }
-        ));
+        let ready = tokens == level - 3;
+
+        let line = if ready && upgradable {
+            styled_text!(
+                "{:<15} (Level {}): {}/{} tokens - READY FOR UPGRADE",
+                champ_name,
+                level,
+                tokens,
+                level - 3
+            )
+        } else if ready {
+            styled_text!(
+                "{:<15} (Level {}): {}/{} tokens - missing shard",
+                champ_name,
+                level,
+                tokens,
+                level - 3
+            )
+        } else {
+            styled_text!("{:<15} (Level {}): {}/{} tokens", champ_name, level, tokens, level - 3)
+        };
+
+        lines.push(line);
     }
-    Ok(result)
+    Ok(lines)
 }
 
 impl_text_view!(
@@ -103,12 +118,15 @@ fn unplayed_champs_view(ctrl: &Controller) -> TextCreationResult {
         .collect::<Vec<_>>();
     unplayed.sort_by_key(|c| c.name.as_str());
 
-    let mut result = String::from("Champions with 0 mastery points:\n\n");
+    let mut lines = vec![styled_text!()];
+
     for c in &unplayed {
-        result.push_str(&format!("{}\n", c.name));
+        lines.push(styled_text!("  {}", c.name));
     }
-    result.push_str(&format!("\n{} champ(s) total", unplayed.len()));
-    Ok(result)
+
+    lines.push(styled_text!());
+    lines.push(styled_text!(Color::Cyan, "{} champ(s) total", unplayed.len()));
+    Ok(lines)
 }
 
 impl_text_view!(

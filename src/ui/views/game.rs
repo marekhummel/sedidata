@@ -2,6 +2,7 @@ use crate::{
     impl_text_view,
     model::ids::ChampionId,
     service::lookup::LookupService,
+    styled_text,
     ui::{Controller, TextCreationResult, ViewError},
 };
 
@@ -30,32 +31,36 @@ fn format_selectable_champ(lookup: &LookupService, champ: &ChampionId) -> Result
         },
         false => output.push_str("  not owned!"),
     }
-    output.push('\n');
     Ok(output)
 }
 
 fn champ_select_info_view(ctrl: &Controller) -> TextCreationResult {
-    let mut result = String::new();
+    let mut lines = Vec::new();
 
     match ctrl.manager.get_champ_select_info()? {
         Some(champ_select_info) => {
-            result.push_str("Currently selected champ:\n");
+            lines.push(styled_text!(Color::Cyan, "Currently selected champ:"));
             let current_champ = champ_select_info.current_champ_id;
-            result.push_str(&format_selectable_champ(ctrl.lookup, &current_champ)?);
+            lines.push(styled_text!(
+                "{}",
+                format_selectable_champ(ctrl.lookup, &current_champ)?
+            ));
 
-            result.push_str("\nBenched Champions:\n");
+            lines.push(styled_text!());
+            lines.push(styled_text!(Color::Cyan, "Benched Champions:"));
             for bench_champ in champ_select_info.benched_champs {
-                result.push_str(&format_selectable_champ(ctrl.lookup, &bench_champ)?);
+                lines.push(styled_text!("{}", format_selectable_champ(ctrl.lookup, &bench_champ)?));
             }
 
-            result.push_str("\nTradable Champions:\n");
+            lines.push(styled_text!());
+            lines.push(styled_text!(Color::Cyan, "Tradable Champions:"));
             for team_champ in champ_select_info.team_champs {
-                result.push_str(&format_selectable_champ(ctrl.lookup, &team_champ)?);
+                lines.push(styled_text!("{}", format_selectable_champ(ctrl.lookup, &team_champ)?));
             }
         }
-        None => result.push_str("Not in champ select!"),
+        None => lines.push(styled_text!(Color::Red, "Not in champ select!")),
     };
-    Ok(result)
+    Ok(lines)
 }
 
 impl_text_view!(
