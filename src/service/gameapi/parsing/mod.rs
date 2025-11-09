@@ -3,7 +3,6 @@ use core::fmt;
 pub mod challenge;
 pub mod champion;
 pub mod champselect;
-pub mod games;
 pub mod loot;
 pub mod mastery;
 pub mod summoner;
