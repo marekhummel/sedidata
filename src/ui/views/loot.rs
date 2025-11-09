@@ -1,5 +1,5 @@
 use crate::{
-    impl_text_view, styled_text,
+    impl_text_view, styled_line, styled_span,
     ui::{Controller, TextCreationResult},
 };
 use std::{
@@ -31,14 +31,15 @@ fn blue_essence_overview_view(ctrl: &Controller) -> TextCreationResult {
         .map(|cs| max(cs.count as i8 - 2, 0) as u32 * cs.disenchant_value as u32)
         .sum::<u32>();
 
-    let be_str = format!("{}", be);
-
     let lines = vec![
-        styled_text!(),
-        styled_text!("Current BE:                                 " Color::Cyan Bold {be_str}),
-        styled_text!("Convertable BE:                             {}", convertable),
-        styled_text!("Convertable BE (Keep one shard per champ):  {}", keep1),
-        styled_text!("Convertable BE (Keep two shards per champ): {}", keep2),
+        styled_line!(),
+        styled_line!(LIST [
+            styled_span!("Current BE:                                 "),
+            styled_span!(be; Cyan Bold),
+        ]),
+        styled_line!("Convertable BE:                             {}", convertable),
+        styled_line!("Convertable BE (Keep one shard per champ):  {}", keep1),
+        styled_line!("Convertable BE (Keep two shards per champ): {}", keep2),
     ];
     Ok(lines)
 }
@@ -70,16 +71,16 @@ fn missing_champ_shards_view(ctrl: &Controller) -> TextCreationResult {
     missing_cs.sort_by_key(|c| c.name.as_str());
 
     let mut lines = vec![
-        styled_text!("Champions for which no champ shard is owned:"),
-        styled_text!(),
+        styled_line!("Champions for which no champ shard is owned:"),
+        styled_line!(),
     ];
 
     for c in &missing_cs {
-        lines.push(styled_text!("  • {}", c.name));
+        lines.push(styled_line!("  • {}", c.name));
     }
 
-    lines.push(styled_text!());
-    lines.push(styled_text!(Color::Cyan, "{} champ(s) total", missing_cs.len()));
+    lines.push(styled_line!());
+    lines.push(styled_line!("{} champ(s) total", missing_cs.len(); Cyan));
     Ok(lines)
 }
 
@@ -99,8 +100,8 @@ fn interesting_skins_view(ctrl: &Controller) -> TextCreationResult {
     let skin_shards = &ctrl.manager.get_loot()?.skin_shards;
 
     let mut lines = vec![
-        styled_text!("Owned skin shards for champs with 10k or more mastery points (sorted by mastery points):"),
-        styled_text!(),
+        styled_line!("Owned skin shards for champs with 10k or more mastery points (sorted by mastery points):"),
+        styled_line!(),
     ];
 
     for c in sorted_champs {
@@ -113,10 +114,10 @@ fn interesting_skins_view(ctrl: &Controller) -> TextCreationResult {
         for shard in shards {
             let skin_name = ctrl.lookup.get_skin(&shard.skin_id)?.name.as_str();
             if first {
-                lines.push(styled_text!("{:<16}  {}", format!("{}:", champ_name), skin_name));
+                lines.push(styled_line!("{:<16}  {}", format!("{}:", champ_name), skin_name));
                 first = false;
             } else {
-                lines.push(styled_text!("{:<16}  {}", "", skin_name));
+                lines.push(styled_line!("{:<16}  {}", "", skin_name));
             }
         }
     }
@@ -143,8 +144,8 @@ fn skin_shards_first_skin_view(ctrl: &Controller) -> TextCreationResult {
     let champs_no_skin = sorted_champs.into_iter().filter(|cid| !champs_with_skin.contains(cid));
 
     let mut lines = vec![
-        styled_text!("Shows skin shards which would be the first skin for the champ (sorted by mastery points):"),
-        styled_text!(),
+        styled_line!("Shows skin shards which would be the first skin for the champ (sorted by mastery points):"),
+        styled_line!(),
     ];
 
     for c in champs_no_skin {
@@ -157,10 +158,10 @@ fn skin_shards_first_skin_view(ctrl: &Controller) -> TextCreationResult {
         for shard in shards {
             let skin_name = ctrl.lookup.get_skin(&shard.skin_id)?.name.as_str();
             if first {
-                lines.push(styled_text!("{:<16}  {}", format!("{}:", champ_name), skin_name));
+                lines.push(styled_line!("{:<16}  {}", format!("{}:", champ_name), skin_name));
                 first = false;
             } else {
-                lines.push(styled_text!("{:<16}  {}", "", skin_name));
+                lines.push(styled_line!("{:<16}  {}", "", skin_name));
             }
         }
     }
@@ -194,8 +195,8 @@ fn skin_shards_disenchantable_view(ctrl: &Controller) -> TextCreationResult {
     sorted_champs_with_skins.reverse();
 
     let mut lines = vec![
-        styled_text!("Shows skin shards for champs with less than 12000 mastery points and for which a skin is already owned (amount in parenthesis):"),
-        styled_text!(),
+        styled_line!("Shows skin shards for champs with less than 12000 mastery points and for which a skin is already owned (amount in parenthesis):"),
+        styled_line!(),
     ];
 
     for c in sorted_champs_with_skins {
@@ -209,14 +210,14 @@ fn skin_shards_disenchantable_view(ctrl: &Controller) -> TextCreationResult {
         for shard in shards {
             let skin_name = ctrl.lookup.get_skin(&shard.skin_id)?.name.as_str();
             if first {
-                lines.push(styled_text!(
+                lines.push(styled_line!(
                     "{:<19}  {}",
                     format!("{} ({}):", champ_name, skin_count),
                     skin_name
                 ));
                 first = false;
             } else {
-                lines.push(styled_text!("{:<19}  {}", "", skin_name));
+                lines.push(styled_line!("{:<19}  {}", "", skin_name));
             }
         }
     }

@@ -1,7 +1,7 @@
 use crate::{
     impl_text_view,
     model::champion::Champion,
-    styled_text,
+    styled_line,
     ui::{Controller, TextCreationResult},
 };
 
@@ -18,10 +18,10 @@ fn level_four_champs_view(ctrl: &Controller) -> TextCreationResult {
         .map(|m| ctrl.lookup.get_champion(&m.champ_id))
         .collect::<Result<Vec<&Champion>, _>>()?;
 
-    let mut lines = vec![styled_text!()];
+    let mut lines = vec![styled_line!()];
 
     for (champ, mastery) in champions.iter().zip(masteries) {
-        lines.push(styled_text!(
+        lines.push(styled_line!(
             "{:<15} ({} pts missing)",
             champ.name,
             mastery.points_to_next_level
@@ -66,14 +66,14 @@ fn mastery_tokens_view(ctrl: &Controller) -> TextCreationResult {
         )
     });
 
-    let mut lines = vec![styled_text!()];
+    let mut lines = vec![styled_line!()];
 
     for (level, tokens, champ_name, upgradable) in full_info {
         let champ_name = champ_name?;
         let ready = tokens == level - 3;
 
         let line = if ready && upgradable {
-            styled_text!(
+            styled_line!(
                 "{:<15} (Level {}): {}/{} tokens - READY FOR UPGRADE",
                 champ_name,
                 level,
@@ -81,7 +81,7 @@ fn mastery_tokens_view(ctrl: &Controller) -> TextCreationResult {
                 level - 3
             )
         } else if ready {
-            styled_text!(
+            styled_line!(
                 "{:<15} (Level {}): {}/{} tokens - missing shard",
                 champ_name,
                 level,
@@ -89,7 +89,7 @@ fn mastery_tokens_view(ctrl: &Controller) -> TextCreationResult {
                 level - 3
             )
         } else {
-            styled_text!("{:<15} (Level {}): {}/{} tokens", champ_name, level, tokens, level - 3)
+            styled_line!("{:<15} (Level {}): {}/{} tokens", champ_name, level, tokens, level - 3)
         };
 
         lines.push(line);
@@ -118,14 +118,14 @@ fn unplayed_champs_view(ctrl: &Controller) -> TextCreationResult {
         .collect::<Vec<_>>();
     unplayed.sort_by_key(|c| c.name.as_str());
 
-    let mut lines = vec![styled_text!()];
+    let mut lines = vec![styled_line!()];
 
     for c in &unplayed {
-        lines.push(styled_text!("  {}", c.name));
+        lines.push(styled_line!("  {}", c.name));
     }
 
-    lines.push(styled_text!());
-    lines.push(styled_text!(Color::Cyan, "{} champ(s) total", unplayed.len()));
+    lines.push(styled_line!());
+    lines.push(styled_line!("{} champ(s) total", unplayed.len(); Cyan));
     Ok(lines)
 }
 

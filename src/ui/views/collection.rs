@@ -1,5 +1,5 @@
 use crate::{
-    impl_text_view, styled_text,
+    impl_text_view, styled_line,
     ui::{Controller, TextCreationResult},
 };
 use std::collections::HashSet;
@@ -19,16 +19,16 @@ fn champions_without_skin_view(ctrl: &Controller) -> TextCreationResult {
     champs_no_skin.sort_by_key(|c| c.name.clone());
 
     let mut lines = vec![
-        styled_text!("Owned champions for which no skin is owned:"),
-        styled_text!(),
+        styled_line!("Owned champions for which no skin is owned:"),
+        styled_line!(),
     ];
 
     for champ in &champs_no_skin {
-        lines.push(styled_text!("  • {}", champ.name));
+        lines.push(styled_line!("  • {}", champ.name));
     }
 
-    lines.push(styled_text!());
-    lines.push(styled_text!(Color::Cyan, "{} champion(s) total", champs_no_skin.len()));
+    lines.push(styled_line!());
+    lines.push(styled_line!("{} champion(s) total", champs_no_skin.len(); Cyan));
 
     Ok(lines)
 }
@@ -50,14 +50,14 @@ fn chromas_without_skin_view(ctrl: &Controller) -> TextCreationResult {
     let chromas_no_skin = chromas.iter().filter(|ch| !skins.contains(&ch.skin_id));
 
     let mut lines = vec![
-        styled_text!("Owned chromas for which the skin isn't owned:"),
-        styled_text!(),
+        styled_line!("Owned chromas for which the skin isn't owned:"),
+        styled_line!(),
     ];
 
     for chroma in chromas_no_skin {
         let skin = ctrl.lookup.get_skin(&chroma.skin_id)?;
         let champ = ctrl.lookup.get_champion(&skin.champ_id)?;
-        lines.push(styled_text!("{} ({}): {}", skin.name, champ.name, chroma.id));
+        lines.push(styled_line!("{} ({}): {}", skin.name, champ.name, chroma.id));
     }
 
     Ok(lines)

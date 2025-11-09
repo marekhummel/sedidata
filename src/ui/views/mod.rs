@@ -22,133 +22,118 @@ pub trait RenderableView {
     fn title(&self) -> &str;
 }
 
+/// Helper macro to create a single Span with optional color and bold
+/// Internal use only - called by styled_text!
+///
+/// Usage:
+/// ```
+/// styled_span!("text")
+/// styled_span!("text", arg1, arg2)
+/// styled_span!("text"; Color::Cyan)
+/// styled_span!("text", arg; Color::Cyan)
+/// styled_span!("text"; Color::Cyan Bold)
+/// styled_span!("text", arg; Color::Cyan Bold)
+/// ```
+#[macro_export]
+macro_rules! styled_span {
+    // More specific patterns FIRST
+
+    // Expression with color and bold (expr; Color::X Bold)
+    ($expr:expr; $color:ident Bold) => {
+        ratatui::text::Span::styled(
+            format!("{}", $expr),
+            ratatui::style::Style::default()
+                .fg(ratatui::style::Color::$color)
+                .add_modifier(ratatui::style::Modifier::BOLD)
+        )
+    };
+
+    // Expression with color (expr; Color::X)
+    ($expr:expr; $color:ident) => {
+        ratatui::text::Span::styled(
+            format!("{}", $expr),
+            ratatui::style::Style::default().fg(ratatui::style::Color::$color)
+        )
+    };
+
+    // Formatted text with color and bold (text, args...; Color::X Bold)
+    ($text:literal, $($arg:expr),+; $color:ident Bold) => {
+        ratatui::text::Span::styled(
+            format!($text, $($arg),+),
+            ratatui::style::Style::default()
+                .fg(ratatui::style::Color::$color)
+                .add_modifier(ratatui::style::Modifier::BOLD)
+        )
+    };
+
+    // Formatted text with color (text, args...; Color::X)
+    ($text:literal, $($arg:expr),+; $color:ident) => {
+        ratatui::text::Span::styled(
+            format!($text, $($arg),+),
+            ratatui::style::Style::default().fg(ratatui::style::Color::$color)
+        )
+    };
+
+    // Plain text with color and bold (text; Color::X Bold)
+    ($text:literal; $color:ident Bold) => {
+        ratatui::text::Span::styled(
+            $text,
+            ratatui::style::Style::default()
+                .fg(ratatui::style::Color::$color)
+                .add_modifier(ratatui::style::Modifier::BOLD)
+        )
+    };
+
+    // Plain text with color (text; Color::X)
+    ($text:literal; $color:ident) => {
+        ratatui::text::Span::styled(
+            $text,
+            ratatui::style::Style::default().fg(ratatui::style::Color::$color)
+        )
+    };
+
+    // Formatted text (text, args...)
+    ($text:literal, $($arg:expr),+) => {
+        ratatui::text::Span::raw(format!($text, $($arg),+))
+    };
+
+    // Plain text literal (LAST - most general)
+    ($text:literal) => {
+        ratatui::text::Span::raw($text)
+    };
+
+    // Plain expression
+    ($expr:expr) => {
+        ratatui::text::Span::raw(format!("{}", $expr))
+    };
+}
+
 /// Macro to create styled text lines easily
 ///
 /// Usage:
 /// ```
-/// styled_text!("Plain text")
-/// styled_text!("Plain {}", variable)
-/// styled_text!(Color::Red, "Red text")
-/// styled_text!(Color::Green, Bold, "Green bold text")
-/// styled_text!("Mix " Color::Blue "blue" " and " Color::Red "red" " text")
+/// // Single span (forwarded to styled_span!):
+/// styled_line!("Plain text")
+/// styled_line!("Plain {}", variable)
+/// styled_line!("Red text"; Color::Red)
+/// styled_line!("Green bold text"; Color::Green Bold)
+/// styled_line!(value; Color::Cyan Bold)
 /// ```
 #[macro_export]
-#[allow(clippy::vec_init_then_push)]
-macro_rules! styled_text {
+macro_rules! styled_line {
     // Empty line
     () => {
         ratatui::text::Line::raw("")
     };
 
-    // Plain text with format args
-    ($fmt:literal $(, $arg:expr)*) => {
-        ratatui::text::Line::raw(format!($fmt $(, $arg)*))
+    // Span list
+    (LIST [$($args:expr),+ $(,)?]) => {
+        ratatui::text::Line::from(vec![$($args),+])
     };
 
-    // Single colored segment with format
-    ($color:expr, $fmt:literal $(, $arg:expr)*) => {{
-        use ratatui::text::{Line, Span};
-        use ratatui::style::{Style, Color};
-        Line::from(Span::styled(
-            format!($fmt $(, $arg)*),
-            Style::default().fg($color)
-        ))
-    }};
-
-    // Colored + Bold with format
-    ($color:expr, Bold, $fmt:literal $(, $arg:expr)*) => {{
-        use ratatui::text::{Line, Span};
-        use ratatui::style::{Style, Color, Modifier};
-        Line::from(Span::styled(
-            format!($fmt $(, $arg)*),
-            Style::default().fg($color).add_modifier(Modifier::BOLD)
-        ))
-    }};
-
-    // Multiple segments - this is the complex one
-    ($($segment:tt)+) => {{
-        let mut spans = Vec::new();
-        $crate::parse_segments!(spans, $($segment)+);
-        ratatui::text::Line::from(spans)
-    }};
-}
-
-/// Helper macro to parse multiple segments
-#[macro_export]
-macro_rules! parse_segments {
-    // Base case - empty
-    ($spans:expr,) => {};
-
-    // Plain string literal
-    ($spans:expr, $text:literal $($rest:tt)*) => {
-        $spans.push(ratatui::text::Span::raw($text));
-        $crate::parse_segments!($spans, $($rest)*);
-    };
-
-    // Plain expression in braces (for formatted strings)
-    ($spans:expr, {$expr:expr} $($rest:tt)*) => {
-        $spans.push(ratatui::text::Span::raw($expr));
-        $crate::parse_segments!($spans, $($rest)*);
-    };
-
-    // Color then string
-    ($spans:expr, Color::$color:ident $text:literal $($rest:tt)*) => {
-        $spans.push(ratatui::text::Span::styled($text, ratatui::style::Style::default().fg(ratatui::style::Color::$color)));
-        $crate::parse_segments!($spans, $($rest)*);
-    };
-
-    // Color then expression in braces
-    ($spans:expr, Color::$color:ident {$expr:expr} $($rest:tt)*) => {
-        $spans.push(ratatui::text::Span::styled($expr, ratatui::style::Style::default().fg(ratatui::style::Color::$color)));
-        $crate::parse_segments!($spans, $($rest)*);
-    };
-
-    // Color Bold then string
-    ($spans:expr, Color::$color:ident Bold $text:literal $($rest:tt)*) => {
-        $spans.push(ratatui::text::Span::styled(
-            $text,
-            ratatui::style::Style::default().fg(ratatui::style::Color::$color).add_modifier(ratatui::style::Modifier::BOLD)
-        ));
-        $crate::parse_segments!($spans, $($rest)*);
-    };
-
-    // Color Bold then expression in braces
-    ($spans:expr, Color::$color:ident Bold {$expr:expr} $($rest:tt)*) => {
-        $spans.push(ratatui::text::Span::styled(
-            $expr,
-            ratatui::style::Style::default().fg(ratatui::style::Color::$color).add_modifier(ratatui::style::Modifier::BOLD)
-        ));
-        $crate::parse_segments!($spans, $($rest)*);
-    };
-
-    // RGB color then string
-    ($spans:expr, Rgb($r:expr, $g:expr, $b:expr) $text:literal $($rest:tt)*) => {
-        $spans.push(ratatui::text::Span::styled($text, ratatui::style::Style::default().fg(ratatui::style::Color::Rgb($r, $g, $b))));
-        $crate::parse_segments!($spans, $($rest)*);
-    };
-
-    // RGB color then expression in braces
-    ($spans:expr, Rgb($r:expr, $g:expr, $b:expr) {$expr:expr} $($rest:tt)*) => {
-        $spans.push(ratatui::text::Span::styled($expr, ratatui::style::Style::default().fg(ratatui::style::Color::Rgb($r, $g, $b))));
-        $crate::parse_segments!($spans, $($rest)*);
-    };
-
-    // RGB color Bold then string
-    ($spans:expr, Rgb($r:expr, $g:expr, $b:expr) Bold $text:literal $($rest:tt)*) => {
-        $spans.push(ratatui::text::Span::styled(
-            $text,
-            ratatui::style::Style::default().fg(ratatui::style::Color::Rgb($r, $g, $b)).add_modifier(ratatui::style::Modifier::BOLD)
-        ));
-        $crate::parse_segments!($spans, $($rest)*);
-    };
-
-    // RGB color Bold then expression in braces
-    ($spans:expr, Rgb($r:expr, $g:expr, $b:expr) Bold {$expr:expr} $($rest:tt)*) => {
-        $spans.push(ratatui::text::Span::styled(
-            $expr,
-            ratatui::style::Style::default().fg(ratatui::style::Color::Rgb($r, $g, $b)).add_modifier(ratatui::style::Modifier::BOLD)
-        ));
-        $crate::parse_segments!($spans, $($rest)*);
+    // Full styled line
+    ($($args:tt)+) => {
+        ratatui::text::Line::from($crate::styled_span!($($args)+))
     };
 }
 

@@ -2,7 +2,7 @@ use crate::{
     impl_text_view,
     model::ids::ChampionId,
     service::lookup::LookupService,
-    styled_text,
+    styled_line,
     ui::{Controller, TextCreationResult, ViewError},
 };
 
@@ -39,26 +39,26 @@ fn champ_select_info_view(ctrl: &Controller) -> TextCreationResult {
 
     match ctrl.manager.get_champ_select_info()? {
         Some(champ_select_info) => {
-            lines.push(styled_text!(Color::Cyan, "Currently selected champ:"));
+            lines.push(styled_line!("Currently selected champ:"; Cyan));
             let current_champ = champ_select_info.current_champ_id;
-            lines.push(styled_text!(
+            lines.push(styled_line!(
                 "{}",
                 format_selectable_champ(ctrl.lookup, &current_champ)?
             ));
 
-            lines.push(styled_text!());
-            lines.push(styled_text!(Color::Cyan, "Benched Champions:"));
+            lines.push(styled_line!());
+            lines.push(styled_line!("Benched Champions:"; Cyan));
             for bench_champ in champ_select_info.benched_champs {
-                lines.push(styled_text!("{}", format_selectable_champ(ctrl.lookup, &bench_champ)?));
+                lines.push(styled_line!("{}", format_selectable_champ(ctrl.lookup, &bench_champ)?));
             }
 
-            lines.push(styled_text!());
-            lines.push(styled_text!(Color::Cyan, "Tradable Champions:"));
+            lines.push(styled_line!());
+            lines.push(styled_line!("Tradable Champions:"; Cyan));
             for team_champ in champ_select_info.team_champs {
-                lines.push(styled_text!("{}", format_selectable_champ(ctrl.lookup, &team_champ)?));
+                lines.push(styled_line!("{}", format_selectable_champ(ctrl.lookup, &team_champ)?));
             }
         }
-        None => lines.push(styled_text!(Color::Red, "Not in champ select!")),
+        None => lines.push(styled_line!("Not in champ select!"; Red)),
     };
     Ok(lines)
 }
