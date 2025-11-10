@@ -198,7 +198,9 @@ impl fmt::Display for ClientInitError {
         match self {
             ClientInitError::CertMissing(err) => write!(f, "Certificate missing: {}", err),
             ClientInitError::CertInvalid(err) => write!(f, "Certificate invalid: {}", err),
-            ClientInitError::LeagueClientFailed(err) => write!(f, "League client failed: {}", err),
+            ClientInitError::LeagueClientFailed(err) => {
+                write!(f, "League client failed, make sure it is running: {}", err)
+            }
             ClientInitError::LeagueClientInvalid() => write!(f, "League client invalid lockfile."),
             ClientInitError::LockfileAuthStringInvalid(err) => write!(f, "Lockfile auth string invalid: {}", err),
             ClientInitError::LockfileAuthHeaderInvalid(err) => write!(f, "Lockfile auth header invalid: {}", err),

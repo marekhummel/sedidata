@@ -43,6 +43,7 @@ struct App {
     should_refresh: bool,
     state: AppState,
     scroll_offset: u16,
+    pressed_keys: Vec<KeyCode>,
 }
 
 impl App {
@@ -57,6 +58,7 @@ impl App {
             should_refresh: false,
             state: AppState::Menu,
             scroll_offset: 0,
+            pressed_keys: Vec::new(),
         }
     }
 
@@ -130,7 +132,6 @@ impl App {
         // Split the provided area into a main list area and a small footer area
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            // main list (takes remaining space) and a small footer for refresh/quit hints
             .constraints([Constraint::Min(0), Constraint::Length(1)])
             .split(area);
 
@@ -218,11 +219,16 @@ impl App {
                     f.render_widget(title, chunks[0]);
 
                     // Render current state
-                    match &self.state {
+                    match &mut self.state {
                         AppState::Menu => {
                             self.render_menu(f, chunks[1]);
                         }
                         AppState::ViewingOutput(view) => {
+                            if !self.pressed_keys.is_empty() {
+                                view.interact(&self.pressed_keys);
+                                self.pressed_keys.clear();
+                            }
+
                             let block = Block::default()
                                 .borders(ratatui::widgets::Borders::ALL)
                                 .padding(ratatui::widgets::Padding::horizontal(1))
@@ -285,7 +291,9 @@ impl App {
                                     self.scroll_offset = 0;
                                 }
                             }
-                            _ => {}
+                            _ => {
+                                self.pressed_keys.push(key.code);
+                            }
                         }
                     }
                 }

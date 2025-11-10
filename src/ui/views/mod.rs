@@ -8,6 +8,7 @@ pub mod progress;
 pub mod summoner;
 
 pub use collection::*;
+use crossterm::event::KeyCode;
 pub use game::*;
 pub use loot::*;
 pub use mastery::*;
@@ -18,6 +19,8 @@ pub use summoner::*;
 pub trait RenderableView {
     /// Render the view into a ratatui Frame with scroll support
     fn render(&self, rc: RenderContext) -> ViewResult;
+
+    fn interact(&mut self, _keys: &[KeyCode]) {}
 
     fn title(&self) -> &str;
 }
@@ -148,6 +151,36 @@ macro_rules! styled_line {
     // Full styled line
     ($($args:tt)+) => {
         ratatui::text::Line::from($crate::styled_span!($($args)+))
+    };
+}
+
+#[macro_export]
+macro_rules! empty_row {
+    ($cell_count:expr) => {
+        Row::new((0..$cell_count).map(|_| Cell::from("")).collect::<Vec<_>>())
+    };
+}
+
+#[macro_export]
+macro_rules! fill_row {
+    ($cell_count:expr; $($cells:expr),+) => {
+        {
+            let mut cells = Vec::new();
+            $(
+                cells.push(Cell::from($cells));
+            )+
+            while cells.len() < $cell_count {
+                cells.push(Cell::from(""));
+            }
+            Row::new(cells)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! header_row {
+    ($($header:expr),+) => {
+        Row::new(vec![$(Cell::from($header)),+])
     };
 }
 

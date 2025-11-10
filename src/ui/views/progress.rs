@@ -1,6 +1,13 @@
-use crate::ui::{views::eval_color_scale_descending, Controller};
+use crate::{
+    empty_row, fill_row, header_row,
+    ui::{
+        views::{eval_color_scale_descending, RenderableView},
+        Controller,
+    },
+};
+use crossterm::event::KeyCode;
 use itertools::Itertools;
-use ratatui::text::Line;
+use ratatui::{text::Line, widgets::Paragraph};
 use std::cmp::Ordering;
 
 // ============================================================================
@@ -106,19 +113,14 @@ impl ChallengesOverviewView {
     }
 }
 
-impl crate::ui::views::RenderableView for ChallengesOverviewView {
+impl RenderableView for ChallengesOverviewView {
     fn title(&self) -> &str {
         "Challenges Overview"
     }
 
     fn render(&self, rc: crate::ui::RenderContext) -> crate::ui::ViewResult {
         if let Some(error) = &self.error {
-            let paragraph = ratatui::widgets::Paragraph::new(format!("\n  [!] Error: {}", error)).block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .padding(Padding::horizontal(1))
-                    .title("Challenges Overview (↑/↓ or PgUp/PgDown to scroll, Esc to return)"),
-            );
+            let paragraph = Paragraph::new(format!("\n  [!] Error: {}", error)).block(rc.block);
             rc.frame.render_widget(paragraph, rc.area);
             return Ok(());
         }
@@ -129,16 +131,10 @@ impl crate::ui::views::RenderableView for ChallengesOverviewView {
         for (category, challenges) in &self.categories {
             // Add category header row spanning multiple columns
             rows.push(
-                Row::new(vec![
-                    Cell::from(Line::from(vec![Span::styled(
-                        format!("━━ {} ━━", category),
-                        Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
-                    )])),
-                    Cell::from(""),
-                    Cell::from(""),
-                    Cell::from(""),
-                    Cell::from(""),
-                ])
+                fill_row!(5; Cell::from(Line::from(vec![Span::styled(
+                    format!("━━ {} ━━", category),
+                    Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
+                )])))
                 .style(Style::default().fg(Color::Cyan)),
             );
 
@@ -149,7 +145,7 @@ impl crate::ui::views::RenderableView for ChallengesOverviewView {
 
                 // Determine game mode display with color coding
                 let gamemode_cell = match challenge.gamemode_short() {
-                    "SR" => Cell::from(Span::styled("SR", Style::default().fg(Color::Rgb(210, 180, 140)))), // Tan/light brown
+                    "SR" => Cell::from(Span::styled("SR", Style::default().fg(Color::Rgb(210, 180, 140)))),
                     "HA" => Cell::from(Span::styled("HA", Style::default().fg(Color::Cyan))),
                     _ => Cell::from("-"),
                 };
@@ -159,7 +155,7 @@ impl crate::ui::views::RenderableView for ChallengesOverviewView {
                 let progress_color = eval_color_scale_descending(progress_pct, &self.progress_scale());
 
                 // Calculate available width for description
-                // Total terminal width minus: Name (32) + Gamemode (6) + Points (6) + Progress (12) + borders/padding (~8)
+                // Total terminal width minus: Columns + borders/padding
                 let desc_width = rc.area.width.saturating_sub(32 + 6 + 6 + 12 + 12).max(40) as usize;
                 let truncated_desc = Self::truncate_with_ellipsis(&challenge.description, desc_width);
 
@@ -179,13 +175,7 @@ impl crate::ui::views::RenderableView for ChallengesOverviewView {
             }
 
             // Empty row after each category
-            rows.push(Row::new(vec![
-                Cell::from(""),
-                Cell::from(""),
-                Cell::from(""),
-                Cell::from(""),
-                Cell::from(""),
-            ]));
+            rows.push(empty_row!(5));
         }
 
         // Skip rows based on scroll offset for manual scrolling
@@ -193,15 +183,9 @@ impl crate::ui::views::RenderableView for ChallengesOverviewView {
 
         let table = Table::new(visible_rows, self.columns())
             .header(
-                Row::new(vec![
-                    Cell::from("Challenge"),
-                    Cell::from("Description"),
-                    Cell::from("Mode"),
-                    Cell::from("Points"),
-                    Cell::from("Progress"),
-                ])
-                .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
-                .bottom_margin(1),
+                header_row!("Challenge", "Description", "Mode", "Points", "Progress")
+                    .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
+                    .bottom_margin(1),
             )
             .block(rc.block)
             .column_spacing(2)

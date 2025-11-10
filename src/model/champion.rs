@@ -30,3 +30,9 @@ pub struct Chroma {
     pub skin_id: SkinId,
     pub owned: bool,
 }
+
+impl Champion {
+    pub fn has_role(&self, role: &str) -> bool {
+        self.roles.iter().any(|r| r.to_lowercase() == role)
+    }
+}
