@@ -68,12 +68,12 @@ impl NextMasteryView {
             Ok(data) => Self {
                 data,
                 error: None,
-                grouping_enabled: true,
+                grouping_enabled: false,
             },
             Err(e) => Self {
                 data: Vec::new(),
                 error: Some(format!("Failed to load masteries: {}", e)),
-                grouping_enabled: true,
+                grouping_enabled: false,
             },
         }
     }

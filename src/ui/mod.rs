@@ -6,6 +6,7 @@ use ratatui::{layout::Rect, text::Line, Frame};
 use crate::service::{data_manager::DataManager, lookup::LookupService, util::UtilService};
 use crate::service::{data_manager::DataRetrievalError, lookup::IdNotFoundError};
 
+pub mod menu;
 pub mod repl;
 pub mod views;
 
