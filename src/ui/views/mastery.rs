@@ -36,12 +36,7 @@ fn unplayed_champs_view(ctrl: &Controller) -> TextCreationResult {
     Ok(lines)
 }
 
-impl_text_view!(
-    UnplayedChampsView,
-    unplayed_champs_view,
-    "Unplayed Champions",
-    "Unplayed Champions"
-);
+impl_text_view!(UnplayedChampsView, unplayed_champs_view, "Unplayed Champions");
 
 // ============================================================================
 // Next mastery view

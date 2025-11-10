@@ -61,9 +61,4 @@ fn champ_select_info_view(ctrl: &Controller) -> TextCreationResult {
     Ok(lines)
 }
 
-impl_text_view!(
-    ChampSelectInfoView,
-    champ_select_info_view,
-    "Champ Select Info",
-    "Champ Select Info"
-);
+impl_text_view!(ChampSelectInfoView, champ_select_info_view, "Champ Select Info");

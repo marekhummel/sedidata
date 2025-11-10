@@ -38,7 +38,6 @@ fn champions_without_skin_view(ctrl: &Controller) -> TextCreationResult {
 impl_text_view!(
     ChampionsWithoutSkinView,
     champions_without_skin_view,
-    "Champions Without Skin",
     "Champions Without Skin"
 );
 
@@ -69,6 +68,5 @@ fn chromas_without_skin_view(ctrl: &Controller) -> TextCreationResult {
 impl_text_view!(
     ChromasWithoutSkinView,
     chromas_without_skin_view,
-    "Chromas Without Skin",
     "Chromas Without Skin"
 );

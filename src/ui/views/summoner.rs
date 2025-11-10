@@ -23,9 +23,4 @@ fn summoner_info_view(ctrl: &Controller) -> TextCreationResult {
     Ok(lines)
 }
 
-impl_text_view!(
-    SummonerInfoView,
-    summoner_info_view,
-    "Show Summoner Info",
-    "Show Summoner Info"
-);
+impl_text_view!(SummonerInfoView, summoner_info_view, "Show Summoner Info");

@@ -46,12 +46,7 @@ fn blue_essence_overview_view(ctrl: &Controller) -> TextCreationResult {
     Ok(lines)
 }
 
-impl_text_view!(
-    BlueEssenceOverviewView,
-    blue_essence_overview_view,
-    "Blue Essence Info",
-    "Blue Essence Info"
-);
+impl_text_view!(BlueEssenceOverviewView, blue_essence_overview_view, "Blue Essence Info");
 
 // ============================================================================
 // Missing Champion Shards View
@@ -89,7 +84,6 @@ fn missing_champ_shards_view(ctrl: &Controller) -> TextCreationResult {
 impl_text_view!(
     MissingChampShardsView,
     missing_champ_shards_view,
-    "Missing Champion Shards",
     "Missing Champion Shards"
 );
 
@@ -129,12 +123,7 @@ fn interesting_skins_view(ctrl: &Controller) -> TextCreationResult {
     Ok(lines)
 }
 
-impl_text_view!(
-    InterestingSkinsView,
-    interesting_skins_view,
-    "Interesting Skins",
-    "Interesting Skins"
-);
+impl_text_view!(InterestingSkinsView, interesting_skins_view, "Interesting Skins");
 
 // ============================================================================
 // Skin Shards for First Skin View
@@ -179,7 +168,6 @@ fn skin_shards_first_skin_view(ctrl: &Controller) -> TextCreationResult {
 impl_text_view!(
     SkinShardsFirstSkinView,
     skin_shards_first_skin_view,
-    "Skin Shards for First Skin",
     "Skin Shards for First Skin"
 );
 
@@ -234,6 +222,5 @@ fn skin_shards_disenchantable_view(ctrl: &Controller) -> TextCreationResult {
 impl_text_view!(
     SkinShardsDisenchantableView,
     skin_shards_disenchantable_view,
-    "Disenchantable Skin Shards",
     "Disenchantable Skin Shards"
 );

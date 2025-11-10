@@ -187,7 +187,7 @@ macro_rules! header_row {
 /// Macro for simple text-based views
 #[macro_export]
 macro_rules! impl_text_view {
-    ($name:ident, $text_render_fn:expr, $title:expr, $description:expr) => {
+    ($name:ident, $text_render_fn:expr, $title:expr) => {
         pub struct $name {
             lines: Vec<ratatui::text::Line<'static>>,
             error: Option<String>,
