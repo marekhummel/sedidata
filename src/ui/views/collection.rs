@@ -1,7 +1,7 @@
 use ratatui::style::Color;
 
 use crate::{
-    impl_text_view, styled_line,
+    impl_text_view, styled_line, styled_span,
     ui::{Controller, TextCreationResult},
 };
 use std::collections::HashSet;
@@ -48,7 +48,17 @@ impl_text_view!(
 fn chromas_without_skin_view(ctrl: &Controller) -> TextCreationResult {
     let skins = ctrl.util.get_owned_skins_set()?;
     let chromas = ctrl.util.get_owned_chromas()?;
-    let chromas_no_skin = chromas.iter().filter(|ch| !skins.contains(&ch.skin_id));
+    let chromas_no_skin = chromas
+        .iter()
+        .filter(|ch| !skins.contains(&ch.skin_id))
+        .collect::<Vec<_>>();
+
+    let skin_shards = &ctrl.manager.get_loot()?.skin_shards;
+    let available_skin_shards = chromas_no_skin
+        .iter()
+        .filter(|c| skin_shards.iter().any(|ss| ss.skin_id == c.skin_id))
+        .map(|c| c.skin_id.clone())
+        .collect::<Vec<_>>();
 
     let mut lines = vec![
         styled_line!("Owned chromas for which the skin isn't owned:"),
@@ -59,7 +69,18 @@ fn chromas_without_skin_view(ctrl: &Controller) -> TextCreationResult {
         let skin = ctrl.lookup.get_skin(&chroma.skin_id)?;
         let champ = ctrl.lookup.get_champion(&skin.champ_id)?;
         let chroma_str = format!("{} ({}):", skin.name, champ.name);
-        lines.push(styled_line!("  • {:<30} {}", chroma_str, chroma.id));
+
+        let shard_owned = available_skin_shards.contains(&chroma.skin_id);
+        let shard_status = if shard_owned {
+            "SKIN SHARD OWNED"
+        } else {
+            "no skin shard either"
+        };
+        let shard_color = if shard_owned { Color::Green } else { Color::DarkGray };
+        lines.push(styled_line!(LIST [
+            styled_span!("  • {:<30} {}   ", chroma_str, chroma.id),
+            styled_span!("- {}", shard_status; shard_color)
+        ]));
     }
 
     Ok(lines)
