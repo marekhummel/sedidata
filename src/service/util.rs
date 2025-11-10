@@ -72,7 +72,7 @@ impl<'a> UtilService<'a> {
         Ok(masteries.iter().filter(|c| levels.contains(&c.level)).collect())
     }
 
-    pub fn get_champ_shard_set(&self) -> DataRetrievalResult<HashSet<ChampionId>> {
+    pub fn _get_champ_shard_set(&self) -> DataRetrievalResult<HashSet<ChampionId>> {
         let loot = self.manager.get_loot()?;
         let masteries = &loot.champion_shards;
 

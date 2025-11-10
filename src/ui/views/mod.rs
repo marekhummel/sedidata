@@ -22,61 +22,93 @@ pub trait RenderableView {
     fn title(&self) -> &str;
 }
 
+pub fn eval_color_scale_descending<T: PartialOrd>(
+    value: T,
+    scale: &[(T, ratatui::style::Color)],
+) -> ratatui::style::Color {
+    for (threshold, color) in scale {
+        if value >= *threshold {
+            return *color;
+        }
+    }
+    // Default to the last color if no thresholds matched
+    scale
+        .last()
+        .map(|(_, color)| *color)
+        .unwrap_or(ratatui::style::Color::White)
+}
+
+pub fn eval_color_scale_ascending<T: PartialOrd>(
+    value: T,
+    scale: &[(T, ratatui::style::Color)],
+) -> ratatui::style::Color {
+    for (threshold, color) in scale {
+        if value <= *threshold {
+            return *color;
+        }
+    }
+    // Default to the first color if no thresholds matched
+    scale
+        .first()
+        .map(|(_, color)| *color)
+        .unwrap_or(ratatui::style::Color::White)
+}
+
 #[macro_export]
 macro_rules! styled_span {
     // More specific patterns FIRST
 
     // Expression with color and bold (expr; Color::X Bold)
-    ($expr:expr; $color:ident Bold) => {
+    ($expr:expr; Bold $color:expr) => {
         ratatui::text::Span::styled(
             format!("{}", $expr),
             ratatui::style::Style::default()
-                .fg(ratatui::style::Color::$color)
+                .fg($color)
                 .add_modifier(ratatui::style::Modifier::BOLD)
         )
     };
 
     // Expression with color (expr; Color::X)
-    ($expr:expr; $color:ident) => {
+    ($expr:expr; $color:expr) => {
         ratatui::text::Span::styled(
             format!("{}", $expr),
-            ratatui::style::Style::default().fg(ratatui::style::Color::$color)
+            ratatui::style::Style::default().fg($color)
         )
     };
 
     // Formatted text with color and bold (text, args...; Color::X Bold)
-    ($text:literal, $($arg:expr),+; $color:ident Bold) => {
+    ($text:literal, $($arg:expr),+; Bold $color:ident) => {
         ratatui::text::Span::styled(
             format!($text, $($arg),+),
             ratatui::style::Style::default()
-                .fg(ratatui::style::Color::$color)
+                .fg($color)
                 .add_modifier(ratatui::style::Modifier::BOLD)
         )
     };
 
     // Formatted text with color (text, args...; Color::X)
-    ($text:literal, $($arg:expr),+; $color:ident) => {
+    ($text:literal, $($arg:expr),+; $color:expr) => {
         ratatui::text::Span::styled(
             format!($text, $($arg),+),
-            ratatui::style::Style::default().fg(ratatui::style::Color::$color)
+            ratatui::style::Style::default().fg($color)
         )
     };
 
     // Plain text with color and bold (text; Color::X Bold)
-    ($text:literal; $color:ident Bold) => {
+    ($text:literal; Bold $color:expr) => {
         ratatui::text::Span::styled(
             $text,
             ratatui::style::Style::default()
-                .fg(ratatui::style::Color::$color)
+                .fg($color)
                 .add_modifier(ratatui::style::Modifier::BOLD)
         )
     };
 
     // Plain text with color (text; Color::X)
-    ($text:literal; $color:ident) => {
+    ($text:literal; $color:expr) => {
         ratatui::text::Span::styled(
             $text,
-            ratatui::style::Style::default().fg(ratatui::style::Color::$color)
+            ratatui::style::Style::default().fg($color)
         )
     };
 
@@ -101,6 +133,11 @@ macro_rules! styled_line {
     // Empty line
     () => {
         ratatui::text::Line::raw("")
+    };
+
+    // Span list
+    (VAR $vec:expr) => {
+        ratatui::text::Line::from($vec)
     };
 
     // Span list

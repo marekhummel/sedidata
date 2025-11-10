@@ -1,4 +1,4 @@
-use crate::ui::Controller;
+use crate::ui::{views::eval_color_scale_descending, Controller};
 use itertools::Itertools;
 use ratatui::text::Line;
 use std::cmp::Ordering;
@@ -69,13 +69,39 @@ impl ChallengesOverviewView {
         Ok(categories)
     }
 
-    fn widths(&self) -> [Constraint; 5] {
+    fn columns(&self) -> [Constraint; 5] {
         [
             Constraint::Length(32), // Name
             Constraint::Min(40),    // Description (takes remaining space)
             Constraint::Length(6),  // Game mode
             Constraint::Length(6),  // Points to next
             Constraint::Length(12), // Progress (current/threshold)
+        ]
+    }
+
+    fn points_scale(&self) -> Vec<(u16, Color)> {
+        vec![
+            (95, Color::Rgb(0, 255, 0)),
+            (80, Color::Rgb(100, 255, 100)),
+            (65, Color::Rgb(150, 255, 100)),
+            (50, Color::Rgb(200, 255, 100)),
+            (35, Color::Rgb(255, 255, 100)),
+            (20, Color::Rgb(255, 220, 100)),
+            (10, Color::Rgb(255, 200, 150)),
+            (0, Color::White),
+        ]
+    }
+
+    fn progress_scale(&self) -> Vec<(f32, Color)> {
+        vec![
+            (95.0, Color::Rgb(0, 255, 0)),
+            (90.0, Color::Rgb(100, 255, 100)),
+            (70.0, Color::Rgb(150, 255, 100)),
+            (60.0, Color::Rgb(200, 255, 100)),
+            (50.0, Color::Rgb(255, 255, 100)),
+            (40.0, Color::Rgb(255, 220, 100)),
+            (20.0, Color::Rgb(255, 200, 150)),
+            (0.0, Color::White),
         ]
     }
 }
@@ -119,6 +145,7 @@ impl crate::ui::views::RenderableView for ChallengesOverviewView {
             // Add challenge rows
             for challenge in challenges {
                 let points_to_next = challenge.points_to_next();
+                let points_color = eval_color_scale_descending(points_to_next, &self.points_scale());
 
                 // Determine game mode display with color coding
                 let gamemode_cell = match challenge.gamemode_short() {
@@ -127,45 +154,9 @@ impl crate::ui::views::RenderableView for ChallengesOverviewView {
                     _ => Cell::from("-"),
                 };
 
-                // Color code points based on value (traffic light gradient)
-                // Higher points = better (green), lower points = less valuable (white)
-                let points_color = if points_to_next >= 95 {
-                    Color::Rgb(0, 255, 0) // 95-100+: Bright green - highest value!
-                } else if points_to_next >= 80 {
-                    Color::Rgb(100, 255, 100) // 80-95: Green
-                } else if points_to_next >= 65 {
-                    Color::Rgb(150, 255, 100) // 65-80: Light green
-                } else if points_to_next >= 50 {
-                    Color::Rgb(200, 255, 100) // 50-65: Yellow-green
-                } else if points_to_next >= 35 {
-                    Color::Rgb(255, 255, 100) // 35-50: Yellow
-                } else if points_to_next >= 20 {
-                    Color::Rgb(255, 220, 100) // 20-35: Light yellow
-                } else if points_to_next >= 10 {
-                    Color::Rgb(255, 200, 150) // 10-20: Cream
-                } else {
-                    Color::White // 0-10: White
-                };
-
                 // Color code progress based on completion percentage (traffic light gradient)
                 let progress_pct = (challenge.current_value / challenge.threshold_value * 100.0).min(100.0);
-                let progress_color = if progress_pct >= 95.0 {
-                    Color::Rgb(0, 255, 0) // 95-100%: Bright green - almost done!
-                } else if progress_pct >= 90.0 {
-                    Color::Rgb(100, 255, 100) // 90-95%: Green
-                } else if progress_pct >= 70.0 {
-                    Color::Rgb(150, 255, 100) // 80-90%: Light green
-                } else if progress_pct >= 60.0 {
-                    Color::Rgb(200, 255, 100) // 70-80%: Yellow-green
-                } else if progress_pct >= 50.0 {
-                    Color::Rgb(255, 255, 100) // 60-70%: Yellow
-                } else if progress_pct >= 40.0 {
-                    Color::Rgb(255, 220, 100) // 50-60%: Light yellow
-                } else if progress_pct >= 20.0 {
-                    Color::Rgb(255, 200, 150) // 40-50%: Cream
-                } else {
-                    Color::White // 0-40%: White
-                };
+                let progress_color = eval_color_scale_descending(progress_pct, &self.progress_scale());
 
                 // Calculate available width for description
                 // Total terminal width minus: Name (32) + Gamemode (6) + Points (6) + Progress (12) + borders/padding (~8)
@@ -200,7 +191,7 @@ impl crate::ui::views::RenderableView for ChallengesOverviewView {
         // Skip rows based on scroll offset for manual scrolling
         let visible_rows: Vec<_> = rows.into_iter().skip(rc.scroll_offset as usize).collect();
 
-        let table = Table::new(visible_rows, self.widths())
+        let table = Table::new(visible_rows, self.columns())
             .header(
                 Row::new(vec![
                     Cell::from("Challenge"),

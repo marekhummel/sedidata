@@ -70,11 +70,19 @@ fn parse_champ_obj(obj: &Object) -> Result<Champion, ParsingError> {
     let owned = obj["ownership"]["owned"]
         .as_bool()
         .ok_or(ParsingError::InvalidType("ownership/owned".into()))?;
+    let roles = obj["roles"]
+        .members()
+        .map(|r| {
+            r.as_str()
+                .map_or(Err(ParsingError::InvalidType("role".into())), |s| Ok(s.to_string()))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
 
     Ok(Champion {
         id: champ_id.into(),
         name: name.to_string(),
         owned,
+        roles,
     })
 }
 

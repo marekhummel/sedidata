@@ -1,3 +1,5 @@
+use ratatui::style::Color;
+
 use crate::{
     impl_text_view, styled_line, styled_span,
     ui::{Controller, TextCreationResult},
@@ -35,7 +37,7 @@ fn blue_essence_overview_view(ctrl: &Controller) -> TextCreationResult {
         styled_line!(),
         styled_line!(LIST [
             styled_span!("Current BE:                                 "),
-            styled_span!(be; Cyan Bold),
+            styled_span!(be; Bold Color::Cyan),
         ]),
         styled_line!("Convertable BE:                             {}", convertable),
         styled_line!("Convertable BE (Keep one shard per champ):  {}", keep1),
@@ -80,7 +82,7 @@ fn missing_champ_shards_view(ctrl: &Controller) -> TextCreationResult {
     }
 
     lines.push(styled_line!());
-    lines.push(styled_line!("{} champ(s) total", missing_cs.len(); Cyan));
+    lines.push(styled_line!("{} champ(s) total", missing_cs.len(); Color::Cyan));
     Ok(lines)
 }
 
@@ -115,7 +117,7 @@ fn interesting_skins_view(ctrl: &Controller) -> TextCreationResult {
             let skin_name = ctrl.lookup.get_skin(&shard.skin_id)?.name.as_str();
             if first {
                 lines.push(styled_line!(LIST [
-                    styled_span!(format!("{:<16}  ", format!("{}:", champ_name)); White Bold),
+                    styled_span!(format!("{:<16}  ", format!("{}:", champ_name)); Bold Color::White),
                     styled_span!(skin_name),
                 ]));
                 first = false;
@@ -162,7 +164,7 @@ fn skin_shards_first_skin_view(ctrl: &Controller) -> TextCreationResult {
             let skin_name = ctrl.lookup.get_skin(&shard.skin_id)?.name.as_str();
             if first {
                 lines.push(styled_line!(LIST [
-                    styled_span!(format!("{:<16}  ", format!("{}:", champ_name)); White Bold),
+                    styled_span!(format!("{:<16}  ", format!("{}:", champ_name)); Bold Color::White),
                     styled_span!(skin_name),
                 ]));
                 first = false;
@@ -217,7 +219,7 @@ fn skin_shards_disenchantable_view(ctrl: &Controller) -> TextCreationResult {
             let skin_name = ctrl.lookup.get_skin(&shard.skin_id)?.name.as_str();
             if first {
                 lines.push(styled_line!(LIST [
-                    styled_span!(format!("{:<19}  ", format!("{} ({}):", champ_name, skin_count)); White Bold),
+                    styled_span!(format!("{:<19}  ", format!("{} ({}):", champ_name, skin_count)); Bold Color::White),
                     styled_span!(skin_name),
                 ]));
                 first = false;

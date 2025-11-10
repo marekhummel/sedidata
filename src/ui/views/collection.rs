@@ -1,3 +1,5 @@
+use ratatui::style::Color;
+
 use crate::{
     impl_text_view, styled_line,
     ui::{Controller, TextCreationResult},
@@ -28,7 +30,7 @@ fn champions_without_skin_view(ctrl: &Controller) -> TextCreationResult {
     }
 
     lines.push(styled_line!());
-    lines.push(styled_line!("{} champion(s) total", champs_no_skin.len(); Cyan));
+    lines.push(styled_line!("{} champion(s) total", champs_no_skin.len(); Color::Cyan));
 
     Ok(lines)
 }

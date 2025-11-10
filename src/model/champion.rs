@@ -7,11 +7,12 @@ pub struct AllChampionInfo {
     pub chromas: Vec<Chroma>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Champion {
     pub id: ChampionId,
     pub name: String,
     pub owned: bool,
+    pub roles: Vec<String>,
 }
 
 #[derive(Debug)]

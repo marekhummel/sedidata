@@ -1,35 +1,46 @@
 use super::ids::ChampionId;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Mastery {
     pub champ_id: ChampionId,
     pub level: u16,
     pub points: u32,
-    pub tokens: Option<u16>,
-    pub points_to_next_level: i32,
-    // pub chest_granted: bool,
+    pub missing_points: i32,
+    pub marks: u16,
+    pub required_marks: u16,
+    pub next_milestone: Milestone,
 }
 
+impl Mastery {
+    pub fn required_points(&self) -> u32 {
+        (self.points as i32 + self.missing_points) as u32
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Milestone {
+    pub reward_marks: u16,
+    pub require_grade_counts: Vec<(String, u16)>,
+}
+
+// LUX
 //   {
-//     "championId": 157,
-//     "championLevel": 31,
-//     "championPoints": 359288,
-//     "championPointsSinceLastLevel": 52688,
-//     "championPointsUntilNextLevel": -41688,
-//     "championSeasonMilestone": 1,
-//     "highestGrade": "S+",
-//     "lastPlayTime": 1730930003000,
+//     "championId": 99,
+//     "championLevel": 9,
+//     "championPoints": 82371,
+//     "championPointsSinceLastLevel": 17771,
+//     "championPointsUntilNextLevel": -6771,
+//     "championSeasonMilestone": 0,
+//     "highestGrade": "C+",
+//     "lastPlayTime": 1762382764000,
 //     "markRequiredForNextLevel": 2,
 //     "milestoneGrades": [
-//       "A+",
-//       "S",
-//       "A"
+//       "C+"
 //     ],
 //     "nextSeasonMilestone": {
 //       "bonus": false,
 //       "requireGradeCounts": {
-//         "A-": 1,
-//         "C-": 4
+//         "A-": 1
 //       },
 //       "rewardConfig": {
 //         "maximumReward": 0,
@@ -38,5 +49,5 @@ pub struct Mastery {
 //       "rewardMarks": 1
 //     },
 //     "puuid": "7496d9e2-1ec1-5303-b3e5-02caab8c00aa",
-//     "tokensEarned": 0
+//     "tokensEarned": 1
 //   },

@@ -1,4 +1,4 @@
-use std::io::stdout;
+use std::{io::stdout, ops::Range};
 
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
@@ -325,6 +325,12 @@ impl App {
                     factory: Some(|ctrl| Box::new(<$view>::new(ctrl))),
                 }
             };
+            (item: $desc:expr, $view:ty, $args:expr) => {
+                MenuEntry {
+                    description: $desc,
+                    factory: Some(|ctrl| Box::new(<$view>::new(ctrl, $args))),
+                }
+            };
         }
 
         vec![
@@ -336,8 +342,10 @@ impl App {
             menu_entry!(item: "Champ Select Info", ChampSelectInfoView),
             // Mastery
             menu_entry!(group: "Mastery"),
-            menu_entry!(item: "Level Four Champions", LevelFourChampsView),
-            menu_entry!(item: "Mastery Tokens", MasteryTokensView),
+            menu_entry!(item: "Sky is the Limit", NextMasteryView, Range{ start: 10, end: 1000 }.collect()),
+            menu_entry!(item: "Mastery 10 Milestone", NextMasteryView, vec![7, 8, 9]),
+            menu_entry!(item: "Mastery  7 Milestone", NextMasteryView, vec![5, 6]),
+            menu_entry!(item: "Mastery  5 Milestone", NextMasteryView, vec![3, 4]),
             menu_entry!(item: "Unplayed Champions", UnplayedChampsView),
             // Progress
             menu_entry!(group: "Progress"),
