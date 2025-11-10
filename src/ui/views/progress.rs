@@ -5,7 +5,6 @@ use crate::{
         Controller,
     },
 };
-use crossterm::event::KeyCode;
 use itertools::Itertools;
 use ratatui::{text::Line, widgets::Paragraph};
 use std::cmp::Ordering;
@@ -18,7 +17,7 @@ use ratatui::{
     layout::Constraint,
     style::{Color, Modifier, Style},
     text::Span,
-    widgets::{Block, Borders, Cell, Padding, Row, Table},
+    widgets::{Cell, Row, Table},
 };
 
 pub struct ChallengesOverviewView {

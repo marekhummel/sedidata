@@ -50,7 +50,7 @@ impl_text_view!(
 use crossterm::event::KeyCode;
 use itertools::Itertools;
 use ratatui::{
-    layout::Constraint,
+    layout::{Alignment, Constraint},
     style::{Color, Modifier, Style},
     text::Span,
     widgets::{Cell, Paragraph, Row, Table},
@@ -97,13 +97,13 @@ impl NextMasteryView {
 
     fn columns(&self) -> [Constraint; 7] {
         [
-            Constraint::Length(25), // Champion
-            Constraint::Length(15), // Roles (3 chars * 3 roles + spaces)
+            Constraint::Length(20), // Champion
+            Constraint::Length(10), // Roles (3 chars * 3 roles + spaces)
             Constraint::Length(4),  // Level
             Constraint::Length(22), // Points (right padded)
             Constraint::Length(8),  // Missing (right padded)
             Constraint::Length(8),  // Marks (right padded)
-            Constraint::Min(30),    // Next Milestone
+            Constraint::Min(20),    // Next Milestone
         ]
     }
 
@@ -147,7 +147,7 @@ impl NextMasteryView {
         format!("{} ⇒ {} mark(s)", grades, milestone.reward_marks)
     }
 
-    fn render_row<'a>(&'a self, mastery: &'a Mastery, champ: &'a Champion) -> Row<'a> {
+    fn render_row<'a>(&'a self, mastery: &'a Mastery, champ: &'a Champion, max_points_log: usize) -> Row<'a> {
         // Create colored role abbreviations
         let role_spans: Vec<Span> = champ
             .roles
@@ -169,13 +169,18 @@ impl NextMasteryView {
         Row::new(vec![
             Cell::from(champ.name.clone()),
             Cell::from(styled_line!(VAR role_spans)),
-            Cell::from(format!("{:>3}", mastery.level)),
-            Cell::from(styled_line!(LIST [
-                styled_span!("{:>8}", mastery.points),
-                styled_span!(" / {:<8}", mastery.required_points(); if missing == 0  { Color::DarkGray } else { Color::White }),
-            ])),
-            Cell::from(styled_line!("{:>6}", missing; points_color)),
-            Cell::from(styled_line!("{:>2}/{:<2}", mastery.marks, mastery.required_marks; marks_color)),
+            Cell::from(styled_line!(mastery.level).alignment(Alignment::Right)),
+            Cell::from(
+                styled_line!(LIST [
+                    styled_span!(mastery.points),
+                    styled_span!(" / {:>1$}", mastery.required_points(), max_points_log; Color::DarkGray),
+                ])
+                .alignment(Alignment::Right),
+            ),
+            Cell::from(styled_line!("{}", missing; points_color).alignment(Alignment::Right)),
+            Cell::from(
+                styled_line!("{}/{}", mastery.marks, mastery.required_marks; marks_color).alignment(Alignment::Right),
+            ),
             Cell::from(Self::format_milestone(&mastery.next_milestone)),
         ])
     }
@@ -183,7 +188,7 @@ impl NextMasteryView {
 
 impl RenderableView for NextMasteryView {
     fn title(&self) -> &str {
-        "Next Mastery Champions"
+        "Mastery Level X Champions"
     }
 
     fn interact(&mut self, keys: &[KeyCode]) {
@@ -221,8 +226,13 @@ impl RenderableView for NextMasteryView {
                 );
 
                 // Add champion rows for this role
+                let max_points_log = champions_with_role
+                    .iter()
+                    .map(|(m, _)| (m.points as f32).log10().ceil() as usize)
+                    .max()
+                    .unwrap();
                 for (mastery, champ) in champions_with_role {
-                    rows.push(self.render_row(mastery, champ));
+                    rows.push(self.render_row(mastery, champ, max_points_log));
                 }
 
                 // Add empty row after each role group
@@ -230,8 +240,14 @@ impl RenderableView for NextMasteryView {
             }
         } else {
             // Add champion rows for this role
+            let max_points_log = self
+                .data
+                .iter()
+                .map(|(m, _)| (m.points as f32).log10().ceil() as usize)
+                .max()
+                .unwrap();
             for (mastery, champ) in &self.data {
-                rows.push(self.render_row(mastery, champ));
+                rows.push(self.render_row(mastery, champ, max_points_log));
             }
         }
 
