@@ -5,6 +5,7 @@ use crate::{
         Controller,
     },
 };
+use crossterm::event::KeyCode;
 use itertools::Itertools;
 use ratatui::{text::Line, widgets::Paragraph};
 use std::cmp::Ordering;
@@ -23,6 +24,7 @@ use ratatui::{
 pub struct ChallengesOverviewView {
     categories: Vec<(String, Vec<crate::model::challenge::Challenge>)>,
     error: Option<String>,
+    sorting_state: u8,
 }
 
 impl ChallengesOverviewView {
@@ -31,10 +33,12 @@ impl ChallengesOverviewView {
             Ok(categories) => Self {
                 categories,
                 error: None,
+                sorting_state: 0,
             },
             Err(e) => Self {
                 categories: Vec::new(),
                 error: Some(format!("Failed to load challenges: {}", e)),
+                sorting_state: 0,
             },
         }
     }
@@ -54,7 +58,7 @@ impl ChallengesOverviewView {
         let mut challenges = ctrl.manager.get_challenges()?.to_vec();
         challenges.retain(|c| !c.is_capstone && !c.is_completed() && c.category != "LEGACY");
 
-        // Sort by category first, then by progress percentage (descending) and points to next (ascending)
+        // Sort by category first, then by progress percentage (descending) and reward in pts (ascending)
         challenges.sort_by(|a, b| {
             let progress_a = (a.current_value / a.threshold_value * 100.0).min(100.0);
             let progress_b = (b.current_value / b.threshold_value * 100.0).min(100.0);
@@ -63,7 +67,7 @@ impl ChallengesOverviewView {
                 .cmp(&b.category)
                 .then_with(|| a.gamemode_short().cmp(b.gamemode_short()).reverse())
                 .then_with(|| progress_a.partial_cmp(&progress_b).unwrap_or(Ordering::Equal).reverse())
-                .then_with(|| a.points_to_next().cmp(&b.points_to_next()))
+                .then_with(|| a.reward_in_pts().cmp(&b.reward_in_pts()))
         });
 
         let mut categories = Vec::new();
@@ -80,7 +84,7 @@ impl ChallengesOverviewView {
             Constraint::Length(32), // Name
             Constraint::Min(40),    // Description (takes remaining space)
             Constraint::Length(6),  // Game mode
-            Constraint::Length(6),  // Points to next
+            Constraint::Length(8),  // reward in pts
             Constraint::Length(12), // Progress (current/threshold)
         ]
     }
@@ -110,11 +114,60 @@ impl ChallengesOverviewView {
             (0.0, Color::White),
         ]
     }
+
+    fn header_with_sorting(&self) -> Row<'static> {
+        match self.sorting_state {
+            0 => header_row!("Challenge", "Description", "Mode↓", "Points↑", "Progress↓"),
+            1 => header_row!("Challenge", "Description", "Mode", "Points↓", "Progress"),
+            2 => header_row!("Challenge↑", "Description", "Mode", "Points", "Progress"),
+            3 => header_row!("Challenge", "Description↑", "Mode", "Points", "Progress"),
+            _ => unreachable!(),
+        }
+    }
 }
 
 impl RenderableView for ChallengesOverviewView {
     fn title(&self) -> &str {
         "Challenges Overview"
+    }
+
+    fn interact(&mut self, keys: &[KeyCode]) {
+        if keys.contains(&KeyCode::Char('s')) {
+            self.sorting_state = (self.sorting_state + 1) % 4;
+
+            for categories in self.categories.iter_mut() {
+                let challenges = &mut categories.1;
+                match self.sorting_state {
+                    0 => {
+                        // Sort by category, progress descending, reward in pts ascending
+                        challenges.sort_by(|a, b| {
+                            let progress_a = (a.current_value / a.threshold_value * 100.0).min(100.0);
+                            let progress_b = (b.current_value / b.threshold_value * 100.0).min(100.0);
+
+                            a.category
+                                .cmp(&b.category)
+                                .then_with(|| a.gamemode_short().cmp(b.gamemode_short()).reverse())
+                                .then_with(|| progress_a.partial_cmp(&progress_b).unwrap_or(Ordering::Equal).reverse())
+                                .then_with(|| a.reward_in_pts().cmp(&b.reward_in_pts()))
+                        });
+                    }
+                    1 => {
+                        // Sort by reward in pts descending
+                        challenges.sort_by_key(|c| c.reward_in_pts());
+                        challenges.reverse();
+                    }
+                    2 => {
+                        // Sort by name ascending
+                        challenges.sort_by_key(|c| c.name.clone());
+                    }
+                    3 => {
+                        // Sort by description ascending
+                        challenges.sort_by_key(|c| c.description.clone());
+                    }
+                    _ => {}
+                }
+            }
+        }
     }
 
     fn render(&self, rc: crate::ui::RenderContext) -> crate::ui::ViewResult {
@@ -139,7 +192,7 @@ impl RenderableView for ChallengesOverviewView {
 
             // Add challenge rows
             for challenge in challenges {
-                let points_to_next = challenge.points_to_next();
+                let points_to_next = challenge.reward_in_pts();
                 let points_color = eval_color_scale_descending(points_to_next, &self.points_scale());
 
                 // Determine game mode display with color coding
@@ -155,7 +208,7 @@ impl RenderableView for ChallengesOverviewView {
 
                 // Calculate available width for description
                 // Total terminal width minus: Columns + borders/padding
-                let desc_width = rc.area.width.saturating_sub(32 + 6 + 6 + 12 + 12).max(40) as usize;
+                let desc_width = rc.area.width.saturating_sub(32 + 6 + 6 + 12 + 13).max(40) as usize;
                 let truncated_desc = Self::truncate_with_ellipsis(&challenge.description, desc_width);
 
                 rows.push(Row::new(vec![
@@ -182,11 +235,11 @@ impl RenderableView for ChallengesOverviewView {
 
         let table = Table::new(visible_rows, self.columns())
             .header(
-                header_row!("Challenge", "Description", "Mode", "Points", "Progress")
+                self.header_with_sorting()
                     .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
                     .bottom_margin(1),
             )
-            .block(rc.block)
+            .block(rc.block.title("(S to change sorting)"))
             .column_spacing(2)
             .style(Style::default().fg(Color::White));
 

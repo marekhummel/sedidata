@@ -1,5 +1,5 @@
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
     Frame,
@@ -122,6 +122,7 @@ impl Menu {
         // Render the footer with subtle instructions
         let footer = Paragraph::new("Refresh data: (r)    Quit: (q)")
             .style(Style::default().fg(Color::DarkGray))
+            .alignment(Alignment::Right)
             .block(Block::default().borders(Borders::NONE));
         frame.render_widget(footer, chunks[1]);
     }

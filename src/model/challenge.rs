@@ -44,10 +44,10 @@ impl Challenge {
             return false;
         }
 
-        self.points_to_next() == 0
+        self.reward_in_pts() == 0
     }
 
-    pub fn points_to_next(&self) -> u16 {
+    pub fn reward_in_pts(&self) -> u16 {
         let current = self.get_threshold(&self.current_level);
         let next = self.get_threshold(&self.next_level);
         next.value - current.value
