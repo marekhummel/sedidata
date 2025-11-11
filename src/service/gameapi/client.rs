@@ -114,7 +114,7 @@ impl ApiClient {
         if self.load_local_json {
             let mut file = File::open(format!("data/{:?}.json", request_type))?;
             let mut buf = String::new();
-            file.read_to_string(&mut buf);
+            file.read_to_string(&mut buf)?;
             let json = json::parse(buf.as_str()).unwrap();
             return Ok(Rc::new(json));
         }
