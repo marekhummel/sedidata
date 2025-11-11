@@ -32,8 +32,8 @@ pub struct DataManager {
 }
 
 impl DataManager {
-    pub fn new(debug: bool) -> Result<Self, DataManagerInitError> {
-        let mut client = ApiClient::new(debug)?;
+    pub fn new(load_local: bool, write_responses: bool) -> Result<Self, DataManagerInitError> {
+        let mut client = ApiClient::new(load_local, write_responses)?;
         let summoner = DataManager::retrieve_summoner(&mut client)?;
         client.set_summoner(summoner.clone());
 

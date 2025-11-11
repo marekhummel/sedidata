@@ -26,7 +26,8 @@ struct LockFileContent {
 }
 
 pub struct ApiClient {
-    debug: bool,
+    write_json: bool,
+    load_local_json: bool,
     client: Client,
     cache: RefCell<HashMap<ClientRequestType, Rc<JsonValue>>>,
     base_url: String,
@@ -34,11 +35,12 @@ pub struct ApiClient {
 }
 
 impl ApiClient {
-    pub fn new(write_debug: bool) -> Result<Self, ClientInitError> {
-        let (client, base_url) = ApiClient::setup_client()?;
+    pub fn new(read_json_files: bool, write_json: bool) -> Result<Self, ClientInitError> {
+        let (client, base_url) = ApiClient::setup_client(read_json_files)?;
         let cache = RefCell::from(HashMap::new());
         Ok(Self {
-            debug: write_debug,
+            write_json,
+            load_local_json: read_json_files,
             client,
             cache,
             base_url,
@@ -46,7 +48,12 @@ impl ApiClient {
         })
     }
 
-    fn setup_client() -> Result<(Client, String), ClientInitError> {
+    fn setup_client(dummy: bool) -> Result<(Client, String), ClientInitError> {
+        if dummy {
+            let client = Client::builder().build()?;
+            return Ok((client, String::new()));
+        }
+
         // Read certificate
         let cert = ApiClient::read_certificate()?;
 
@@ -104,6 +111,14 @@ impl ApiClient {
     }
 
     pub fn request(&self, request_type: ClientRequestType, cache: bool) -> Result<Rc<JsonValue>, RequestError> {
+        if self.load_local_json {
+            let mut file = File::open(format!("data/{:?}.json", request_type))?;
+            let mut buf = String::new();
+            file.read_to_string(&mut buf);
+            let json = json::parse(buf.as_str()).unwrap();
+            return Ok(Rc::new(json));
+        }
+
         match self.cache.borrow_mut().entry(request_type) {
             Entry::Occupied(oe) => Ok(oe.get().clone()),
             Entry::Vacant(ve) => {
@@ -142,7 +157,7 @@ impl ApiClient {
                 let text = response.text()?;
                 let json = json::parse(text.as_str())?;
 
-                if self.debug {
+                if self.write_json {
                     let _ = create_dir("data");
                     let mut file = File::create(format!("data/{:?}.json", request_type)).unwrap();
                     let _ = file.write_all(json.pretty(2).as_bytes());
@@ -162,7 +177,7 @@ impl ApiClient {
     }
 
     pub fn refresh(&mut self) -> Result<(), ClientInitError> {
-        let (client, base_url) = ApiClient::setup_client()?;
+        let (client, base_url) = ApiClient::setup_client(self.load_local_json)?;
         self.client = client;
         self.base_url = base_url;
 
@@ -279,6 +294,7 @@ pub enum RequestError {
     SummonerNeeded,
     InvalidResponse,
     ParsingFailed(json::Error),
+    LocalFileError(io::Error),
 }
 
 impl fmt::Display for RequestError {
@@ -288,6 +304,7 @@ impl fmt::Display for RequestError {
             RequestError::SummonerNeeded => write!(f, "Summoner information is needed for this request."),
             RequestError::InvalidResponse => write!(f, "The server returned an invalid response."),
             RequestError::ParsingFailed(err) => write!(f, "Parsing error: {}", err),
+            RequestError::LocalFileError(err) => write!(f, "Local file error: {}", err),
         }
     }
 }
@@ -301,5 +318,11 @@ impl From<reqwest::Error> for RequestError {
 impl From<json::Error> for RequestError {
     fn from(error: json::Error) -> Self {
         RequestError::ParsingFailed(error)
+    }
+}
+
+impl From<io::Error> for RequestError {
+    fn from(error: io::Error) -> Self {
+        RequestError::LocalFileError(error)
     }
 }

@@ -95,9 +95,9 @@ impl NextMasteryView {
             Constraint::Length(20), // Champion
             Constraint::Length(10), // Roles (3 chars * 3 roles + spaces)
             Constraint::Length(4),  // Level
-            Constraint::Length(22), // Points (right padded)
+            Constraint::Length(20), // Points (right padded)
             Constraint::Length(8),  // Missing (right padded)
-            Constraint::Length(8),  // Marks (right padded)
+            Constraint::Length(10), // Marks (right padded)
             Constraint::Min(20),    // Next Milestone
         ]
     }
@@ -160,6 +160,9 @@ impl NextMasteryView {
         // Color code marks progress
         let marks_progress = mastery.marks as f32 / mastery.required_marks as f32;
         let marks_color = eval_color_scale_descending(marks_progress, &self.progress_scale());
+        let marks_line = (mastery.required_marks > 0)
+            .then(|| styled_line!("{}/{}", mastery.marks, mastery.required_marks; marks_color))
+            .unwrap_or(styled_line!(""));
 
         Row::new(vec![
             Cell::from(champ.name.clone()),
@@ -173,9 +176,7 @@ impl NextMasteryView {
                 .alignment(Alignment::Right),
             ),
             Cell::from(styled_line!("{}", missing; points_color).alignment(Alignment::Right)),
-            Cell::from(
-                styled_line!("{}/{}", mastery.marks, mastery.required_marks; marks_color).alignment(Alignment::Right),
-            ),
+            Cell::from(marks_line.alignment(Alignment::Right)),
             Cell::from(Self::format_milestone(&mastery.next_milestone)),
         ])
     }

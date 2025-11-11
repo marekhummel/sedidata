@@ -8,14 +8,8 @@ mod model;
 mod service;
 mod ui;
 
-// #[allow(dead_code)]
-// mod test;
-
 fn main() {
-    // test::main();
-    // return;
-
-    match DataManager::new(true) {
+    match DataManager::new(true, true) {
         Ok(manager) => match repl::run(manager) {
             Ok(_) => return,
             Err(error) => println!("Error occured while running REPL:\n{}\n", error),
