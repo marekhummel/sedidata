@@ -4,7 +4,7 @@ use std::{
     env, fmt,
     fs::{create_dir, File},
     io::{self, BufRead, Read, Write},
-    path::Path,
+    path::{Path, PathBuf},
     rc::Rc,
 };
 
@@ -26,7 +26,6 @@ struct LockFileContent {
 }
 
 pub struct ApiClient {
-    league_install_path: String,
     write_json: bool,
     load_local_json: bool,
     client: Client,
@@ -36,11 +35,11 @@ pub struct ApiClient {
 }
 
 impl ApiClient {
-    pub fn new(league_install_path: &str, read_json_files: bool, write_json: bool) -> Result<Self, ClientInitError> {
-        let (client, base_url) = ApiClient::setup_client(league_install_path, read_json_files)?;
+    pub fn new(read_json_files: bool, write_json: bool) -> Result<Self, ClientInitError> {
+        let league_install_path = ApiClient::get_or_prompt_league_path()?;
+        let (client, base_url) = ApiClient::setup_client(&league_install_path, read_json_files)?;
         let cache = RefCell::from(HashMap::new());
         Ok(Self {
-            league_install_path: league_install_path.to_string(),
             write_json,
             load_local_json: read_json_files,
             client,
@@ -48,6 +47,74 @@ impl ApiClient {
             base_url,
             summoner: None,
         })
+    }
+
+    fn get_app_data_dir() -> Result<PathBuf, ClientInitError> {
+        let local_app_data = env::var("LOCALAPPDATA").map_err(|_| ClientInitError::LocalAppDataNotFound)?;
+
+        let mut app_dir = PathBuf::from(local_app_data);
+        app_dir.push("sedidata");
+
+        // Create directory if it doesn't exist
+        if !app_dir.exists() {
+            std::fs::create_dir_all(&app_dir).map_err(ClientInitError::AppDataDirCreationFailed)?;
+        }
+
+        Ok(app_dir)
+    }
+
+    fn get_or_prompt_league_path() -> Result<String, ClientInitError> {
+        let app_dir = ApiClient::get_app_data_dir()?;
+        let path_file = app_dir.join("league_path.txt");
+
+        // Try to read existing path
+        if path_file.exists() {
+            if let Ok(mut file) = File::open(&path_file) {
+                let mut content = String::new();
+                if file.read_to_string(&mut content).is_ok() {
+                    let path = content.trim().to_string();
+                    if !path.is_empty() {
+                        return Ok(path);
+                    }
+                }
+            }
+        }
+
+        // Prompt user for path
+        println!("\n=== League of Legends Installation Path Setup ===");
+        println!("Please enter the path to your League of Legends installation directory.");
+        println!("(Press Enter to use default: C:\\Program Files\\Riot Games\\League of Legends\\)");
+        print!("\nPath: ");
+        io::Write::flush(&mut io::stdout()).unwrap();
+
+        let mut input = String::new();
+        io::stdin()
+            .read_line(&mut input)
+            .map_err(ClientInitError::UserInputFailed)?;
+
+        let league_path = input.trim();
+        let league_path = if league_path.is_empty() {
+            r"C:\Program Files\Riot Games\League of Legends\"
+        } else {
+            league_path
+        };
+
+        // Verify the path exists
+        let path = Path::new(league_path);
+        if !path.exists() {
+            return Err(ClientInitError::LeaguePathInvalid(format!(
+                "Path does not exist: {}",
+                league_path
+            )));
+        }
+
+        // Save the path
+        let mut file = File::create(&path_file).map_err(ClientInitError::PathFileSaveFailed)?;
+        file.write_all(league_path.as_bytes())
+            .map_err(ClientInitError::PathFileSaveFailed)?;
+
+        println!("Path saved successfully!\n");
+        Ok(league_path.to_string())
     }
 
     fn setup_client(league_install_path: &str, dummy: bool) -> Result<(Client, String), ClientInitError> {
@@ -80,15 +147,18 @@ impl ApiClient {
     }
 
     fn read_certificate() -> Result<Certificate, CertificateError> {
-        // Temp file path
-        let mut cert_path = env::temp_dir();
+        // Get LocalAppData path
+        let local_app_data = env::var("LOCALAPPDATA").map_err(|_| CertificateError::LocalAppDataNotFound)?;
+
+        let mut cert_path = PathBuf::from(local_app_data);
         cert_path.push("sedidata");
+
         if !cert_path.exists() {
             std::fs::create_dir_all(&cert_path)?;
         }
         cert_path.push("riotgames.pem");
 
-        // Downlaod if missing
+        // Download if missing
         if !cert_path.exists() {
             const CERT_URL: &str = "https://static.developer.riotgames.com/docs/lol/riotgames.pem";
             let client = Client::builder().build()?;
@@ -198,7 +268,8 @@ impl ApiClient {
     }
 
     pub fn refresh(&mut self) -> Result<(), ClientInitError> {
-        let (client, base_url) = ApiClient::setup_client(&self.league_install_path, self.load_local_json)?;
+        let league_install_path = ApiClient::get_or_prompt_league_path()?;
+        let (client, base_url) = ApiClient::setup_client(&league_install_path, self.load_local_json)?;
         self.client = client;
         self.base_url = base_url;
 
@@ -223,6 +294,11 @@ pub enum ClientInitError {
     CertMissing(io::Error),
     CertInvalid(reqwest::Error),
     CertDownloadFailed(String),
+    LocalAppDataNotFound,
+    AppDataDirCreationFailed(io::Error),
+    LeaguePathInvalid(String),
+    UserInputFailed(io::Error),
+    PathFileSaveFailed(io::Error),
     LeagueClientFailed(io::Error),
     LeagueClientInvalid(),
     LockfileAuthStringInvalid(io::Error),
@@ -236,6 +312,11 @@ impl fmt::Display for ClientInitError {
             ClientInitError::CertMissing(err) => write!(f, "Certificate missing: {}", err),
             ClientInitError::CertInvalid(err) => write!(f, "Certificate invalid: {}", err),
             ClientInitError::CertDownloadFailed(msg) => write!(f, "Certificate download failed: {}", msg),
+            ClientInitError::LocalAppDataNotFound => write!(f, "Could not find LocalAppData directory"),
+            ClientInitError::AppDataDirCreationFailed(err) => write!(f, "Failed to create app data directory: {}", err),
+            ClientInitError::LeaguePathInvalid(msg) => write!(f, "Invalid League path: {}", msg),
+            ClientInitError::UserInputFailed(err) => write!(f, "Failed to read user input: {}", err),
+            ClientInitError::PathFileSaveFailed(err) => write!(f, "Failed to save path file: {}", err),
             ClientInitError::LeagueClientFailed(err) => {
                 write!(f, "League client failed, make sure it is running: {}", err)
             }
@@ -253,6 +334,7 @@ impl From<CertificateError> for ClientInitError {
             CertificateError::Missing(err) => Self::CertMissing(err),
             CertificateError::Invalid(err) => Self::CertInvalid(err),
             CertificateError::DownloadFailed(msg) => Self::CertDownloadFailed(msg),
+            CertificateError::LocalAppDataNotFound => Self::LocalAppDataNotFound,
         }
     }
 }
@@ -288,6 +370,7 @@ enum CertificateError {
     Missing(io::Error),
     Invalid(reqwest::Error),
     DownloadFailed(String),
+    LocalAppDataNotFound,
 }
 
 impl From<io::Error> for CertificateError {

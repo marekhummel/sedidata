@@ -14,13 +14,6 @@ mod ui;
 #[command(name = "sedidata")]
 #[command(version, about, long_about = None)]
 struct Args {
-    #[arg(
-        short = 'p',
-        long = "path",
-        default_value = r"C:\Program Files\Riot Games\League of Legends\"
-    )]
-    league_path: String,
-
     /// Load data from local JSON files instead of fetching from the game client
     #[arg(short = 'l', long = "load-local")]
     load_local_json_files: bool,
@@ -33,7 +26,7 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    match DataManager::new(&args.league_path, args.load_local_json_files, args.store_responses) {
+    match DataManager::new(args.load_local_json_files, args.store_responses) {
         Ok(manager) => match repl::run(manager) {
             Ok(_) => return,
             Err(error) => println!("Error occured while running REPL:\n{}\n", error),
