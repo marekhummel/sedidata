@@ -106,7 +106,7 @@ impl DataManager {
                 let champ_select_info = parse_champselect_info(Rc::as_ref(&champ_select_json))?;
                 Ok(Some(champ_select_info))
             }
-            // Err(RequestError::InvalidResponse(_, _)) => Ok(None),
+            Err(RequestError::InvalidResponse(_, _)) => Ok(None),
             Err(err) => Err(err.into()),
         }
     }
