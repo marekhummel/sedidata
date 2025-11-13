@@ -1,7 +1,7 @@
 use std::{
     cell::RefCell,
     collections::{hash_map::Entry, HashMap},
-    fmt,
+    env, fmt,
     fs::{create_dir, File},
     io::{self, BufRead, Read, Write},
     path::Path,
@@ -26,6 +26,7 @@ struct LockFileContent {
 }
 
 pub struct ApiClient {
+    league_install_path: String,
     write_json: bool,
     load_local_json: bool,
     client: Client,
@@ -35,10 +36,11 @@ pub struct ApiClient {
 }
 
 impl ApiClient {
-    pub fn new(read_json_files: bool, write_json: bool) -> Result<Self, ClientInitError> {
-        let (client, base_url) = ApiClient::setup_client(read_json_files)?;
+    pub fn new(league_install_path: &str, read_json_files: bool, write_json: bool) -> Result<Self, ClientInitError> {
+        let (client, base_url) = ApiClient::setup_client(league_install_path, read_json_files)?;
         let cache = RefCell::from(HashMap::new());
         Ok(Self {
+            league_install_path: league_install_path.to_string(),
             write_json,
             load_local_json: read_json_files,
             client,
@@ -48,7 +50,7 @@ impl ApiClient {
         })
     }
 
-    fn setup_client(dummy: bool) -> Result<(Client, String), ClientInitError> {
+    fn setup_client(league_install_path: &str, dummy: bool) -> Result<(Client, String), ClientInitError> {
         if dummy {
             let client = Client::builder().build()?;
             return Ok((client, String::new()));
@@ -58,7 +60,7 @@ impl ApiClient {
         let cert = ApiClient::read_certificate()?;
 
         // Read lockfile and create basic auth secret
-        let lockfile = ApiClient::read_lockfile()?;
+        let lockfile = ApiClient::read_lockfile(league_install_path)?;
         let basic_auth = format!("{}:{}", lockfile.username, lockfile.password);
         let mut base64_enc = EncoderStringWriter::new(&general_purpose::STANDARD);
         base64_enc.write_all(basic_auth.as_bytes())?;
@@ -78,23 +80,43 @@ impl ApiClient {
     }
 
     fn read_certificate() -> Result<Certificate, CertificateError> {
+        // Temp file path
+        let mut cert_path = env::temp_dir();
+        cert_path.push("sedidata");
+        if !cert_path.exists() {
+            std::fs::create_dir_all(&cert_path)?;
+        }
+        cert_path.push("riotgames.pem");
+
+        // Downlaod if missing
+        if !cert_path.exists() {
+            const CERT_URL: &str = "https://static.developer.riotgames.com/docs/lol/riotgames.pem";
+            let client = Client::builder().build()?;
+            let response = client.get(CERT_URL).send()?;
+
+            if !response.status().is_success() {
+                return Err(CertificateError::DownloadFailed(format!(
+                    "Failed to download certificate: HTTP {}",
+                    response.status()
+                )));
+            }
+
+            let cert_data = response.bytes()?;
+            let mut file = File::create(&cert_path)?;
+            file.write_all(&cert_data)?;
+        }
+
+        // Load
         let mut buffer = Vec::new();
-        let mut cert_file = File::open("config/riotgames.pem")?;
+        let mut cert_file = File::open(&cert_path)?;
         cert_file.read_to_end(&mut buffer)?;
         let cert = reqwest::Certificate::from_pem(&buffer)?;
         Ok(cert)
     }
 
-    fn read_lockfile() -> Result<LockFileContent, LockfileError> {
-        // read config file
-        let config_path_file = File::open("config/league_path.txt")?;
-        let league_path = io::BufReader::new(config_path_file)
-            .lines()
-            .next()
-            .ok_or(LockfileError::CantBeRead)??;
-
+    fn read_lockfile(league_install_path: &str) -> Result<LockFileContent, LockfileError> {
         // read lockfile
-        let lol_path = Path::new(league_path.trim());
+        let lol_path = Path::new(league_install_path.trim());
         let lol_lockfile = File::open(lol_path.join("lockfile"))?;
         let content = io::BufReader::new(lol_lockfile)
             .lines()
@@ -176,7 +198,7 @@ impl ApiClient {
     }
 
     pub fn refresh(&mut self) -> Result<(), ClientInitError> {
-        let (client, base_url) = ApiClient::setup_client(self.load_local_json)?;
+        let (client, base_url) = ApiClient::setup_client(&self.league_install_path, self.load_local_json)?;
         self.client = client;
         self.base_url = base_url;
 
@@ -200,6 +222,7 @@ pub enum ClientRequestType {
 pub enum ClientInitError {
     CertMissing(io::Error),
     CertInvalid(reqwest::Error),
+    CertDownloadFailed(String),
     LeagueClientFailed(io::Error),
     LeagueClientInvalid(),
     LockfileAuthStringInvalid(io::Error),
@@ -212,6 +235,7 @@ impl fmt::Display for ClientInitError {
         match self {
             ClientInitError::CertMissing(err) => write!(f, "Certificate missing: {}", err),
             ClientInitError::CertInvalid(err) => write!(f, "Certificate invalid: {}", err),
+            ClientInitError::CertDownloadFailed(msg) => write!(f, "Certificate download failed: {}", msg),
             ClientInitError::LeagueClientFailed(err) => {
                 write!(f, "League client failed, make sure it is running: {}", err)
             }
@@ -228,6 +252,7 @@ impl From<CertificateError> for ClientInitError {
         match cert_err {
             CertificateError::Missing(err) => Self::CertMissing(err),
             CertificateError::Invalid(err) => Self::CertInvalid(err),
+            CertificateError::DownloadFailed(msg) => Self::CertDownloadFailed(msg),
         }
     }
 }
@@ -262,6 +287,7 @@ impl From<reqwest::Error> for ClientInitError {
 enum CertificateError {
     Missing(io::Error),
     Invalid(reqwest::Error),
+    DownloadFailed(String),
 }
 
 impl From<io::Error> for CertificateError {
