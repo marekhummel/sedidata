@@ -1,4 +1,4 @@
-use std::io::stdout;
+use std::{io::stdout, time::Instant};
 
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
@@ -36,6 +36,7 @@ struct App {
     should_refresh: bool,
     scroll_offset: u16,
     pressed_keys: Vec<KeyCode>,
+    last_refresh: Option<Instant>,
 }
 
 impl App {
@@ -47,6 +48,7 @@ impl App {
             state: AppState::Menu,
             scroll_offset: 0,
             pressed_keys: Vec::new(),
+            last_refresh: None,
         }
     }
 
@@ -88,6 +90,36 @@ impl App {
         }
     }
 
+    fn should_refresh_view(&self) -> bool {
+        if let AppState::ViewingOutput(view) = &self.state {
+            if let Some(interval) = view.auto_refresh_interval() {
+                if let Some(last_refresh) = self.last_refresh {
+                    return last_refresh.elapsed().as_secs_f32() >= interval;
+                }
+                // If we've never refreshed, we should refresh now
+                return true;
+            }
+        }
+        false
+    }
+
+    fn refresh_current_view(&mut self, controller: &Controller) {
+        if let AppState::ViewingOutput(view) = &mut self.state {
+            // Preserve scroll position during auto-refresh
+            let _ = view.refresh(controller);
+            self.last_refresh = Some(Instant::now());
+        }
+    }
+
+    fn manual_refresh(&mut self, controller: &Controller) {
+        if let AppState::ViewingOutput(view) = &mut self.state {
+            // Reset scroll position on manual refresh
+            let _ = view.refresh(controller);
+            self.last_refresh = Some(Instant::now());
+            self.scroll_offset = 0;
+        }
+    }
+
     fn run(
         &mut self,
         terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
@@ -99,6 +131,16 @@ impl App {
 
             loop {
                 let summoner_name = manager.get_summoner().game_name.clone();
+
+                // Check if we should auto-refresh the current view
+                if self.should_refresh_view() {
+                    let ctrl = Controller {
+                        manager,
+                        lookup: &lookup,
+                        util: &util,
+                    };
+                    self.refresh_current_view(&ctrl);
+                }
 
                 terminal.draw(|f| {
                     let chunks = Layout::default()
@@ -133,7 +175,7 @@ impl App {
                                 .borders(ratatui::widgets::Borders::ALL)
                                 .padding(ratatui::widgets::Padding::horizontal(1))
                                 .title(format!(
-                                    "{} (↑/↓ or PgUp/PgDown to scroll, Esc/q to return)",
+                                    "{} (↑/↓ or PgUp/PgDown to scroll, r to refresh, Esc/q to return)",
                                     view.title()
                                 ))
                                 .title_style(
@@ -169,6 +211,15 @@ impl App {
                                 self.should_refresh = true;
                                 break;
                             }
+                            KeyCode::Char('r') if !self.is_in_menu() => {
+                                // Manual refresh in view mode
+                                let ctrl = Controller {
+                                    manager,
+                                    lookup: &lookup,
+                                    util: &util,
+                                };
+                                self.manual_refresh(&ctrl);
+                            }
                             KeyCode::Up => self.previous(),
                             KeyCode::Down => self.next(),
                             KeyCode::PageUp => self.page_up(10),
@@ -176,6 +227,7 @@ impl App {
                             KeyCode::Esc | KeyCode::Char('q') if !self.is_in_menu() => {
                                 self.state = AppState::Menu;
                                 self.scroll_offset = 0;
+                                self.last_refresh = None;
                             }
                             KeyCode::Enter if self.is_in_menu() => {
                                 if let Some(factory) = self.menu.get_factory() {
@@ -189,6 +241,7 @@ impl App {
                                     terminal.clear()?;
                                     self.state = AppState::ViewingOutput(view);
                                     self.scroll_offset = 0;
+                                    self.last_refresh = Some(Instant::now());
                                 }
                             }
                             _ => {

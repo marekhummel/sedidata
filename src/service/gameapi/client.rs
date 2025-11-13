@@ -149,8 +149,7 @@ impl ApiClient {
                 // Send request
                 let response = self.client.get(url).send()?;
                 if !response.status().is_success() {
-                    eprintln!("Request failed ({:?}): {:?}.", request_type, response);
-                    return Err(RequestError::InvalidResponse);
+                    return Err(RequestError::InvalidResponse(request_type, Box::new(response)));
                 }
 
                 // Return json
@@ -292,7 +291,7 @@ impl From<io::Error> for LockfileError {
 pub enum RequestError {
     ClientFailed(reqwest::Error),
     SummonerNeeded,
-    InvalidResponse,
+    InvalidResponse(ClientRequestType, Box<reqwest::blocking::Response>),
     ParsingFailed(json::Error),
     LocalFileError(io::Error),
 }
@@ -302,7 +301,11 @@ impl fmt::Display for RequestError {
         match self {
             RequestError::ClientFailed(err) => write!(f, "Client error: {}", err),
             RequestError::SummonerNeeded => write!(f, "Summoner information is needed for this request."),
-            RequestError::InvalidResponse => write!(f, "The server returned an invalid response."),
+            RequestError::InvalidResponse(req_type, response) => write!(
+                f,
+                "The server returned an invalid response for request {:?}: {:?}",
+                req_type, response
+            ),
             RequestError::ParsingFailed(err) => write!(f, "Parsing error: {}", err),
             RequestError::LocalFileError(err) => write!(f, "Local file error: {}", err),
         }

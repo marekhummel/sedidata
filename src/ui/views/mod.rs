@@ -1,4 +1,4 @@
-use crate::ui::{RenderContext, ViewResult};
+use crate::ui::{Controller, RenderContext, ViewResult};
 
 pub mod collection;
 pub mod game;
@@ -23,6 +23,16 @@ pub trait RenderableView {
     fn interact(&mut self, _keys: &[KeyCode]) {}
 
     fn title(&self) -> &str;
+
+    /// Returns the auto-refresh interval in seconds, or None if no auto-refresh
+    fn auto_refresh_interval(&self) -> Option<f32> {
+        None
+    }
+
+    /// Called when the view should refresh its data
+    fn refresh(&mut self, _controller: &Controller) -> Result<(), String> {
+        Ok(())
+    }
 }
 
 pub fn eval_color_scale_descending<T: PartialOrd>(
@@ -187,14 +197,25 @@ macro_rules! header_row {
 /// Macro for simple text-based views
 #[macro_export]
 macro_rules! impl_text_view {
+    // Without auto-refresh
     ($name:ident, $text_render_fn:expr, $title:expr) => {
+        $crate::impl_text_view!(@internal $name, $text_render_fn, $title, None);
+    };
+
+    // With auto-refresh interval
+    ($name:ident, $text_render_fn:expr, $title:expr, auto_refresh: $interval:expr) => {
+        $crate::impl_text_view!(@internal $name, $text_render_fn, $title, Some($interval));
+    };
+
+    // Internal implementation
+    (@internal $name:ident, $text_render_fn:expr, $title:expr, $interval:expr) => {
         pub struct $name {
             lines: Vec<ratatui::text::Line<'static>>,
             error: Option<String>,
         }
 
         impl $name {
-            pub fn new(controller: &Controller) -> Self {
+            fn load_data(controller: &Controller) -> Self {
                 match $text_render_fn(controller) {
                     Ok(lines) => Self { lines, error: None },
                     Err(e) => Self {
@@ -203,11 +224,26 @@ macro_rules! impl_text_view {
                     },
                 }
             }
+
+            pub fn new(controller: &Controller) -> Self {
+                Self::load_data(controller)
+            }
         }
 
         impl $crate::ui::views::RenderableView for $name {
             fn title(&self) -> &str {
                 $title
+            }
+
+            fn auto_refresh_interval(&self) -> Option<f32> {
+                $interval
+            }
+
+            fn refresh(&mut self, controller: &Controller) -> Result<(), String> {
+                let new_data = Self::load_data(controller);
+                self.lines = new_data.lines;
+                self.error = new_data.error;
+                Ok(())
             }
 
             fn render(&self, rc: $crate::ui::RenderContext) -> $crate::ui::ViewResult {

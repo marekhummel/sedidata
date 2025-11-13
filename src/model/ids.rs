@@ -4,7 +4,7 @@ use std::fmt::Display;
 pub struct SummonerId(String);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ChampionId(String);
+pub struct ChampionId(pub String);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct SkinId(String);

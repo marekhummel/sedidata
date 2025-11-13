@@ -159,7 +159,7 @@ impl Menu {
             menu_entry!(item: "Show Summoner Info", SummonerInfoView),
             // Live game
             menu_entry!(group: "Live Game"),
-            menu_entry!(item: "Champ Select Info", ChampSelectInfoView),
+            menu_entry!(item: "Champ Select Info (ARAM)", ChampSelectInfoView),
             // Mastery
             menu_entry!(group: "Mastery"),
             menu_entry!(item: "Sky is the Limit", NextMasteryView, (10..=1000).collect()),
