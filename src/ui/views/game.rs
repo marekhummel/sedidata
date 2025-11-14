@@ -50,7 +50,8 @@ fn format_selectable_champ(entry: ChampionSelectEntry) -> Result<String, ViewErr
 fn get_entries(champ_ids: &[ChampionId], lookup: &LookupService) -> Result<Vec<ChampionSelectEntry>, ViewError> {
     let mut entries = champ_ids
         .iter()
-        .map(|bc| get_champ_info(bc, lookup))
+        .filter(|champ| champ.0 != "0")
+        .map(|champ| get_champ_info(champ, lookup))
         .collect::<Result<Vec<_>, _>>()?;
     entries.sort_by_key(|(champ, mastery)| {
         (
