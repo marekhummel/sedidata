@@ -142,11 +142,13 @@ impl App {
                     self.refresh_current_view(&ctrl);
                 }
 
+                let mut view_height = 0; // Placeholder initialization
                 terminal.draw(|f| {
                     let chunks = Layout::default()
                         .direction(Direction::Vertical)
                         .constraints([Constraint::Length(3), Constraint::Min(0)])
                         .split(f.size());
+                    view_height = chunks[1].height;
 
                     // Title with subtle welcome message
                     let title = Paragraph::new(format!(" Welcome, {}!", summoner_name))
@@ -226,8 +228,8 @@ impl App {
                             }
                             KeyCode::Up => self.previous(),
                             KeyCode::Down => self.next(),
-                            KeyCode::PageUp => self.page_up(10),
-                            KeyCode::PageDown => self.page_down(10),
+                            KeyCode::PageUp => self.page_up(view_height / 2),
+                            KeyCode::PageDown => self.page_down(view_height / 2),
                             KeyCode::Esc | KeyCode::Char('q') if !self.is_in_menu() => {
                                 self.state = AppState::Menu;
                                 self.scroll_offset = 0;
