@@ -389,19 +389,23 @@ impl RenderableView for AllMasteriesView {
 
 pub struct NextMasteryView {
     internal: MasteryView,
+    title: String,
 }
 
 impl NextMasteryView {
-    pub fn new(controller: &Controller, lvl_range: Vec<u16>) -> Self {
+    pub fn new(controller: &Controller, lvl_range: Vec<u16>, title_range: &str) -> Self {
         let mut internal = MasteryView::new(true, false, true);
         internal.load_masteries(controller, Some(lvl_range));
-        Self { internal }
+        Self {
+            internal,
+            title: format!("Mastery Level {} Champions", title_range),
+        }
     }
 }
 
 impl RenderableView for NextMasteryView {
     fn title(&self) -> &str {
-        "Mastery Level X Champions"
+        self.title.as_str()
     }
 
     fn interact(&mut self, keys: &[KeyCode]) {

@@ -149,10 +149,10 @@ impl Menu {
                     factory: Some(|ctrl| Box::new(<$view>::new(ctrl))),
                 }
             };
-            (item: $desc:expr, $view:ty, $args:expr) => {
+            (item: $desc:expr, $view:ty, $($args:expr),+) => {
                 MenuEntry {
                     description: $desc,
-                    factory: Some(|ctrl| Box::new(<$view>::new(ctrl, $args))),
+                    factory: Some(|ctrl| Box::new(<$view>::new(ctrl, $($args),+))),
                 }
             };
         }
@@ -167,10 +167,10 @@ impl Menu {
             // Mastery
             menu_entry!(group: "Mastery"),
             menu_entry!(item: "All Masteries", AllMasteriesView),
-            menu_entry!(item: "Sky is the Limit", NextMasteryView, (10..=1000).collect()),
-            menu_entry!(item: "Mastery 10 Milestone", NextMasteryView, vec![7, 8, 9]),
-            menu_entry!(item: "Mastery  7 Milestone", NextMasteryView, vec![5, 6]),
-            menu_entry!(item: "Mastery  5 Milestone", NextMasteryView, vec![3, 4]),
+            menu_entry!(item: "Sky is the Limit", NextMasteryView, (10..=1000).collect(), "10+"),
+            menu_entry!(item: "Mastery 10 Milestone", NextMasteryView, vec![7, 8, 9], "7-9"),
+            menu_entry!(item: "Mastery  7 Milestone", NextMasteryView, vec![5, 6], "5-6"),
+            menu_entry!(item: "Mastery  5 Milestone", NextMasteryView, vec![3, 4], "3-4"),
             menu_entry!(item: "Unplayed Champions", UnplayedChampsView),
             // Progress
             menu_entry!(group: "Progress"),
