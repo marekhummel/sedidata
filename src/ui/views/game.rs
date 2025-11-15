@@ -71,10 +71,10 @@ fn champ_select_info_view(ctrl: &Controller) -> TextCreationResult {
 
     match ctrl.manager.get_champ_select_info()? {
         Some(champ_select_info) => {
-            lines.push(styled_line!("Currently selected champ:"; Color::Cyan));
+            lines.push(styled_line!("Currently selected champ:"; Color::Rgb(200, 150, 0)));
             let current_champ = champ_select_info.current_champ_id;
             if current_champ == ChampionId("0".into()) {
-                lines.push(styled_line!("  Not yet selected"; Color::Yellow));
+                lines.push(styled_line!("  Not yet selected"; Color::LightBlue));
             } else {
                 lines.push(styled_line!(
                     "{}",
@@ -83,7 +83,7 @@ fn champ_select_info_view(ctrl: &Controller) -> TextCreationResult {
             }
 
             lines.push(styled_line!());
-            lines.push(styled_line!("Benched Champions:"; Color::Cyan));
+            lines.push(styled_line!("Benched Champions:"; Color::Rgb(200, 150, 0)));
             let benched = get_entries(&champ_select_info.benched_champs, ctrl.lookup)?;
 
             for entry in benched {
@@ -91,7 +91,7 @@ fn champ_select_info_view(ctrl: &Controller) -> TextCreationResult {
             }
 
             lines.push(styled_line!());
-            lines.push(styled_line!("Tradable Champions:"; Color::Cyan));
+            lines.push(styled_line!("Tradable Champions:"; Color::Rgb(200, 150, 0)));
 
             let team = get_entries(&champ_select_info.team_champs, ctrl.lookup)?;
             for entry in team {

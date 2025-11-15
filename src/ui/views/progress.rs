@@ -185,9 +185,9 @@ impl RenderableView for ChallengesOverviewView {
             rows.push(
                 fill_row!(5; Cell::from(Line::from(vec![Span::styled(
                     format!("━━ {} ━━", category),
-                    Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
+                    Style::default().fg(Color::LightBlue).add_modifier(Modifier::BOLD),
                 )])))
-                .style(Style::default().fg(Color::Cyan)),
+                .style(Style::default().fg(Color::LightBlue)),
             );
 
             // Add challenge rows
@@ -198,7 +198,7 @@ impl RenderableView for ChallengesOverviewView {
                 // Determine game mode display with color coding
                 let gamemode_cell = match challenge.gamemode_short() {
                     "SR" => Cell::from(Span::styled("SR", Style::default().fg(Color::Rgb(210, 180, 140)))),
-                    "HA" => Cell::from(Span::styled("HA", Style::default().fg(Color::Cyan))),
+                    "HA" => Cell::from(Span::styled("HA", Style::default().fg(Color::Rgb(200, 150, 0)))),
                     _ => Cell::from("-"),
                 };
 
@@ -236,7 +236,7 @@ impl RenderableView for ChallengesOverviewView {
         let table = Table::new(visible_rows, self.columns())
             .header(
                 self.header_with_sorting()
-                    .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
+                    .style(Style::default().fg(Color::LightBlue).add_modifier(Modifier::BOLD))
                     .bottom_margin(1),
             )
             .block(rc.block.title("(S to change sorting)"))

@@ -30,7 +30,7 @@ fn champions_without_skin_view(ctrl: &Controller) -> TextCreationResult {
     }
 
     lines.push(styled_line!());
-    lines.push(styled_line!("{} champion(s) total", champs_no_skin.len(); Color::Cyan));
+    lines.push(styled_line!("{} champion(s) total", champs_no_skin.len(); Color::Rgb(200, 150, 0)));
 
     Ok(lines)
 }

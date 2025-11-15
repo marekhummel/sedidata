@@ -37,7 +37,7 @@ fn blue_essence_overview_view(ctrl: &Controller) -> TextCreationResult {
         styled_line!(),
         styled_line!(LIST [
             styled_span!("Current BE:                                 "),
-            styled_span!(be; Bold Color::Cyan),
+            styled_span!(be; Bold Color::Rgb(200, 150, 0)),
         ]),
         styled_line!("Convertable BE:                             {}", convertable),
         styled_line!("Convertable BE (Keep one shard per champ):  {}", keep1),
@@ -77,7 +77,7 @@ fn missing_champ_shards_view(ctrl: &Controller) -> TextCreationResult {
     }
 
     lines.push(styled_line!());
-    lines.push(styled_line!("{} champ(s) total", missing_cs.len(); Color::Cyan));
+    lines.push(styled_line!("{} champ(s) total", missing_cs.len(); Color::Rgb(200, 150, 0)));
     Ok(lines)
 }
 

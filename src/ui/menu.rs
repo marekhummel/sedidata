@@ -80,7 +80,7 @@ impl Menu {
                 // Group header - cyan bold
                 items.push(
                     ListItem::new(format!("━━ {} ━━", entry.description))
-                        .style(Style::default().fg(Color::LightCyan).add_modifier(Modifier::BOLD)),
+                        .style(Style::default().fg(Color::LightYellow).add_modifier(Modifier::BOLD)),
                 );
             } else {
                 // Regular menu item - subtle indicator for selected item
@@ -108,10 +108,14 @@ impl Menu {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .border_style(Style::default().fg(Color::Cyan))
+                    .border_style(Style::default().fg(Color::Rgb(200, 150, 0)))
                     .padding(ratatui::widgets::Padding::uniform(1))
                     .title("Commands (↑/↓ to navigate, Enter to select)")
-                    .title_style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+                    .title_style(
+                        Style::default()
+                            .fg(Color::Rgb(200, 150, 0))
+                            .add_modifier(Modifier::BOLD),
+                    ),
             )
             .highlight_style(Style::default().bg(Color::White).fg(Color::Black))
             .highlight_symbol("");

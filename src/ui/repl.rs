@@ -154,9 +154,13 @@ impl App {
                         .block(
                             Block::default()
                                 .borders(Borders::ALL)
-                                .border_style(Style::default().fg(Color::Cyan))
+                                .border_style(Style::default().fg(Color::Rgb(200, 150, 0)))
                                 .title("Sedidata - LoL Special Statistics")
-                                .title_style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+                                .title_style(
+                                    Style::default()
+                                        .fg(Color::Rgb(200, 150, 0))
+                                        .add_modifier(Modifier::BOLD),
+                                ),
                         );
                     f.render_widget(title, chunks[0]);
 
@@ -180,10 +184,10 @@ impl App {
                                 ))
                                 .title_style(
                                     Style::default()
-                                        .fg(Color::Cyan)
+                                        .fg(Color::Rgb(200, 150, 0))
                                         .add_modifier(ratatui::style::Modifier::BOLD),
                                 )
-                                .border_style(Style::default().fg(Color::Cyan));
+                                .border_style(Style::default().fg(Color::Rgb(200, 150, 0)));
 
                             let rc = RenderContext {
                                 frame: f,

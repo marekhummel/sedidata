@@ -40,7 +40,7 @@ fn unplayed_champs_view(ctrl: &Controller) -> TextCreationResult {
     }
 
     lines.push(styled_line!());
-    lines.push(styled_line!("{} champ(s) total", unplayed.len(); Color::Cyan));
+    lines.push(styled_line!("{} champ(s) total", unplayed.len(); Color::Rgb(200, 150, 0)));
     Ok(lines)
 }
 
@@ -202,7 +202,7 @@ impl MasteryView {
         let table = Table::new(visible_rows, self.columns())
             .header(
                 self.header_row()
-                    .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
+                    .style(Style::default().fg(Color::LightBlue).add_modifier(Modifier::BOLD))
                     .bottom_margin(1),
             )
             .block(self.modify_block(rc.block))
