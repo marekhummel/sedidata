@@ -7,8 +7,16 @@ use crate::{
     styled_line, styled_span,
     ui::{
         views::{eval_color_scale_ascending, eval_color_scale_descending, RenderableView},
-        Controller, TextCreationResult,
+        Controller, RenderContext, TextCreationResult, ViewError, ViewResult,
     },
+};
+use crossterm::event::KeyCode;
+use itertools::Itertools;
+use ratatui::{
+    layout::{Alignment, Constraint},
+    style::{Color, Modifier, Style},
+    text::Span,
+    widgets::{Block, Cell, Paragraph, Row, Table},
 };
 
 // ============================================================================
@@ -39,161 +47,100 @@ fn unplayed_champs_view(ctrl: &Controller) -> TextCreationResult {
 impl_text_view!(UnplayedChampsView, unplayed_champs_view, "Unplayed Champions");
 
 // ============================================================================
-// Next mastery view
+// All Masteries View
 // ============================================================================
 
-use crossterm::event::KeyCode;
-use itertools::Itertools;
-use ratatui::{
-    layout::{Alignment, Constraint},
-    style::{Color, Modifier, Style},
-    text::Span,
-    widgets::{Cell, Paragraph, Row, Table},
-};
-
-pub struct NextMasteryView {
+struct MasteryView {
     data: Vec<(Mastery, Champion)>,
     error: Option<String>,
+    with_role: bool,
     grouping_enabled: bool,
+    sorting_enabled: bool,
+    grouping_status: bool,
+    sorting_status: u8,
 }
 
-impl NextMasteryView {
-    pub fn new(controller: &Controller, lvl_range: Vec<u16>) -> Self {
-        match Self::load_masteries(controller, lvl_range) {
-            Ok(data) => Self {
-                data,
-                error: None,
-                grouping_enabled: false,
-            },
-            Err(e) => Self {
-                data: Vec::new(),
-                error: Some(format!("Failed to load masteries: {}", e)),
-                grouping_enabled: false,
-            },
+impl MasteryView {
+    pub fn new(grouping: bool, sorting: bool, with_role: bool) -> Self {
+        Self {
+            data: Vec::new(),
+            error: None,
+            with_role,
+            grouping_enabled: grouping,
+            sorting_enabled: sorting,
+            grouping_status: false,
+            sorting_status: 0,
         }
     }
 
-    fn load_masteries(
-        ctrl: &Controller,
-        lvl_range: Vec<u16>,
-    ) -> Result<Vec<(Mastery, Champion)>, crate::ui::ViewError> {
-        let mut masteries = ctrl.util.get_masteries_with_level(lvl_range)?;
-        masteries.sort_by_key(|m| (m.level, m.points));
-        masteries.reverse();
+    pub fn load_masteries(&mut self, ctrl: &Controller, lvl_range: Option<Vec<u16>>) {
+        let masteries: Result<Vec<(Mastery, Champion)>, ViewError> = (|| {
+            let mastery_list = match lvl_range {
+                None => ctrl.manager.get_masteries()?.iter().collect(),
+                Some(rng) => ctrl.util.get_masteries_with_level(rng)?,
+            };
 
-        let mut result = Vec::new();
-        for mastery in masteries {
-            let champ = ctrl.lookup.get_champion(&mastery.champ_id)?;
-            result.push((mastery.clone(), champ.clone()));
-        }
+            let mut result = Vec::new();
+            for mastery in mastery_list {
+                let champ = ctrl.lookup.get_champion(&mastery.champ_id)?;
+                result.push((mastery.clone(), champ.clone()));
+            }
+            result.sort_by_key(|(m, _)| (m.level, m.points));
+            result.reverse();
 
-        Ok(result)
-    }
+            Ok(result)
+        })();
 
-    fn columns(&self) -> [Constraint; 7] {
-        [
-            Constraint::Length(20), // Champion
-            Constraint::Length(10), // Roles (3 chars * 3 roles + spaces)
-            Constraint::Length(4),  // Level
-            Constraint::Length(20), // Points (right padded)
-            Constraint::Length(8),  // Missing (right padded)
-            Constraint::Length(10), // Marks (right padded)
-            Constraint::Min(20),    // Next Milestone
-        ]
-    }
-
-    fn role_abbreviation(role: &str) -> Span<'_> {
-        match role.to_lowercase().as_str() {
-            "assassin" => styled_span!("ASS"; Color::Red),
-            "mage" => styled_span!("MGE"; Color::Blue),
-            "tank" => styled_span!("TNK"; Color::Green),
-            "fighter" => styled_span!("FGT"; Color::Yellow),
-            "marksman" => styled_span!("MRK"; Color::Cyan),
-            "support" => styled_span!("SUP"; Color::Magenta),
-            _ => styled_span!("???"; Color::White),
+        match masteries {
+            Ok(data) => self.data = data,
+            Err(e) => self.error = Some(format!("Failed to load masteries: {}", e)),
         }
     }
 
-    fn missing_points_scale(&self) -> Vec<(i32, Color)> {
-        vec![
-            (0, Color::Green),
-            (2000, Color::Rgb(200, 255, 100)),
-            (5000, Color::Yellow),
-            (i32::MAX, Color::White),
-        ]
-    }
+    pub fn check_keys(&mut self, keys: &[KeyCode]) {
+        if self.grouping_enabled && keys.contains(&KeyCode::Char('g')) {
+            self.grouping_status = !self.grouping_status;
+        }
 
-    fn progress_scale(&self) -> Vec<(f32, Color)> {
-        vec![
-            (0.99, Color::Green),
-            (0.7, Color::Rgb(200, 255, 100)),
-            (0.5, Color::Yellow),
-            (0.0, Color::White),
-        ]
-    }
-
-    fn format_milestone(milestone: &Milestone) -> String {
-        let grades = milestone
-            .require_grade_counts
-            .iter()
-            .map(|(grade, count)| format!("{}x {}", count, grade))
-            .collect::<Vec<_>>()
-            .join(", ");
-        format!("{} ⇒ {} mark(s)", grades, milestone.reward_marks)
-    }
-
-    fn render_row<'a>(&'a self, mastery: &'a Mastery, champ: &'a Champion, max_points_log: usize) -> Row<'a> {
-        // Create colored role abbreviations
-        let role_spans: Vec<Span> = champ
-            .roles
-            .iter()
-            .sorted_by_key(|r| *r)
-            .map(|r| Self::role_abbreviation(r.trim()))
-            .enumerate()
-            .flat_map(|(i, span)| if i > 0 { vec![Span::raw(" "), span] } else { vec![span] })
-            .collect();
-
-        // Color code missing points
-        let missing = mastery.missing_points.max(0);
-        let points_color = eval_color_scale_ascending(missing, &self.missing_points_scale());
-
-        // Color code marks progress
-        let marks_progress = mastery.marks as f32 / mastery.required_marks as f32;
-        let marks_color = eval_color_scale_descending(marks_progress, &self.progress_scale());
-        let marks_line = (mastery.required_marks > 0)
-            .then(|| styled_line!("{}/{}", mastery.marks, mastery.required_marks; marks_color))
-            .unwrap_or(styled_line!(""));
-
-        Row::new(vec![
-            Cell::from(champ.name.clone()),
-            Cell::from(styled_line!(VAR role_spans)),
-            Cell::from(styled_line!(mastery.level).alignment(Alignment::Right)),
-            Cell::from(
-                styled_line!(LIST [
-                    styled_span!(mastery.points),
-                    styled_span!(" / {:>1$}", mastery.required_points(), max_points_log; Color::DarkGray),
-                ])
-                .alignment(Alignment::Right),
-            ),
-            Cell::from(styled_line!("{}", missing; points_color).alignment(Alignment::Right)),
-            Cell::from(marks_line.alignment(Alignment::Right)),
-            Cell::from(Self::format_milestone(&mastery.next_milestone)),
-        ])
-    }
-}
-
-impl RenderableView for NextMasteryView {
-    fn title(&self) -> &str {
-        "Mastery Level X Champions"
-    }
-
-    fn interact(&mut self, keys: &[KeyCode]) {
-        if keys.contains(&KeyCode::Char('g')) {
-            self.grouping_enabled = !self.grouping_enabled;
+        if self.sorting_enabled && keys.contains(&KeyCode::Char('s')) {
+            self.sorting_status = (self.sorting_status + 1) % 2;
+            match self.sorting_status {
+                0 => {
+                    self.data.sort_by_key(|(m, _)| (m.level, m.points));
+                    self.data.reverse();
+                }
+                1 => {
+                    self.data.sort_by_key(|(_, champ)| champ.name.clone());
+                }
+                _ => unreachable!(),
+            }
         }
     }
 
-    fn render(&self, rc: crate::ui::RenderContext) -> crate::ui::ViewResult {
+    fn columns(&self) -> Vec<Constraint> {
+        if self.with_role {
+            vec![
+                Constraint::Length(20), // Champion
+                Constraint::Length(10), // Roles (3 chars * 3 roles + spaces)
+                Constraint::Length(4),  // Level
+                Constraint::Length(20), // Points (right padded)
+                Constraint::Length(8),  // Missing (right padded)
+                Constraint::Length(10), // Marks (right padded)
+                Constraint::Min(20),    // Next Milestone
+            ]
+        } else {
+            vec![
+                Constraint::Length(20), // Champion
+                Constraint::Length(4),  // Level
+                Constraint::Length(20), // Points (right padded)
+                Constraint::Length(8),  // Missing (right padded)
+                Constraint::Length(10), // Marks (right padded)
+                Constraint::Min(20),    // Next Milestone
+            ]
+        }
+    }
+
+    pub fn render(&self, rc: RenderContext) -> ViewResult {
         if let Some(error) = &self.error {
             let paragraph = Paragraph::new(format!("\n  [!] Error: {}", error)).block(rc.block);
             rc.frame.render_widget(paragraph, rc.area);
@@ -201,7 +148,9 @@ impl RenderableView for NextMasteryView {
         }
 
         let mut rows = vec![];
-        if self.grouping_enabled {
+        if self.grouping_status {
+            assert!(self.with_role, "Grouping by role requires 'with_role' to be enabled.");
+
             // Group champions by role (each champion can appear in multiple groups)
             let role_order = vec!["assassin", "fighter", "mage", "marksman", "support", "tank"];
 
@@ -252,6 +201,128 @@ impl RenderableView for NextMasteryView {
 
         let table = Table::new(visible_rows, self.columns())
             .header(
+                self.header_row()
+                    .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
+                    .bottom_margin(1),
+            )
+            .block(self.modify_block(rc.block))
+            .column_spacing(2)
+            .style(Style::default().fg(Color::White));
+
+        rc.frame.render_widget(table, rc.area);
+        Ok(())
+    }
+
+    fn role_abbreviation(role: &str) -> Span<'_> {
+        match role.to_lowercase().as_str() {
+            "assassin" => styled_span!("ASS"; Color::Red),
+            "mage" => styled_span!("MGE"; Color::Blue),
+            "tank" => styled_span!("TNK"; Color::Green),
+            "fighter" => styled_span!("FGT"; Color::Yellow),
+            "marksman" => styled_span!("MRK"; Color::Cyan),
+            "support" => styled_span!("SUP"; Color::Magenta),
+            _ => styled_span!("???"; Color::White),
+        }
+    }
+
+    fn missing_points_scale() -> Vec<(i32, Color)> {
+        vec![
+            (0, Color::Green),
+            (2000, Color::Rgb(200, 255, 100)),
+            (5000, Color::Yellow),
+            (i32::MAX, Color::White),
+        ]
+    }
+
+    fn progress_scale() -> Vec<(f32, Color)> {
+        vec![
+            (0.99, Color::Green),
+            (0.7, Color::Rgb(200, 255, 100)),
+            (0.5, Color::Yellow),
+            (0.0, Color::White),
+        ]
+    }
+
+    fn render_row<'a>(&'a self, mastery: &'a Mastery, champ: &'a Champion, max_points_log: usize) -> Row<'a> {
+        // Color code missing points
+        let missing = mastery.missing_points.max(0);
+        let points_color = eval_color_scale_ascending(missing, &MasteryView::missing_points_scale());
+
+        // Color code marks progress
+        let marks_progress = mastery.marks as f32 / mastery.required_marks as f32;
+        let marks_color = eval_color_scale_descending(marks_progress, &MasteryView::progress_scale());
+        let marks_line = (mastery.required_marks > 0)
+            .then(|| styled_line!("{}/{}", mastery.marks, mastery.required_marks; marks_color))
+            .unwrap_or(styled_line!(""));
+
+        // Cells
+        let mut cells = vec![
+            Cell::from(champ.name.clone()),
+            Cell::from(styled_line!(mastery.level).alignment(Alignment::Right)),
+            Cell::from(
+                styled_line!(LIST [
+                    styled_span!(mastery.points),
+                    styled_span!(" / {:>1$}", mastery.required_points(), max_points_log; Color::DarkGray),
+                ])
+                .alignment(Alignment::Right),
+            ),
+            Cell::from(styled_line!("{}", missing; points_color).alignment(Alignment::Right)),
+            Cell::from(marks_line.alignment(Alignment::Right)),
+            Cell::from(Self::format_milestone(&mastery.next_milestone)),
+        ];
+
+        if self.with_role {
+            // Create colored role abbreviations
+            let role_spans: Vec<Span> = champ
+                .roles
+                .iter()
+                .sorted_by_key(|r| *r)
+                .map(|r| Self::role_abbreviation(r.trim()))
+                .enumerate()
+                .flat_map(|(i, span)| if i > 0 { vec![Span::raw(" "), span] } else { vec![span] })
+                .collect();
+
+            cells.insert(1, Cell::from(styled_line!(VAR role_spans)));
+        }
+
+        Row::new(cells)
+    }
+
+    fn format_milestone(milestone: &Milestone) -> String {
+        let grades = milestone
+            .require_grade_counts
+            .iter()
+            .map(|(grade, count)| format!("{}x {}", count, grade))
+            .collect::<Vec<_>>()
+            .join(", ");
+        format!("{} ⇒ {} mark(s)", grades, milestone.reward_marks)
+    }
+
+    fn header_row<'a>(&'a self) -> Row<'a> {
+        if self.with_role {
+            if self.sorting_enabled {
+                match self.sorting_status {
+                    0 => header_row!(
+                        "Champion",
+                        "Roles",
+                        "Lvl↓",
+                        "Points↓",
+                        "Missing",
+                        "Marks",
+                        "Next Milestone"
+                    ),
+                    1 => header_row!(
+                        "Champion↑",
+                        "Roles",
+                        "Lvl",
+                        "Points",
+                        "Missing",
+                        "Marks",
+                        "Next Milestone"
+                    ),
+                    _ => unreachable!(),
+                }
+            } else {
                 header_row!(
                     "Champion",
                     "Roles",
@@ -261,14 +332,83 @@ impl RenderableView for NextMasteryView {
                     "Marks",
                     "Next Milestone"
                 )
-                .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
-                .bottom_margin(1),
-            )
-            .block(rc.block.title("(G to toggle grouping)"))
-            .column_spacing(2)
-            .style(Style::default().fg(Color::White));
+            }
+        } else if self.sorting_enabled {
+            match self.sorting_status {
+                0 => header_row!("Champion", "Lvl↓", "Points↓", "Missing", "Marks", "Next Milestone"),
+                1 => header_row!("Champion↑", "Lvl", "Points", "Missing", "Marks", "Next Milestone"),
+                _ => unreachable!(),
+            }
+        } else {
+            header_row!("Champion", "Lvl", "Points", "Missing", "Marks", "Next Milestone")
+        }
+    }
 
-        rc.frame.render_widget(table, rc.area);
-        Ok(())
+    fn modify_block<'a>(&'a self, block: Block<'a>) -> Block<'a> {
+        let mut block_mod = block;
+        if self.grouping_enabled {
+            block_mod = block_mod.title("(G to toggle grouping) ");
+        }
+        if self.sorting_enabled {
+            block_mod = block_mod.title("(S to toggle sorting) ");
+        }
+
+        block_mod
+    }
+}
+
+pub struct AllMasteriesView {
+    internal: MasteryView,
+}
+
+impl AllMasteriesView {
+    pub fn new(controller: &Controller) -> Self {
+        let mut internal = MasteryView::new(false, true, false);
+        internal.load_masteries(controller, None);
+        Self { internal }
+    }
+}
+
+impl RenderableView for AllMasteriesView {
+    fn title(&self) -> &str {
+        "All Masteries"
+    }
+
+    fn interact(&mut self, keys: &[KeyCode]) {
+        self.internal.check_keys(keys);
+    }
+
+    fn render(&self, rc: RenderContext) -> ViewResult {
+        self.internal.render(rc)
+    }
+}
+
+// ============================================================================
+// Next mastery view
+// ============================================================================
+
+pub struct NextMasteryView {
+    internal: MasteryView,
+}
+
+impl NextMasteryView {
+    pub fn new(controller: &Controller, lvl_range: Vec<u16>) -> Self {
+        let mut internal = MasteryView::new(true, false, true);
+        internal.load_masteries(controller, Some(lvl_range));
+        Self { internal }
+    }
+}
+
+impl RenderableView for NextMasteryView {
+    fn title(&self) -> &str {
+        "Mastery Level X Champions"
+    }
+
+    fn interact(&mut self, keys: &[KeyCode]) {
+        self.internal.check_keys(keys);
+    }
+
+    fn render(&self, rc: crate::ui::RenderContext) -> crate::ui::ViewResult {
+        self.internal.render(rc)
     }
 }

@@ -164,7 +164,7 @@ impl RenderableView for ChallengesOverviewView {
                         // Sort by description ascending
                         challenges.sort_by_key(|c| c.description.clone());
                     }
-                    _ => {}
+                    _ => unreachable!(),
                 }
             }
         }

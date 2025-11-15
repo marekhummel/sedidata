@@ -162,6 +162,7 @@ impl Menu {
             menu_entry!(item: "Champ Select Info (ARAM)", ChampSelectInfoView),
             // Mastery
             menu_entry!(group: "Mastery"),
+            menu_entry!(item: "All Masteries", AllMasteriesView),
             menu_entry!(item: "Sky is the Limit", NextMasteryView, (10..=1000).collect()),
             menu_entry!(item: "Mastery 10 Milestone", NextMasteryView, vec![7, 8, 9]),
             menu_entry!(item: "Mastery  7 Milestone", NextMasteryView, vec![5, 6]),

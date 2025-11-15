@@ -65,6 +65,8 @@ fn get_entries(champ_ids: &[ChampionId], lookup: &LookupService) -> Result<Vec<C
 }
 
 fn champ_select_info_view(ctrl: &Controller) -> TextCreationResult {
+    // Verify queue id
+
     let mut lines = Vec::new();
 
     match ctrl.manager.get_champ_select_info()? {
