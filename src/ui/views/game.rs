@@ -65,37 +65,45 @@ fn get_entries(champ_ids: &[ChampionId], lookup: &LookupService) -> Result<Vec<C
 }
 
 fn champ_select_info_view(ctrl: &Controller) -> TextCreationResult {
-    // Verify queue id
-
     let mut lines = Vec::new();
 
     match ctrl.manager.get_champ_select_info()? {
         Some(champ_select_info) => {
-            lines.push(styled_line!("Currently selected champ:"; Color::Rgb(200, 150, 0)));
-            let current_champ = champ_select_info.current_champ_id;
-            if current_champ == ChampionId("0".into()) {
-                lines.push(styled_line!("  Not yet selected"; Color::LightBlue));
-            } else {
-                lines.push(styled_line!(
-                    "{}",
-                    format_selectable_champ(get_champ_info(&current_champ, ctrl.lookup)?)?
-                ));
-            }
+            let queue = ctrl.lookup.get_queue(champ_select_info.queue_id)?;
 
-            lines.push(styled_line!());
-            lines.push(styled_line!("Benched Champions:"; Color::Rgb(200, 150, 0)));
-            let benched = get_entries(&champ_select_info.benched_champs, ctrl.lookup)?;
+            match queue.gamemode.as_str() {
+                "ARAM" => {
+                    lines.push(styled_line!("Currently selected champ:"; Color::Rgb(200, 150, 0)));
+                    let current_champ = champ_select_info.current_champ_id;
+                    if current_champ == ChampionId("0".into()) {
+                        lines.push(styled_line!("  Not yet selected"; Color::LightBlue));
+                    } else {
+                        lines.push(styled_line!(
+                            "{}",
+                            format_selectable_champ(get_champ_info(&current_champ, ctrl.lookup)?)?
+                        ));
+                    }
 
-            for entry in benched {
-                lines.push(styled_line!("{}", format_selectable_champ(entry)?));
-            }
+                    lines.push(styled_line!());
+                    lines.push(styled_line!("Benched Champions:"; Color::Rgb(200, 150, 0)));
+                    let benched = get_entries(&champ_select_info.benched_champs, ctrl.lookup)?;
 
-            lines.push(styled_line!());
-            lines.push(styled_line!("Tradable Champions:"; Color::Rgb(200, 150, 0)));
+                    for entry in benched {
+                        lines.push(styled_line!("{}", format_selectable_champ(entry)?));
+                    }
 
-            let team = get_entries(&champ_select_info.team_champs, ctrl.lookup)?;
-            for entry in team {
-                lines.push(styled_line!("{}", format_selectable_champ(entry)?));
+                    lines.push(styled_line!());
+                    lines.push(styled_line!("Tradable Champions:"; Color::Rgb(200, 150, 0)));
+
+                    let team = get_entries(&champ_select_info.team_champs, ctrl.lookup)?;
+                    for entry in team {
+                        lines.push(styled_line!("{}", format_selectable_champ(entry)?));
+                    }
+                }
+                _ => lines.extend(vec![
+                    styled_line!(),
+                    styled_line!("  This view only supports ARAM champ selects"; Color::Yellow),
+                ]),
             }
         }
         None => lines.extend(vec![styled_line!(), styled_line!("  Not in champ select!"; Color::Red)]),

@@ -8,6 +8,11 @@ use super::ParsingError;
 
 pub fn parse_champselect_info(json: &JsonValue) -> Result<ChampSelectInfo, ParsingError> {
     if let JsonValue::Object(obj) = json {
+        // Queue
+        let queue_id = obj["queueId"]
+            .as_u16()
+            .ok_or(ParsingError::InvalidType("queueId".into()))?;
+
         // Benched
         let bench_json = &obj["benchChampions"];
         let bench = parse_bench_champions(bench_json)?;
@@ -28,6 +33,7 @@ pub fn parse_champselect_info(json: &JsonValue) -> Result<ChampSelectInfo, Parsi
             current_champ_id,
             team_champs,
             benched_champs: bench,
+            queue_id,
         });
     }
 

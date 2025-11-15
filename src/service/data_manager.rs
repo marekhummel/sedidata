@@ -6,7 +6,7 @@ use crate::{
     model::{
         challenge::Challenge,
         champion::{AllChampionInfo, Champion, Chroma, Skin},
-        champselect::ChampSelectInfo,
+        champselect::{ChampSelectInfo, QueueInfo},
         loot::LootItems,
         mastery::Mastery,
         summoner::Summoner,
@@ -18,7 +18,7 @@ use super::gameapi::{
     client::{ApiClient, ClientInitError, ClientRequestType, RequestError},
     parsing::{
         champion::parse_champions, champselect::parse_champselect_info, loot::parse_loot, mastery::parse_masteries,
-        summoner::parse_summoner, ParsingError,
+        queues::parse_queues, summoner::parse_summoner, ParsingError,
     },
 };
 
@@ -29,6 +29,7 @@ pub struct DataManager {
     masteries_cache: OnceCell<Vec<Mastery>>,
     loot_cache: OnceCell<LootItems>,
     challenges_cache: OnceCell<Vec<Challenge>>,
+    queues_cache: OnceCell<Vec<QueueInfo>>,
 }
 
 impl DataManager {
@@ -44,6 +45,7 @@ impl DataManager {
             masteries_cache: OnceCell::new(),
             loot_cache: OnceCell::new(),
             challenges_cache: OnceCell::new(),
+            queues_cache: OnceCell::new(),
         })
     }
 
@@ -115,6 +117,14 @@ impl DataManager {
         })
     }
 
+    pub fn get_queue_types(&self) -> DataRetrievalResult<&Vec<QueueInfo>> {
+        self.queues_cache.get_or_try_init(|| {
+            let queues_json = self.client.request(ClientRequestType::QueueTypes, true)?;
+            let queues = parse_queues(Rc::as_ref(&queues_json))?;
+            Ok(queues)
+        })
+    }
+
     pub fn refresh(&mut self) -> DataRetrievalResult<()> {
         self.client.refresh()?;
         let summoner = DataManager::retrieve_summoner(&mut self.client)?;
@@ -124,6 +134,7 @@ impl DataManager {
         self.masteries_cache = OnceCell::new();
         self.loot_cache = OnceCell::new();
         self.challenges_cache = OnceCell::new();
+        self.queues_cache = OnceCell::new();
         Ok(())
     }
 

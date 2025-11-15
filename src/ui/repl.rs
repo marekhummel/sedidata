@@ -272,8 +272,9 @@ impl App {
         let skins = manager.get_skins()?;
         let masteries = manager.get_masteries()?;
         let challenges = manager.get_challenges()?;
+        let queues = manager.get_queue_types()?;
 
-        Ok(LookupService::new(champions, skins, masteries, challenges))
+        Ok(LookupService::new(champions, skins, masteries, challenges, queues))
     }
 }
 

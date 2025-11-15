@@ -236,6 +236,9 @@ impl ApiClient {
                     ClientRequestType::Challenges => {
                         format!("{}lol-challenges/v1/challenges/local-player", self.base_url)
                     }
+                    ClientRequestType::QueueTypes => {
+                        format!("{}lol-game-queues/v1/queues", self.base_url)
+                    }
                 };
 
                 // Send request
@@ -287,6 +290,7 @@ pub enum ClientRequestType {
     Loot,
     ChampSelect,
     Challenges,
+    QueueTypes,
 }
 
 #[derive(Debug)]

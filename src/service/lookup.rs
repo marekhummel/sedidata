@@ -3,6 +3,7 @@ use std::{collections::HashMap, fmt};
 use crate::model::{
     challenge::Challenge,
     champion::{Champion, Skin},
+    champselect::QueueInfo,
     ids::{ChampionId, SkinId},
     mastery::Mastery,
 };
@@ -12,6 +13,7 @@ pub struct LookupService<'a> {
     skins: HashMap<SkinId, &'a Skin>,
     masteries: HashMap<ChampionId, &'a Mastery>,
     _challenges: HashMap<i32, &'a Challenge>,
+    queues: HashMap<u16, &'a QueueInfo>,
 }
 
 impl<'a> LookupService<'a> {
@@ -20,12 +22,14 @@ impl<'a> LookupService<'a> {
         skins: &'a [Skin],
         masteries: &'a [Mastery],
         challenges: &'a [Challenge],
+        queues: &'a [QueueInfo],
     ) -> Self {
         Self {
             champs: champions.iter().map(|c| (c.id.clone(), c)).collect(),
             skins: skins.iter().map(|c| (c.id.clone(), c)).collect(),
             masteries: masteries.iter().map(|m| (m.champ_id.clone(), m)).collect(),
             _challenges: challenges.iter().map(|ch| (ch.id, ch)).collect(),
+            queues: queues.iter().map(|q| (q.queue_id, q)).collect(),
         }
     }
 
@@ -56,6 +60,13 @@ impl<'a> LookupService<'a> {
             None => Err(IdNotFoundError::_Challenge(id)),
         }
     }
+
+    pub fn get_queue(&self, id: u16) -> Result<&'a QueueInfo, IdNotFoundError> {
+        match self.queues.get(&id) {
+            Some(queue) => Ok(*queue),
+            None => Err(IdNotFoundError::Queue(id)),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -63,6 +74,7 @@ pub enum IdNotFoundError {
     Champ(ChampionId),
     Skin(SkinId),
     _Challenge(i32),
+    Queue(u16),
 }
 
 impl fmt::Display for IdNotFoundError {
@@ -71,6 +83,7 @@ impl fmt::Display for IdNotFoundError {
             IdNotFoundError::Champ(id) => write!(f, "Champion ID not found: {}", id),
             IdNotFoundError::Skin(id) => write!(f, "Skin ID not found: {}", id),
             IdNotFoundError::_Challenge(id) => write!(f, "Challenge ID not found: {}", id),
+            IdNotFoundError::Queue(id) => write!(f, "Queue ID not found: {}", id),
         }
     }
 }

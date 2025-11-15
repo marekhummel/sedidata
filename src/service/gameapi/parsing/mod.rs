@@ -5,6 +5,7 @@ pub mod champion;
 pub mod champselect;
 pub mod loot;
 pub mod mastery;
+pub mod queues;
 pub mod summoner;
 
 #[derive(Debug)]
