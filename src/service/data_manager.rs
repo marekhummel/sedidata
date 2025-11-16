@@ -6,22 +6,25 @@ use crate::{
     model::{
         challenge::Challenge,
         champion::{AllChampionInfo, Champion, Chroma, Skin},
-        champselect::{ChampSelectInfo, QueueInfo},
+        champselect::{ChampSelectPlayer, ChampSelectSession, QueueInfo},
         loot::LootItems,
         mastery::Mastery,
         summoner::Summoner,
     },
-    service::gameapi::parsing::challenge::parse_challenges,
-};
-
-use super::gameapi::{
-    client::{ApiClient, ClientInitError, ClientRequestType, RequestError},
-    parsing::{
-        champion::parse_champions, champselect::parse_champselect_info, loot::parse_loot, mastery::parse_masteries,
-        queues::parse_queues, summoner::parse_summoner, ParsingError,
+    service::gameapi::{
+        client::{ApiClient, ClientInitError, ClientRequestType, RequestError},
+        parsing::{
+            challenge::parse_challenges,
+            champion::parse_champions,
+            champselect::parse_champ_select,
+            loot::parse_loot,
+            mastery::parse_masteries,
+            queues::parse_queues,
+            summoner::{parse_ranked_stats, parse_summoner},
+            ParsingError,
+        },
     },
 };
-
 pub struct DataManager {
     client: ApiClient,
     summoner: OnceCell<Summoner>,
@@ -98,17 +101,6 @@ impl DataManager {
         })
     }
 
-    pub fn get_champ_select_info(&self) -> DataRetrievalResult<Option<ChampSelectInfo>> {
-        match self.client.request(ClientRequestType::ChampSelect, false) {
-            Ok(champ_select_json) => {
-                let champ_select_info = parse_champselect_info(Rc::as_ref(&champ_select_json))?;
-                Ok(Some(champ_select_info))
-            }
-            Err(RequestError::InvalidResponse(_, _)) => Ok(None),
-            Err(err) => Err(err.into()),
-        }
-    }
-
     pub fn get_challenges(&self) -> DataRetrievalResult<&Vec<Challenge>> {
         self.challenges_cache.get_or_try_init(|| {
             let challenges_json = self.client.request(ClientRequestType::Challenges, true)?;
@@ -123,6 +115,54 @@ impl DataManager {
             let queues = parse_queues(Rc::as_ref(&queues_json))?;
             Ok(queues)
         })
+    }
+
+    pub fn get_champ_select(&self) -> DataRetrievalResult<Option<ChampSelectSession>> {
+        match self.client.request(ClientRequestType::ChampSelect, false) {
+            Ok(champ_select_json) => {
+                let champ_select_info = parse_champ_select(Rc::as_ref(&champ_select_json))?;
+                Ok(Some(champ_select_info))
+            }
+            Err(RequestError::InvalidResponse(_, _)) => Ok(None),
+            Err(err) => Err(err.into()),
+        }
+    }
+
+    pub fn get_champ_select_with_ranked(
+        &self,
+    ) -> DataRetrievalResult<Option<(ChampSelectSession, Vec<ChampSelectPlayer>)>> {
+        let sessio_opt = self.get_champ_select()?;
+        match sessio_opt {
+            Some(session) => {
+                let mut all_players = Vec::new();
+
+                // Process all players from both teams
+                for player_info in session.my_team.iter().chain(session.their_team.iter()) {
+                    // Fetch summoner info
+                    let summoner_json = self
+                        .client
+                        .request(ClientRequestType::OtherSummoner(player_info.puuid.clone()), false)?;
+
+                    let summoner = parse_summoner(Rc::as_ref(&summoner_json))?;
+
+                    // Fetch ranked stats
+                    let ranked_json = self
+                        .client
+                        .request(ClientRequestType::RankedStats(player_info.puuid.clone()), false)?;
+
+                    let ranked_stats = parse_ranked_stats(Rc::as_ref(&ranked_json))?;
+
+                    all_players.push(ChampSelectPlayer {
+                        player_info: player_info.clone(),
+                        summoner: Some(summoner),
+                        ranked_stats,
+                    });
+                }
+
+                Ok(Some((session, all_players)))
+            }
+            None => Ok(None),
+        }
     }
 
     pub fn refresh(&mut self) -> DataRetrievalResult<()> {

@@ -204,18 +204,18 @@ impl ApiClient {
 
     pub fn request(&self, request_type: ClientRequestType, cache: bool) -> Result<Rc<JsonValue>, RequestError> {
         if self.load_local_json {
-            let mut file = File::open(format!("data/{:?}.json", request_type))?;
+            let mut file = File::open(format!("data/{}.json", request_type))?;
             let mut buf = String::new();
             file.read_to_string(&mut buf)?;
             let json = json::parse(buf.as_str()).unwrap();
             return Ok(Rc::new(json));
         }
 
-        match self.cache.borrow_mut().entry(request_type) {
+        match self.cache.borrow_mut().entry(request_type.clone()) {
             Entry::Occupied(oe) => Ok(oe.get().clone()),
             Entry::Vacant(ve) => {
                 // Get url
-                let url = match request_type {
+                let url = match &request_type {
                     ClientRequestType::Summoner => {
                         format!("{}lol-summoner/v1/current-summoner", self.base_url)
                     }
@@ -239,12 +239,18 @@ impl ApiClient {
                     ClientRequestType::QueueTypes => {
                         format!("{}lol-game-queues/v1/queues", self.base_url)
                     }
+                    ClientRequestType::OtherSummoner(puuid) => {
+                        format!("{}lol-summoner/v2/summoners/puuid/{}", self.base_url, puuid)
+                    }
+                    ClientRequestType::RankedStats(puuid) => {
+                        format!("{}lol-ranked/v1/ranked-stats/{}", self.base_url, puuid)
+                    }
                 };
 
                 // Send request
                 let response = self.client.get(url).send()?;
                 if !response.status().is_success() {
-                    return Err(RequestError::InvalidResponse(request_type, Box::new(response)));
+                    return Err(RequestError::InvalidResponse(request_type.clone(), Box::new(response)));
                 }
 
                 // Return json
@@ -282,7 +288,7 @@ impl ApiClient {
     }
 }
 
-#[derive(Debug, PartialEq, Hash, Eq, Clone, Copy)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum ClientRequestType {
     Summoner,
     Champions,
@@ -291,6 +297,24 @@ pub enum ClientRequestType {
     ChampSelect,
     Challenges,
     QueueTypes,
+    OtherSummoner(String), // PUUID parameter
+    RankedStats(String),   // PUUID parameter
+}
+
+impl fmt::Display for ClientRequestType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ClientRequestType::Summoner => write!(f, "Summoner"),
+            ClientRequestType::Champions => write!(f, "Champions"),
+            ClientRequestType::Masteries => write!(f, "Masteries"),
+            ClientRequestType::Loot => write!(f, "Loot"),
+            ClientRequestType::ChampSelect => write!(f, "ChampSelect"),
+            ClientRequestType::Challenges => write!(f, "Challenges"),
+            ClientRequestType::QueueTypes => write!(f, "QueueTypes"),
+            ClientRequestType::OtherSummoner(puuid) => write!(f, "OtherSummoner_{}", puuid),
+            ClientRequestType::RankedStats(puuid) => write!(f, "RankedStats_{}", puuid),
+        }
+    }
 }
 
 #[derive(Debug)]

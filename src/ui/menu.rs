@@ -150,7 +150,8 @@ impl Menu {
             menu_entry!(item: "Show Summoner Info", SummonerInfoView),
             // Live game
             menu_entry!(group: "Live Game"),
-            menu_entry!(item: "Champ Select Info (ARAM)", ChampSelectInfoView),
+            menu_entry!(item: "Champ Select Info (ARAM)", ChampSelectAramView),
+            menu_entry!(item: "Live Game Player Info", LivePlayerInfoView),
             // Mastery
             menu_entry!(group: "Mastery"),
             menu_entry!(item: "All Masteries", AllMasteriesView),
