@@ -412,7 +412,7 @@ impl RenderableView for NextMasteryView {
         self.internal.check_keys(keys);
     }
 
-    fn render(&self, rc: crate::ui::RenderContext) -> crate::ui::ViewResult {
+    fn render(&self, rc: RenderContext) -> ViewResult {
         self.internal.render(rc)
     }
 }

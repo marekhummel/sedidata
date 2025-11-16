@@ -1,8 +1,9 @@
 use crate::{
     empty_row, fill_row, header_row,
+    model::challenge::Challenge,
     ui::{
         views::{eval_color_scale_descending, RenderableView},
-        Controller,
+        Controller, RenderContext, ViewError, ViewResult,
     },
 };
 use crossterm::event::KeyCode;
@@ -22,7 +23,7 @@ use ratatui::{
 };
 
 pub struct ChallengesOverviewView {
-    categories: Vec<(String, Vec<crate::model::challenge::Challenge>)>,
+    categories: Vec<(String, Vec<Challenge>)>,
     error: Option<String>,
     sorting_state: u8,
 }
@@ -52,9 +53,7 @@ impl ChallengesOverviewView {
         }
     }
 
-    fn load_challenges(
-        ctrl: &Controller,
-    ) -> Result<Vec<(String, Vec<crate::model::challenge::Challenge>)>, crate::ui::ViewError> {
+    fn load_challenges(ctrl: &Controller) -> Result<Vec<(String, Vec<Challenge>)>, ViewError> {
         let mut challenges = ctrl.manager.get_challenges()?.to_vec();
         challenges.retain(|c| !c.is_capstone && !c.is_completed() && c.category != "LEGACY");
 
@@ -170,7 +169,7 @@ impl RenderableView for ChallengesOverviewView {
         }
     }
 
-    fn render(&self, rc: crate::ui::RenderContext) -> crate::ui::ViewResult {
+    fn render(&self, rc: RenderContext) -> ViewResult {
         if let Some(error) = &self.error {
             let paragraph = Paragraph::new(format!("\n  [!] Error: {}", error)).block(rc.block);
             rc.frame.render_widget(paragraph, rc.area);

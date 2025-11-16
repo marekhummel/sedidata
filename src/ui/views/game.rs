@@ -131,7 +131,7 @@ fn champ_select_aram_view(ctrl: &Controller) -> TextCreationResult {
                 }
                 _ => lines.extend(vec![
                     styled_line!(),
-                    styled_line!("  This view only supports ARAM champ selects"; Color::Yellow),
+                    styled_line!("  This view only supports ARAM champ selects."; Color::Yellow),
                 ]),
             }
         }

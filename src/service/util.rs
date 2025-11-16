@@ -1,13 +1,13 @@
 use std::collections::HashSet;
 
-use crate::model::{
-    champion::{Champion, Chroma, Skin},
-    ids::{ChampionId, SkinId},
-    mastery::Mastery,
+use crate::{
+    model::{
+        champion::{Champion, Chroma, Skin},
+        ids::{ChampionId, SkinId},
+        mastery::Mastery,
+    },
+    service::data_manager::{DataManager, DataRetrievalResult},
 };
-
-use super::data_manager::{DataManager, DataRetrievalResult};
-
 pub struct UtilService<'a> {
     manager: &'a DataManager,
 }
