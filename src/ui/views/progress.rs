@@ -8,7 +8,7 @@ use crate::{
 };
 use crossterm::event::KeyCode;
 use itertools::Itertools;
-use ratatui::{text::Line, widgets::Paragraph};
+use ratatui::text::Line;
 use std::cmp::Ordering;
 
 // ============================================================================
@@ -171,8 +171,7 @@ impl RenderableView for ChallengesOverviewView {
 
     fn render(&self, rc: RenderContext) -> ViewResult {
         if let Some(error) = &self.error {
-            let paragraph = Paragraph::new(format!("\n  [!] Error: {}", error)).block(rc.block);
-            rc.frame.render_widget(paragraph, rc.area);
+            rc.error(error);
             return Ok(());
         }
 

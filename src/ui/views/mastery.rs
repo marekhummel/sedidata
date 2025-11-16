@@ -16,7 +16,7 @@ use ratatui::{
     layout::{Alignment, Constraint},
     style::{Color, Modifier, Style},
     text::Span,
-    widgets::{Block, Cell, Paragraph, Row, Table},
+    widgets::{Block, Cell, Row, Table},
 };
 
 // ============================================================================
@@ -142,8 +142,7 @@ impl MasteryView {
 
     pub fn render(&self, rc: RenderContext) -> ViewResult {
         if let Some(error) = &self.error {
-            let paragraph = Paragraph::new(format!("\n  [!] Error: {}", error)).block(rc.block);
-            rc.frame.render_widget(paragraph, rc.area);
+            rc.error(error);
             return Ok(());
         }
 

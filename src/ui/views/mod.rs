@@ -247,19 +247,12 @@ macro_rules! impl_text_view {
             }
 
             fn render(&self, rc: $crate::ui::RenderContext) -> $crate::ui::ViewResult {
-                use ratatui::style::{Color, Style};
-                use ratatui::text::{Line, Span};
+                if let Some(error) = &self.error {
+                    rc.error(error);
+                    return Ok(());
+                }
 
-                let text = if let Some(error) = &self.error {
-                    vec![Line::from(vec![
-                        Span::raw("\n  [!] Error: "),
-                        Span::styled(error, Style::default().fg(Color::Red)),
-                    ])]
-                } else {
-                    self.lines.clone()
-                };
-
-                let paragraph = ratatui::widgets::Paragraph::new(text)
+                let paragraph = ratatui::widgets::Paragraph::new(self.lines.clone())
                     .block(rc.block)
                     .wrap(ratatui::widgets::Wrap { trim: false })
                     .scroll((rc.scroll_offset, 0));

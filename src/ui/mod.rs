@@ -1,6 +1,7 @@
 use std::{fmt, io};
 
-use ratatui::widgets::Block;
+use ratatui::style::{Color, Style};
+use ratatui::widgets::{Block, Paragraph};
 use ratatui::{layout::Rect, text::Line, Frame};
 
 use crate::service::{data_manager::DataManager, lookup::LookupService, util::UtilService};
@@ -24,6 +25,18 @@ pub struct RenderContext<'a, 'b> {
     pub area: Rect,
     pub scroll_offset: u16,
     pub block: Block<'b>,
+}
+
+impl<'a, 'b> RenderContext<'a, 'b> {
+    pub fn error(self, error: &str) {
+        let paragraph = Paragraph::new(format!("\n  [!] Error: {}", error))
+            .style(Style::default().fg(Color::Red))
+            .wrap(ratatui::widgets::Wrap { trim: true })
+            .block(self.block)
+            .scroll((0, 0));
+
+        self.frame.render_widget(paragraph, self.area);
+    }
 }
 
 #[derive(Debug)]

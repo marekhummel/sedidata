@@ -10,14 +10,13 @@ use crate::{
     },
     service::lookup::LookupService,
     styled_line, styled_span,
-    ui::Controller,
-    ui::{views::RenderableView, RenderContext, TextCreationResult, ViewError, ViewResult},
+    ui::{views::RenderableView, Controller, RenderContext, TextCreationResult, ViewError, ViewResult},
 };
 use itertools::{EitherOrBoth, Itertools};
 use ratatui::{
     layout::{Alignment, Constraint},
     style::{Color, Modifier, Style},
-    widgets::{Cell, Paragraph, Row, Table},
+    widgets::{Cell, Row, Table},
 };
 
 // ============================================================================
@@ -149,7 +148,7 @@ impl_text_view!(ChampSelectAramView, champ_select_aram_view, "ARAM Champ Select 
 pub struct LivePlayerInfoView {
     _cs_session: Option<ChampSelectSession>,
     players: Vec<ChampSelectPlayer>,
-    error: Option<(String, Color)>,
+    error: Option<String>,
 }
 
 impl LivePlayerInfoView {
@@ -164,13 +163,13 @@ impl LivePlayerInfoView {
                 None => Self {
                     _cs_session: None,
                     players: Vec::new(),
-                    error: Some(("  Not in champ select!".into(), Color::Yellow)),
+                    error: Some("  Not in champ select!".into()),
                 },
             },
             Err(e) => Self {
                 _cs_session: None,
                 players: Vec::new(),
-                error: Some((format!("Failed to load player data: {}", e), Color::Red)),
+                error: Some(format!("Failed to load player data: {}", e)),
             },
         }
     }
@@ -319,11 +318,8 @@ impl RenderableView for LivePlayerInfoView {
     }
 
     fn render(&self, rc: RenderContext) -> ViewResult {
-        if let Some((error, color)) = &self.error {
-            let paragraph = Paragraph::new(styled_span!("\n  [!] Error: {}", error; *color))
-                .block(rc.block)
-                .wrap(ratatui::widgets::Wrap { trim: true });
-            rc.frame.render_widget(paragraph, rc.area);
+        if let Some(error) = &self.error {
+            rc.error(error);
             return Ok(());
         }
 
