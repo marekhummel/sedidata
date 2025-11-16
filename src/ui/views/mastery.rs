@@ -4,6 +4,7 @@ use crate::{
         champion::Champion,
         mastery::{Mastery, Milestone},
     },
+    service::lookup,
     styled_line, styled_span,
     ui::{
         views::{eval_color_scale_ascending, eval_color_scale_descending, RenderableView},
@@ -163,7 +164,7 @@ impl MasteryView {
                 rows.push(
                     fill_row!(7; Cell::from(styled_line!(LIST [
                         styled_span!("━━ "),
-                        Self::role_abbreviation(role),
+                        Self::format_role(role, false),
                         styled_span!(" ━━"),
                     ])))
                     .style(Style::default().add_modifier(Modifier::BOLD)),
@@ -212,14 +213,14 @@ impl MasteryView {
         Ok(())
     }
 
-    fn role_abbreviation(role: &str) -> Span<'_> {
+    fn format_role(role: &str, abbreviate: bool) -> Span<'_> {
         match role.to_lowercase().as_str() {
-            "assassin" => styled_span!("ASS"; Color::Red),
-            "mage" => styled_span!("MGE"; Color::Blue),
-            "tank" => styled_span!("TNK"; Color::Green),
-            "fighter" => styled_span!("FGT"; Color::Yellow),
-            "marksman" => styled_span!("MRK"; Color::Cyan),
-            "support" => styled_span!("SUP"; Color::Magenta),
+            "assassin" => styled_span!(if abbreviate { "ASS" } else { "Assassin" }; Color::Red),
+            "mage" => styled_span!(if abbreviate { "MGE" } else { "Mage" }; Color::Blue),
+            "tank" => styled_span!(if abbreviate { "TNK" } else { "Tank" }; Color::Green),
+            "fighter" => styled_span!(if abbreviate { "FGT" } else { "Fighter" }; Color::Yellow),
+            "marksman" => styled_span!(if abbreviate { "MRK" } else { "Marksman" }; Color::Cyan),
+            "support" => styled_span!(if abbreviate { "SUP" } else { "Support" }; Color::Magenta),
             _ => styled_span!("???"; Color::White),
         }
     }
@@ -254,6 +255,10 @@ impl MasteryView {
             .then(|| styled_line!("{}/{}", mastery.marks, mastery.required_marks; marks_color))
             .unwrap_or(styled_line!(""));
 
+        let milestone = (mastery.required_marks > 0)
+            .then(|| styled_line!(Self::format_milestone(&mastery.next_milestone)))
+            .unwrap_or(styled_line!(""));
+
         // Cells
         let mut cells = vec![
             Cell::from(champ.name.clone()),
@@ -267,7 +272,7 @@ impl MasteryView {
             ),
             Cell::from(styled_line!("{}", missing; points_color).alignment(Alignment::Right)),
             Cell::from(marks_line.alignment(Alignment::Right)),
-            Cell::from(Self::format_milestone(&mastery.next_milestone)),
+            Cell::from(milestone),
         ];
 
         if self.with_role {
@@ -276,7 +281,7 @@ impl MasteryView {
                 .roles
                 .iter()
                 .sorted_by_key(|r| *r)
-                .map(|r| Self::role_abbreviation(r.trim()))
+                .map(|r| Self::format_role(r.trim(), true))
                 .enumerate()
                 .flat_map(|(i, span)| if i > 0 { vec![Span::raw(" "), span] } else { vec![span] })
                 .collect();
