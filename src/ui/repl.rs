@@ -7,7 +7,7 @@ use crossterm::{
 };
 use ratatui::{
     backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout},
+    layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, Paragraph},
     Terminal,
@@ -146,7 +146,7 @@ impl App {
                 terminal.draw(|f| {
                     let chunks = Layout::default()
                         .direction(Direction::Vertical)
-                        .constraints([Constraint::Length(3), Constraint::Min(0)])
+                        .constraints([Constraint::Length(3), Constraint::Min(0), Constraint::Length(1)])
                         .split(f.size());
                     view_height = chunks[1].height;
 
@@ -166,6 +166,16 @@ impl App {
                         );
                     f.render_widget(title, chunks[0]);
 
+                    let info = if self.is_in_menu() {
+                        "Use ↑/↓ to navigate, Enter to select, r to refresh data, q to quit."
+                    } else {
+                        "Use ↑/↓ or PgUp/PgDown to scroll, Esc/q to return."
+                    };
+                    let info_paragraph = Paragraph::new(info)
+                        .style(Style::default().fg(Color::DarkGray))
+                        .alignment(Alignment::Right);
+                    f.render_widget(info_paragraph, chunks[2]);
+
                     // Render current state
                     match &mut self.state {
                         AppState::Menu => self.menu.render(f, chunks[1]),
@@ -180,10 +190,7 @@ impl App {
                             let block = Block::default()
                                 .borders(ratatui::widgets::Borders::ALL)
                                 .padding(ratatui::widgets::Padding::horizontal(1))
-                                .title(format!(
-                                    "{} (↑/↓ or PgUp/PgDown to scroll, r to refresh, Esc/q to return)",
-                                    view.title()
-                                ))
+                                .title(view.title().to_string())
                                 .title_style(
                                     Style::default()
                                         .fg(Color::Rgb(200, 150, 0))

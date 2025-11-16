@@ -1,7 +1,7 @@
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::Rect,
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
+    widgets::{Block, Borders, List, ListItem, ListState},
     Frame,
 };
 
@@ -67,12 +67,6 @@ impl Menu {
     }
 
     pub fn render(&self, frame: &mut Frame, area: Rect) {
-        // Split the provided area into a main list area and a small footer area
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([Constraint::Min(0), Constraint::Length(1)])
-            .split(area);
-
         // Build list items; headers (factory == None) are styled and non-selectable.
         let mut items: Vec<ListItem> = Vec::with_capacity(self.menu_entries.len());
         for (i, entry) in self.menu_entries.iter().enumerate() {
@@ -110,7 +104,7 @@ impl Menu {
                     .borders(Borders::ALL)
                     .border_style(Style::default().fg(Color::Rgb(200, 150, 0)))
                     .padding(ratatui::widgets::Padding::uniform(1))
-                    .title("Commands (↑/↓ to navigate, Enter to select)")
+                    .title("Commands")
                     .title_style(
                         Style::default()
                             .fg(Color::Rgb(200, 150, 0))
@@ -121,14 +115,7 @@ impl Menu {
             .highlight_symbol("");
 
         // Render the selectable menu in the top chunk
-        frame.render_stateful_widget(list, chunks[0], &mut list_state);
-
-        // Render the footer with subtle instructions
-        let footer = Paragraph::new("Refresh data: (r)    Quit: (q)")
-            .style(Style::default().fg(Color::DarkGray))
-            .alignment(Alignment::Right)
-            .block(Block::default().borders(Borders::NONE));
-        frame.render_widget(footer, chunks[1]);
+        frame.render_stateful_widget(list, area, &mut list_state);
     }
 
     pub fn get_factory(&self) -> Option<ViewFactory> {
