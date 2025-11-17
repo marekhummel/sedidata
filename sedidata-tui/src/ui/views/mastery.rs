@@ -4,7 +4,6 @@ use crate::{
         champion::Champion,
         mastery::{Mastery, Milestone},
     },
-    service::lookup,
     styled_line, styled_span,
     ui::{
         views::{eval_color_scale_ascending, eval_color_scale_descending, RenderableView},

@@ -98,8 +98,8 @@ fn champ_select_aram_view(ctrl: &Controller) -> TextCreationResult {
         Some(champ_select_info) => {
             let queue = ctrl.lookup.get_queue(champ_select_info.queue_id)?;
 
-            match queue.gamemode.as_str() {
-                "ARAM" => {
+            match queue.select_mode_group.as_str() {
+                "kARAM" => {
                     let (current_champ, team_champs) = get_team_selections(&champ_select_info);
 
                     lines.push(styled_line!("Currently selected champ:"; Color::Rgb(200, 150, 0)));
@@ -130,7 +130,7 @@ fn champ_select_aram_view(ctrl: &Controller) -> TextCreationResult {
                 }
                 _ => lines.extend(vec![
                     styled_line!(),
-                    styled_line!("  This view only supports ARAM champ selects."; Color::Yellow),
+                    styled_line!("  This view only supports ARAM champ selects, and this is {:?}.", queue; Color::Yellow),
                 ]),
             }
         }

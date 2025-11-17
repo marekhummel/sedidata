@@ -1,0 +1,65 @@
+name: CI/CD
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]  # for releases
+
+jobs:
+  build:
+    name: Build all workspace crates
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build all crates
+        run: cargo build --release
+
+      - name: Upload TUI binary artifact
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: sedidata-tui
+          path: target/release/sedidata.exe
+          retention-days: 1
+
+  release:
+    name: Release main binary on tags
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: windows-latest
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sedidata-tui
+          path: ./artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./artifacts/sedidata.exe
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+  deploy_render:
+    name: Deploy HTTP proxy to Render
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Render
+        run: |
+          curl -X POST \
+              -H "Accept: application/json" \
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+              -d '{"clearCache": "clear"}' \
+              https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys

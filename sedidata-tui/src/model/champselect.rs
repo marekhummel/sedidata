@@ -32,6 +32,7 @@ pub struct QueueInfo {
     pub queue_id: u16,
     pub _category: String,
     pub _description: String,
-    pub gamemode: String,
+    pub _gamemode: String,
     pub _type_descriptor: String,
+    pub select_mode_group: String,
 }
