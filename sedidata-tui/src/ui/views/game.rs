@@ -4,9 +4,10 @@ use crate::{
     empty_row, header_row, impl_text_view,
     model::{
         champion::Champion,
-        champselect::{ChampSelectPlayer, ChampSelectSession},
+        champselect::{ChampSelectPlayerInfo, ChampSelectSession},
         ids::ChampionId,
         mastery::Mastery,
+        summoner::SummonerWithStats,
     },
     service::lookup::LookupService,
     styled_line, styled_span,
@@ -14,7 +15,7 @@ use crate::{
 };
 use itertools::{EitherOrBoth, Itertools};
 use ratatui::{
-    layout::{Alignment, Constraint},
+    layout::Constraint,
     style::{Color, Modifier, Style},
     widgets::{Cell, Row, Table},
 };
@@ -146,28 +147,41 @@ impl_text_view!(ChampSelectAramView, champ_select_aram_view, "ARAM Champ Select 
 // ==========================================================================
 
 pub struct LivePlayerInfoView {
-    _cs_session: Option<ChampSelectSession>,
-    players: Vec<ChampSelectPlayer>,
+    cs_session: Option<ChampSelectSession>,
+    players: Vec<SummonerWithStats>,
     error: Option<String>,
 }
 
 impl LivePlayerInfoView {
     pub fn new(ctrl: &Controller) -> Self {
-        match ctrl.manager.get_champ_select_with_ranked() {
+        match ctrl.manager.get_champ_select() {
             Ok(champ_select) => match champ_select {
-                Some((session, players)) => Self {
-                    _cs_session: Some(session),
-                    players,
-                    error: None,
-                },
+                Some(session) => {
+                    let player_infos = session.my_team.iter().chain(session.their_team.iter());
+                    let players = player_infos
+                        .map(|pi| (pi.game_name.clone(), pi.tag_line.clone()))
+                        .collect_vec();
+                    match ctrl.manager.get_ranked_info(&players) {
+                        Ok(summoners) => Self {
+                            cs_session: Some(session),
+                            players: summoners,
+                            error: None,
+                        },
+                        Err(e) => Self {
+                            cs_session: Some(session),
+                            players: Vec::new(),
+                            error: Some(format!("Failed to load player ranked data: {}", e)),
+                        },
+                    }
+                }
                 None => Self {
-                    _cs_session: None,
+                    cs_session: None,
                     players: Vec::new(),
                     error: Some("  Not in champ select!".into()),
                 },
             },
             Err(e) => Self {
-                _cs_session: None,
+                cs_session: None,
                 players: Vec::new(),
                 error: Some(format!("Failed to load player data: {}", e)),
             },
@@ -183,7 +197,7 @@ impl LivePlayerInfoView {
             Constraint::Length(14), // Queue Type
             Constraint::Length(12), // Rank
             Constraint::Length(5),  // LP
-            Constraint::Length(8),  // Wins
+            Constraint::Length(20), // Wins / Losses
             Constraint::Length(18), // Peak Rank
         ]
     }
@@ -207,14 +221,6 @@ impl LivePlayerInfoView {
             "bottom" => 3,
             "utility" => 4,
             _ => 5,
-        }
-    }
-
-    fn queue_sort_key(queue: &str) -> u8 {
-        match queue {
-            "RANKED_SOLO_5x5" => 0,
-            "RANKED_FLEX_SR" => 1,
-            _ => 2,
         }
     }
 
@@ -251,43 +257,76 @@ impl LivePlayerInfoView {
         }
     }
 
-    fn render_player_rows<'a>(&'a self, player: &'a ChampSelectPlayer) -> Vec<Row<'a>> {
+    fn render_player_rows<'a>(
+        &'a self,
+        player: &'a ChampSelectPlayerInfo,
+        summ_stats: &'a SummonerWithStats,
+    ) -> Vec<Row<'a>> {
         // Player info
-        let summoner = player.summoner.as_ref().unwrap();
-        let player_name = format!("{}#{}", summoner.game_name, summoner.tag_line);
+        let player_name = format!("{}#{}", player.game_name, player.tag_line);
         let player_cells = vec![
-            Cell::from(if player.player_info.is_ally {
+            Cell::from(if player.is_ally {
                 styled_line!("Ally"; Color::Blue)
             } else {
                 styled_line!("Enemy"; Color::Red)
             }),
-            Cell::from(Self::format_position(&player.player_info.position)),
+            Cell::from(Self::format_position(&player.position)),
             Cell::from(player_name),
-            Cell::from(summoner.level.to_string()),
+            Cell::from(summ_stats.summoner.level.to_string()),
         ];
 
         // Ranked info
         let mut ranked_cells = vec![];
-        if player.ranked_stats.is_empty() {
-            ranked_cells.push(vec![
+        match summ_stats.ranked_stats {
+            None => ranked_cells.push(vec![
                 Cell::from("No ranked data"),
                 Cell::from(""),
                 Cell::from(""),
                 Cell::from(""),
-                Cell::from(""),
-            ]);
-        } else {
-            for stats in &player.ranked_stats {
-                let rank_color = Self::get_rank_color(&stats.tier);
-                let peak_rank_color = Self::get_rank_color(&stats.highest_tier);
-                ranked_cells.push(vec![
-                    Cell::from(Self::format_queue_type(&stats.queue_type)),
-                    Cell::from(styled_span!(Self::format_rank(&stats.tier, &stats.division); rank_color)),
-                    Cell::from(styled_line!(stats.league_points).alignment(Alignment::Right)),
-                    Cell::from(styled_line!(stats.wins).alignment(Alignment::Right)),
-                    Cell::from(styled_line!(
-                        Self::format_rank(&stats.highest_tier, &stats.highest_division); peak_rank_color)),
-                ]);
+            ]),
+            Some(ref ranked_stats) => {
+                for queue in &["RANKED_SOLO_5x5", "RANKED_FLEX_SR"] {
+                    match ranked_stats.get(*queue) {
+                        Some(stats) => {
+                            let rank_color = Self::get_rank_color(&stats.tier);
+                            ranked_cells.push(vec![
+                                Cell::from(Self::format_queue_type(queue)),
+                                Cell::from(styled_span!(Self::format_rank(&stats.tier, &stats.division); rank_color)),
+                                Cell::from(stats.league_points.to_string()),
+                                Cell::from(styled_line!(
+                                    "{:>3}/{:<3} ({:.1} %)",
+                                    stats.wins,
+                                    stats.losses,
+                                    stats.wins as f64 / (stats.wins + stats.losses) as f64 * 100.0
+                                )),
+                            ]);
+                        }
+                        None => ranked_cells.push(vec![
+                            Cell::from(Self::format_queue_type(queue)),
+                            Cell::from("Unranked"),
+                            Cell::from(""),
+                            Cell::from(""),
+                        ]),
+                    }
+                }
+
+                for (queue, stats) in ranked_stats
+                    .iter()
+                    .filter(|q| q.0 != "RANKED_SOLO_5x5" && q.0 != "RANKED_FLEX_SR")
+                {
+                    let rank_color = Self::get_rank_color(&stats.tier);
+                    ranked_cells.push(vec![
+                        Cell::from(Self::format_queue_type(queue)),
+                        Cell::from(styled_span!(Self::format_rank(&stats.tier, &stats.division); rank_color)),
+                        Cell::from(stats.league_points.to_string()),
+                        Cell::from(styled_line!(
+                            "{:>3}/{:>3} ({:.1} %)",
+                            stats.wins,
+                            stats.losses,
+                            stats.wins as f64 / (stats.wins + stats.losses) as f64 * 100.0
+                        )),
+                    ]);
+                }
             }
         }
 
@@ -326,17 +365,18 @@ impl RenderableView for LivePlayerInfoView {
         let mut rows = vec![];
 
         // Sort players by team and position, and sort their ranked stats
-        let mut sorted_players = self.players.clone();
-        sorted_players.sort_by_key(|p| (p.player_info.is_ally, Self::position_sort_key(&p.player_info.position)));
-
-        // Sort ranked stats for each player
-        for player in &mut sorted_players {
-            player.ranked_stats.sort_by_key(|s| Self::queue_sort_key(&s.queue_type));
-        }
+        let cs = self.cs_session.as_ref().unwrap();
+        let mut sorted_players = cs.my_team.iter().chain(cs.their_team.iter()).collect_vec();
+        sorted_players.sort_by_key(|p| (p.is_ally, Self::position_sort_key(&p.position)));
 
         for player in &sorted_players {
-            rows.extend(self.render_player_rows(player));
-            rows.push(empty_row!(9));
+            let stats = self
+                .players
+                .iter()
+                .find(|s| s.summoner.game_name == player.game_name && s.summoner.tag_line == player.tag_line)
+                .unwrap();
+            rows.extend(self.render_player_rows(player, stats));
+            rows.push(empty_row!(8));
         }
 
         // Skip rows based on scroll offset
@@ -344,19 +384,9 @@ impl RenderableView for LivePlayerInfoView {
 
         let table = Table::new(visible_rows, self.columns())
             .header(
-                header_row!(
-                    "Team",
-                    "Position",
-                    "Player",
-                    "Level",
-                    "Queue",
-                    "Rank",
-                    "LP",
-                    "Wins",
-                    "Peak Rank"
-                )
-                .style(Style::default().fg(Color::LightBlue).add_modifier(Modifier::BOLD))
-                .bottom_margin(1),
+                header_row!("Team", "Position", "Player", "Level", "Queue", "Rank", "LP", "W/L")
+                    .style(Style::default().fg(Color::LightBlue).add_modifier(Modifier::BOLD))
+                    .bottom_margin(1),
             )
             .block(rc.block)
             .column_spacing(2)

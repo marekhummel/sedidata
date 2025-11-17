@@ -1,6 +1,6 @@
 use json::JsonValue;
 
-use crate::model::summoner::{RankedQueueStats, Summoner};
+use crate::model::summoner::{RankedQueueStats, RiotApiSummonerResponse, Summoner};
 
 use super::ParsingError;
 
@@ -32,11 +32,12 @@ pub fn parse_summoner(json: &JsonValue) -> Result<Summoner, ParsingError> {
     Err(ParsingError::InvalidType("root".into()))
 }
 
-pub fn parse_ranked_stats(json: &JsonValue) -> Result<Vec<RankedQueueStats>, ParsingError> {
-    let mut stats = Vec::new();
+pub fn parse_ranked_stats(json: &JsonValue) -> Result<RiotApiSummonerResponse, ParsingError> {
+    if let JsonValue::Object(obj) = &json {
+        let level = obj["level"].as_u16().ok_or(ParsingError::InvalidType("level".into()))?;
 
-    if let JsonValue::Object(obj) = json {
-        if let JsonValue::Array(queues_array) = &obj["queues"] {
+        let mut stats = Vec::new();
+        if let JsonValue::Array(queues_array) = &obj["ranked_stats"] {
             for queue_json in queues_array {
                 if let JsonValue::Object(queue) = queue_json {
                     let queue_type = queue["queueType"]
@@ -54,7 +55,7 @@ pub fn parse_ranked_stats(json: &JsonValue) -> Result<Vec<RankedQueueStats>, Par
                         .ok_or(ParsingError::InvalidType("tier".into()))?
                         .to_string();
 
-                    let division = queue["division"]
+                    let division = queue["rank"]
                         .as_str()
                         .ok_or(ParsingError::InvalidType("division".into()))?
                         .to_string();
@@ -65,17 +66,9 @@ pub fn parse_ranked_stats(json: &JsonValue) -> Result<Vec<RankedQueueStats>, Par
 
                     let wins = queue["wins"].as_u32().ok_or(ParsingError::InvalidType("wins".into()))?;
 
-                    let _losses = queue["losses"]
+                    let losses = queue["losses"]
                         .as_u32()
                         .ok_or(ParsingError::InvalidType("losses".into()))?;
-
-                    let _is_provisional = queue["isProvisional"]
-                        .as_bool()
-                        .ok_or(ParsingError::InvalidType("isProvisional".into()))?;
-
-                    let highest_tier = queue["highestTier"].as_str().unwrap_or("").to_string();
-
-                    let highest_division = queue["highestDivision"].as_str().unwrap_or("").to_string();
 
                     stats.push(RankedQueueStats {
                         queue_type,
@@ -83,15 +76,17 @@ pub fn parse_ranked_stats(json: &JsonValue) -> Result<Vec<RankedQueueStats>, Par
                         division,
                         league_points,
                         wins,
-                        _losses,
-                        _is_provisional,
-                        highest_tier,
-                        highest_division,
+                        losses,
                     });
                 }
             }
         }
+
+        return Ok(RiotApiSummonerResponse {
+            level,
+            ranked_stats: stats,
+        });
     }
 
-    Ok(stats)
+    Err(ParsingError::InvalidType("root".into()))
 }

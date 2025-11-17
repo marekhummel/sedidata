@@ -25,19 +25,19 @@ struct LockFileContent {
     password: String,
 }
 
-pub struct ApiClient {
+pub struct LcuClient {
     write_json: bool,
     load_local_json: bool,
     client: Client,
-    cache: RefCell<HashMap<ClientRequestType, Rc<JsonValue>>>,
+    cache: RefCell<HashMap<LcuClientRequestType, Rc<JsonValue>>>,
     base_url: String,
     summoner: Option<Summoner>,
 }
 
-impl ApiClient {
-    pub fn new(read_json_files: bool, write_json: bool) -> Result<Self, ClientInitError> {
-        let league_install_path = ApiClient::get_or_prompt_league_path()?;
-        let (client, base_url) = ApiClient::setup_client(&league_install_path, read_json_files)?;
+impl LcuClient {
+    pub fn new(read_json_files: bool, write_json: bool) -> Result<Self, LcuClientInitError> {
+        let league_install_path = LcuClient::get_or_prompt_league_path()?;
+        let (client, base_url) = LcuClient::setup_client(&league_install_path, read_json_files)?;
         let cache = RefCell::from(HashMap::new());
         Ok(Self {
             write_json,
@@ -49,22 +49,22 @@ impl ApiClient {
         })
     }
 
-    fn get_app_data_dir() -> Result<PathBuf, ClientInitError> {
-        let local_app_data = env::var("LOCALAPPDATA").map_err(|_| ClientInitError::LocalAppDataNotFound)?;
+    fn get_app_data_dir() -> Result<PathBuf, LcuClientInitError> {
+        let local_app_data = env::var("LOCALAPPDATA").map_err(|_| LcuClientInitError::LocalAppDataNotFound)?;
 
         let mut app_dir = PathBuf::from(local_app_data);
         app_dir.push("sedidata");
 
         // Create directory if it doesn't exist
         if !app_dir.exists() {
-            std::fs::create_dir_all(&app_dir).map_err(ClientInitError::AppDataDirCreationFailed)?;
+            std::fs::create_dir_all(&app_dir).map_err(LcuClientInitError::AppDataDirCreationFailed)?;
         }
 
         Ok(app_dir)
     }
 
-    fn get_or_prompt_league_path() -> Result<String, ClientInitError> {
-        let app_dir = ApiClient::get_app_data_dir()?;
+    fn get_or_prompt_league_path() -> Result<String, LcuClientInitError> {
+        let app_dir = LcuClient::get_app_data_dir()?;
         let path_file = app_dir.join("league_path.txt");
 
         // Try to read existing path
@@ -90,7 +90,7 @@ impl ApiClient {
         let mut input = String::new();
         io::stdin()
             .read_line(&mut input)
-            .map_err(ClientInitError::UserInputFailed)?;
+            .map_err(LcuClientInitError::UserInputFailed)?;
 
         let league_path = input.trim();
         let league_path = if league_path.is_empty() {
@@ -102,32 +102,32 @@ impl ApiClient {
         // Verify the path exists
         let path = Path::new(league_path);
         if !path.exists() {
-            return Err(ClientInitError::LeaguePathInvalid(format!(
+            return Err(LcuClientInitError::LeaguePathInvalid(format!(
                 "Path does not exist: {}",
                 league_path
             )));
         }
 
         // Save the path
-        let mut file = File::create(&path_file).map_err(ClientInitError::PathFileSaveFailed)?;
+        let mut file = File::create(&path_file).map_err(LcuClientInitError::PathFileSaveFailed)?;
         file.write_all(league_path.as_bytes())
-            .map_err(ClientInitError::PathFileSaveFailed)?;
+            .map_err(LcuClientInitError::PathFileSaveFailed)?;
 
         println!("Path saved successfully!\n");
         Ok(league_path.to_string())
     }
 
-    fn setup_client(league_install_path: &str, dummy: bool) -> Result<(Client, String), ClientInitError> {
+    fn setup_client(league_install_path: &str, dummy: bool) -> Result<(Client, String), LcuClientInitError> {
         if dummy {
             let client = Client::builder().build()?;
             return Ok((client, String::new()));
         }
 
         // Read certificate
-        let cert = ApiClient::read_certificate()?;
+        let cert = LcuClient::read_certificate()?;
 
         // Read lockfile and create basic auth secret
-        let lockfile = ApiClient::read_lockfile(league_install_path)?;
+        let lockfile = LcuClient::read_lockfile(league_install_path)?;
         let basic_auth = format!("{}:{}", lockfile.username, lockfile.password);
         let mut base64_enc = EncoderStringWriter::new(&general_purpose::STANDARD);
         base64_enc.write_all(basic_auth.as_bytes())?;
@@ -202,7 +202,7 @@ impl ApiClient {
         })
     }
 
-    pub fn request(&self, request_type: ClientRequestType, cache: bool) -> Result<Rc<JsonValue>, RequestError> {
+    pub fn request(&self, request_type: LcuClientRequestType, cache: bool) -> Result<Rc<JsonValue>, LcuRequestError> {
         if self.load_local_json {
             let mut file = File::open(format!("data/{}.json", request_type))?;
             let mut buf = String::new();
@@ -216,41 +216,43 @@ impl ApiClient {
             Entry::Vacant(ve) => {
                 // Get url
                 let url = match &request_type {
-                    ClientRequestType::Summoner => {
+                    LcuClientRequestType::Summoner => {
                         format!("{}lol-summoner/v1/current-summoner", self.base_url)
                     }
-                    ClientRequestType::Champions => match &self.summoner {
+                    LcuClientRequestType::Champions => match &self.summoner {
                         Some(s) => format!("{}lol-champions/v1/inventories/{}/champions", self.base_url, s.id),
-                        None => return Err(RequestError::SummonerNeeded),
+                        None => return Err(LcuRequestError::SummonerNeeded),
                     },
-                    ClientRequestType::Masteries => match &self.summoner {
+                    LcuClientRequestType::Masteries => match &self.summoner {
                         Some(_) => format!("{}lol-champion-mastery/v1/local-player/champion-mastery", self.base_url),
-                        None => return Err(RequestError::SummonerNeeded),
+                        None => return Err(LcuRequestError::SummonerNeeded),
                     },
-                    ClientRequestType::Loot => {
+                    LcuClientRequestType::Loot => {
                         format!("{}lol-loot/v1/player-loot", self.base_url)
                     }
-                    ClientRequestType::ChampSelect => {
+                    LcuClientRequestType::ChampSelect => {
                         format!("{}lol-champ-select/v1/session", self.base_url)
                     }
-                    ClientRequestType::Challenges => {
+                    LcuClientRequestType::Challenges => {
                         format!("{}lol-challenges/v1/challenges/local-player", self.base_url)
                     }
-                    ClientRequestType::QueueTypes => {
+                    LcuClientRequestType::QueueTypes => {
                         format!("{}lol-game-queues/v1/queues", self.base_url)
-                    }
-                    ClientRequestType::OtherSummoner(puuid) => {
-                        format!("{}lol-summoner/v2/summoners/puuid/{}", self.base_url, puuid)
-                    }
-                    ClientRequestType::RankedStats(puuid) => {
-                        format!("{}lol-ranked/v1/ranked-stats/{}", self.base_url, puuid)
-                    }
+                    } // LcuClientRequestType::OtherSummoner(puuid) => {
+                      //     format!("{}lol-summoner/v2/summoners/puuid/{}", self.base_url, puuid)
+                      // }
+                      // LcuClientRequestType::RankedStats(puuid) => {
+                      //     format!("{}lol-ranked/v1/ranked-stats/{}", self.base_url, puuid)
+                      // }
                 };
 
                 // Send request
                 let response = self.client.get(url).send()?;
                 if !response.status().is_success() {
-                    return Err(RequestError::InvalidResponse(request_type.clone(), Box::new(response)));
+                    return Err(LcuRequestError::InvalidResponse(
+                        request_type.clone(),
+                        Box::new(response),
+                    ));
                 }
 
                 // Return json
@@ -276,9 +278,9 @@ impl ApiClient {
         self.summoner = Some(s);
     }
 
-    pub fn refresh(&mut self) -> Result<(), ClientInitError> {
-        let league_install_path = ApiClient::get_or_prompt_league_path()?;
-        let (client, base_url) = ApiClient::setup_client(&league_install_path, self.load_local_json)?;
+    pub fn refresh(&mut self) -> Result<(), LcuClientInitError> {
+        let league_install_path = LcuClient::get_or_prompt_league_path()?;
+        let (client, base_url) = LcuClient::setup_client(&league_install_path, self.load_local_json)?;
         self.client = client;
         self.base_url = base_url;
 
@@ -288,37 +290,8 @@ impl ApiClient {
     }
 }
 
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub enum ClientRequestType {
-    Summoner,
-    Champions,
-    Masteries,
-    Loot,
-    ChampSelect,
-    Challenges,
-    QueueTypes,
-    OtherSummoner(String), // PUUID parameter
-    RankedStats(String),   // PUUID parameter
-}
-
-impl fmt::Display for ClientRequestType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ClientRequestType::Summoner => write!(f, "Summoner"),
-            ClientRequestType::Champions => write!(f, "Champions"),
-            ClientRequestType::Masteries => write!(f, "Masteries"),
-            ClientRequestType::Loot => write!(f, "Loot"),
-            ClientRequestType::ChampSelect => write!(f, "ChampSelect"),
-            ClientRequestType::Challenges => write!(f, "Challenges"),
-            ClientRequestType::QueueTypes => write!(f, "QueueTypes"),
-            ClientRequestType::OtherSummoner(puuid) => write!(f, "OtherSummoner_{}", puuid),
-            ClientRequestType::RankedStats(puuid) => write!(f, "RankedStats_{}", puuid),
-        }
-    }
-}
-
 #[derive(Debug)]
-pub enum ClientInitError {
+pub enum LcuClientInitError {
     CertMissing(io::Error),
     CertInvalid(reqwest::Error),
     CertDownloadFailed(String),
@@ -334,29 +307,31 @@ pub enum ClientInitError {
     ClientError(reqwest::Error),
 }
 
-impl fmt::Display for ClientInitError {
+impl fmt::Display for LcuClientInitError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ClientInitError::CertMissing(err) => write!(f, "Certificate missing: {}", err),
-            ClientInitError::CertInvalid(err) => write!(f, "Certificate invalid: {}", err),
-            ClientInitError::CertDownloadFailed(msg) => write!(f, "Certificate download failed: {}", msg),
-            ClientInitError::LocalAppDataNotFound => write!(f, "Could not find LocalAppData directory"),
-            ClientInitError::AppDataDirCreationFailed(err) => write!(f, "Failed to create app data directory: {}", err),
-            ClientInitError::LeaguePathInvalid(msg) => write!(f, "Invalid League path: {}", msg),
-            ClientInitError::UserInputFailed(err) => write!(f, "Failed to read user input: {}", err),
-            ClientInitError::PathFileSaveFailed(err) => write!(f, "Failed to save path file: {}", err),
-            ClientInitError::LeagueClientFailed(err) => {
+            LcuClientInitError::CertMissing(err) => write!(f, "Certificate missing: {}", err),
+            LcuClientInitError::CertInvalid(err) => write!(f, "Certificate invalid: {}", err),
+            LcuClientInitError::CertDownloadFailed(msg) => write!(f, "Certificate download failed: {}", msg),
+            LcuClientInitError::LocalAppDataNotFound => write!(f, "Could not find LocalAppData directory"),
+            LcuClientInitError::AppDataDirCreationFailed(err) => {
+                write!(f, "Failed to create app data directory: {}", err)
+            }
+            LcuClientInitError::LeaguePathInvalid(msg) => write!(f, "Invalid League path: {}", msg),
+            LcuClientInitError::UserInputFailed(err) => write!(f, "Failed to read user input: {}", err),
+            LcuClientInitError::PathFileSaveFailed(err) => write!(f, "Failed to save path file: {}", err),
+            LcuClientInitError::LeagueClientFailed(err) => {
                 write!(f, "League client failed, make sure it is running: {}", err)
             }
-            ClientInitError::LeagueClientInvalid() => write!(f, "League client invalid lockfile."),
-            ClientInitError::LockfileAuthStringInvalid(err) => write!(f, "Lockfile auth string invalid: {}", err),
-            ClientInitError::LockfileAuthHeaderInvalid(err) => write!(f, "Lockfile auth header invalid: {}", err),
-            ClientInitError::ClientError(err) => write!(f, "Client error: {}", err),
+            LcuClientInitError::LeagueClientInvalid() => write!(f, "League client invalid lockfile."),
+            LcuClientInitError::LockfileAuthStringInvalid(err) => write!(f, "Lockfile auth string invalid: {}", err),
+            LcuClientInitError::LockfileAuthHeaderInvalid(err) => write!(f, "Lockfile auth header invalid: {}", err),
+            LcuClientInitError::ClientError(err) => write!(f, "Client error: {}", err),
         }
     }
 }
 
-impl From<CertificateError> for ClientInitError {
+impl From<CertificateError> for LcuClientInitError {
     fn from(cert_err: CertificateError) -> Self {
         match cert_err {
             CertificateError::Missing(err) => Self::CertMissing(err),
@@ -367,7 +342,7 @@ impl From<CertificateError> for ClientInitError {
     }
 }
 
-impl From<LockfileError> for ClientInitError {
+impl From<LockfileError> for LcuClientInitError {
     fn from(lf_error: LockfileError) -> Self {
         match lf_error {
             LockfileError::Missing(err) => Self::LeagueClientFailed(err),
@@ -376,19 +351,19 @@ impl From<LockfileError> for ClientInitError {
     }
 }
 
-impl From<io::Error> for ClientInitError {
+impl From<io::Error> for LcuClientInitError {
     fn from(error: io::Error) -> Self {
         Self::LockfileAuthStringInvalid(error)
     }
 }
 
-impl From<InvalidHeaderValue> for ClientInitError {
+impl From<InvalidHeaderValue> for LcuClientInitError {
     fn from(error: InvalidHeaderValue) -> Self {
         Self::LockfileAuthHeaderInvalid(error)
     }
 }
 
-impl From<reqwest::Error> for ClientInitError {
+impl From<reqwest::Error> for LcuClientInitError {
     fn from(error: reqwest::Error) -> Self {
         Self::ClientError(error)
     }
@@ -424,45 +399,70 @@ impl From<io::Error> for LockfileError {
     }
 }
 
-#[derive(Debug)]
-pub enum RequestError {
-    ClientFailed(reqwest::Error),
-    SummonerNeeded,
-    InvalidResponse(ClientRequestType, Box<reqwest::blocking::Response>),
-    ParsingFailed(json::Error),
-    LocalFileError(io::Error),
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub enum LcuClientRequestType {
+    Summoner,
+    Champions,
+    Masteries,
+    Loot,
+    ChampSelect,
+    Challenges,
+    QueueTypes,
 }
 
-impl fmt::Display for RequestError {
+impl fmt::Display for LcuClientRequestType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            RequestError::ClientFailed(err) => write!(f, "Client error: {}", err),
-            RequestError::SummonerNeeded => write!(f, "Summoner information is needed for this request."),
-            RequestError::InvalidResponse(req_type, response) => write!(
-                f,
-                "The server returned an invalid response for request {:?}: {:?}",
-                req_type, response
-            ),
-            RequestError::ParsingFailed(err) => write!(f, "Parsing error: {}", err),
-            RequestError::LocalFileError(err) => write!(f, "Local file error: {}", err),
+            LcuClientRequestType::Summoner => write!(f, "Summoner"),
+            LcuClientRequestType::Champions => write!(f, "Champions"),
+            LcuClientRequestType::Masteries => write!(f, "Masteries"),
+            LcuClientRequestType::Loot => write!(f, "Loot"),
+            LcuClientRequestType::ChampSelect => write!(f, "ChampSelect"),
+            LcuClientRequestType::Challenges => write!(f, "Challenges"),
+            LcuClientRequestType::QueueTypes => write!(f, "QueueTypes"),
         }
     }
 }
 
-impl From<reqwest::Error> for RequestError {
+#[derive(Debug)]
+pub enum LcuRequestError {
+    ClientFailed(reqwest::Error),
+    SummonerNeeded,
+    InvalidResponse(LcuClientRequestType, Box<reqwest::blocking::Response>),
+    ParsingFailed(json::Error),
+    LocalFileError(io::Error),
+}
+
+impl fmt::Display for LcuRequestError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            LcuRequestError::ClientFailed(err) => write!(f, "Client error: {}", err),
+            LcuRequestError::SummonerNeeded => write!(f, "Summoner information is needed for this request."),
+            LcuRequestError::InvalidResponse(req_type, response) => write!(
+                f,
+                "The server returned an invalid response for request {:?}: {:?}",
+                req_type, response
+            ),
+            LcuRequestError::ParsingFailed(err) => write!(f, "Parsing error: {}", err),
+            LcuRequestError::LocalFileError(err) => write!(f, "Local file error: {}", err),
+        }
+    }
+}
+
+impl From<reqwest::Error> for LcuRequestError {
     fn from(error: reqwest::Error) -> Self {
-        RequestError::ClientFailed(error)
+        LcuRequestError::ClientFailed(error)
     }
 }
 
-impl From<json::Error> for RequestError {
+impl From<json::Error> for LcuRequestError {
     fn from(error: json::Error) -> Self {
-        RequestError::ParsingFailed(error)
+        LcuRequestError::ParsingFailed(error)
     }
 }
 
-impl From<io::Error> for RequestError {
+impl From<io::Error> for LcuRequestError {
     fn from(error: io::Error) -> Self {
-        RequestError::LocalFileError(error)
+        LcuRequestError::LocalFileError(error)
     }
 }

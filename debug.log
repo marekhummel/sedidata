@@ -1,0 +1,12 @@
+   Compiling sedidata-tui v2.1.0 (C:\Users\mhummel\OneDrive\Coding\Sedidata\sedidata-tui)
+warning: unused import: `Alignment`
+  --> sedidata-tui\src\ui\views\game.rs:18:14
+   |
+18 |     layout::{Alignment, Constraint},
+   |              ^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: `sedidata-tui` (bin "sedidata-tui") generated 1 warning (run `cargo fix --bin "sedidata-tui"` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.57s
+     Running `target\debug\sedidata-tui.exe -l`

@@ -93,10 +93,22 @@ fn parse_team_players(team_json: &JsonValue, is_ally: bool) -> Result<Vec<ChampS
                     .ok_or(ParsingError::InvalidType("puuid".into()))?
                     .to_string();
 
+                let game_name = player["gameName"]
+                    .as_str()
+                    .ok_or(ParsingError::InvalidType("gameName".into()))?
+                    .to_string();
+
+                let tag_line = player["tagLine"]
+                    .as_str()
+                    .ok_or(ParsingError::InvalidType("tagLine".into()))?
+                    .to_string();
+
                 players.push(ChampSelectPlayerInfo {
                     cell_id,
                     position,
-                    puuid,
+                    _puuid: puuid,
+                    game_name,
+                    tag_line,
                     is_ally,
                     selected_champion: champ_id.into(),
                 });

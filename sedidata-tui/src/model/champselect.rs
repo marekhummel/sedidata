@@ -1,7 +1,5 @@
 use super::ids::ChampionId;
 
-use crate::model::summoner::{RankedQueueStats, Summoner};
-
 #[derive(Debug, Clone)]
 pub struct ChampSelectSession {
     pub queue_id: u16,
@@ -15,16 +13,11 @@ pub struct ChampSelectSession {
 pub struct ChampSelectPlayerInfo {
     pub cell_id: u8,
     pub position: String,
-    pub puuid: String,
+    pub _puuid: String,
+    pub game_name: String,
+    pub tag_line: String,
     pub is_ally: bool,
     pub selected_champion: ChampionId,
-}
-
-#[derive(Debug, Clone)]
-pub struct ChampSelectPlayer {
-    pub player_info: ChampSelectPlayerInfo,
-    pub summoner: Option<Summoner>,
-    pub ranked_stats: Vec<RankedQueueStats>,
 }
 
 #[derive(Debug)]
