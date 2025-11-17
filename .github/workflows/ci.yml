@@ -6,6 +6,25 @@ on:
     tags: ["v*"]  # for releases
 
 jobs:
+  check_changes:
+    name: Check if server code changed
+    runs-on: ubuntu-latest
+    outputs:
+      server_changed: ${{ steps.filter.outputs.server }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for server changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            server:
+              - 'sedidata-server/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+
   build:
     name: Build all workspace crates
     runs-on: windows-latest
@@ -51,8 +70,10 @@ jobs:
 
   deploy_render:
     name: Deploy HTTP proxy to Render
-    needs: build
-    if: github.ref == 'refs/heads/main'
+    needs: [check_changes, build]
+    if: |
+      github.ref == 'refs/heads/main' &&
+      needs.check_changes.outputs.server_changed == 'true'
     runs-on: ubuntu-latest
 
     steps:

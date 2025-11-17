@@ -10,7 +10,10 @@ pub struct AccountRequest {
 #[serde(rename_all = "camelCase")]
 pub struct RiotAccountResponse {
     pub puuid: String,
+
+    #[allow(dead_code)]
     pub game_name: String,
+    #[allow(dead_code)]
     pub tag_line: String,
 }
 
