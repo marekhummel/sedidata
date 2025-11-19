@@ -25,7 +25,7 @@ pub fn parse_summoner(json: &JsonValue) -> Result<Summoner, ParsingError> {
             puuid: puuid.to_string(),
             game_name: game_name.to_string(),
             tag_line: tag_line.to_string(),
-            level,
+            level: Some(level),
         });
     }
 

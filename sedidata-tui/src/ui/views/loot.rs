@@ -14,7 +14,7 @@ use std::{
 // ============================================================================
 
 fn blue_essence_overview_view(ctrl: &Controller) -> TextCreationResult {
-    let loot = ctrl.manager.get_loot()?;
+    let loot = ctrl.manager.get_loot().recv().unwrap()?;
     let be = loot.credits.blue_essence;
     let champ_shards = &loot.champion_shards;
 
@@ -53,8 +53,8 @@ impl_text_view!(BlueEssenceOverviewView, blue_essence_overview_view, "Blue Essen
 // ============================================================================
 
 fn missing_champ_shards_view(ctrl: &Controller) -> TextCreationResult {
-    let champs = ctrl.manager.get_champions()?;
-    let loot = ctrl.manager.get_loot()?;
+    let champs = ctrl.manager.get_champions().recv().unwrap()?;
+    let loot = ctrl.manager.get_loot().recv().unwrap()?;
     let owned_champ_shards = loot
         .champion_shards
         .iter()
@@ -92,8 +92,12 @@ impl_text_view!(
 // ============================================================================
 
 fn interesting_skins_view(ctrl: &Controller) -> TextCreationResult {
-    let sorted_champs = ctrl.util.get_champions_sorted_by_mastery(None, Some(10_000))?;
-    let skin_shards = &ctrl.manager.get_loot()?.skin_shards;
+    let sorted_champs = ctrl
+        .util
+        .get_champions_sorted_by_mastery(None, Some(10_000))
+        .recv()
+        .unwrap()?;
+    let skin_shards = &ctrl.manager.get_loot().recv().unwrap()?.skin_shards;
 
     let mut lines = vec![
         styled_line!("Owned skin shards for champs with 10k or more mastery points (sorted by mastery points):"),
@@ -108,15 +112,15 @@ fn interesting_skins_view(ctrl: &Controller) -> TextCreationResult {
         let champ_name = ctrl.lookup.get_champion(&c)?.name.to_string();
         let mut first = true;
         for shard in shards {
-            let skin_name = ctrl.lookup.get_skin(&shard.skin_id)?.name.as_str();
+            let skin = ctrl.lookup.get_skin(&shard.skin_id)?;
             if first {
                 lines.push(styled_line!(LIST [
                     styled_span!(format!("{:<16}  ", format!("{}:", champ_name)); Bold Color::White),
-                    styled_span!(skin_name),
+                    styled_span!(skin.name),
                 ]));
                 first = false;
             } else {
-                lines.push(styled_line!("{:<16}  {}", "", skin_name));
+                lines.push(styled_line!("{:<16}  {}", "", skin.name));
             }
         }
     }
@@ -130,11 +134,11 @@ impl_text_view!(InterestingSkinsView, interesting_skins_view, "Interesting Skins
 // ============================================================================
 
 fn skin_shards_first_skin_view(ctrl: &Controller) -> TextCreationResult {
-    let skin_shards = &ctrl.manager.get_loot()?.skin_shards;
-    let skins = ctrl.util.get_owned_nobase_skins()?;
+    let skin_shards = &ctrl.manager.get_loot().recv().unwrap()?.skin_shards;
+    let skins = ctrl.util.get_owned_nobase_skins().recv().unwrap()?;
     let champs_with_skin = skins.iter().map(|s| s.champ_id.clone()).collect::<HashSet<_>>();
 
-    let sorted_champs = ctrl.util.get_champions_sorted_by_mastery(None, None)?;
+    let sorted_champs = ctrl.util.get_champions_sorted_by_mastery(None, None).recv().unwrap()?;
     let champs_no_skin = sorted_champs.into_iter().filter(|cid| !champs_with_skin.contains(cid));
 
     let mut lines = vec![
@@ -150,15 +154,15 @@ fn skin_shards_first_skin_view(ctrl: &Controller) -> TextCreationResult {
         let champ_name = ctrl.lookup.get_champion(&c)?.name.to_string();
         let mut first = true;
         for shard in shards {
-            let skin_name = ctrl.lookup.get_skin(&shard.skin_id)?.name.as_str();
+            let skin = ctrl.lookup.get_skin(&shard.skin_id)?;
             if first {
                 lines.push(styled_line!(LIST [
                     styled_span!(format!("{:<16}  ", format!("{}:", champ_name)); Bold Color::White),
-                    styled_span!(skin_name),
+                    styled_span!(skin.name),
                 ]));
                 first = false;
             } else {
-                lines.push(styled_line!("{:<16}  {}", "", skin_name));
+                lines.push(styled_line!("{:<16}  {}", "", skin.name));
             }
         }
     }
@@ -176,14 +180,18 @@ impl_text_view!(
 // ============================================================================
 
 fn skin_shards_disenchantable_view(ctrl: &Controller) -> TextCreationResult {
-    let skin_shards = &ctrl.manager.get_loot()?.skin_shards;
-    let skins = ctrl.util.get_owned_nobase_skins()?;
+    let skin_shards = &ctrl.manager.get_loot().recv().unwrap()?.skin_shards;
+    let skins = ctrl.util.get_owned_nobase_skins().recv().unwrap()?;
     let skins_per_champ = skins.iter().fold(HashMap::new(), |mut map, skin| {
         *map.entry(skin.champ_id.clone()).or_insert(0u8) += 1;
         map
     });
 
-    let champs_by_mastery = ctrl.util.get_champions_sorted_by_mastery(Some(12_000), None)?;
+    let champs_by_mastery = ctrl
+        .util
+        .get_champions_sorted_by_mastery(Some(12_000), None)
+        .recv()
+        .unwrap()?;
     let mut sorted_champs_with_skins = champs_by_mastery
         .iter()
         .filter(|cid| skins_per_champ.contains_key(cid))
@@ -204,15 +212,15 @@ fn skin_shards_disenchantable_view(ctrl: &Controller) -> TextCreationResult {
         let skin_count = skins_per_champ.get(c).unwrap_or(&0);
         let mut first = true;
         for shard in shards {
-            let skin_name = ctrl.lookup.get_skin(&shard.skin_id)?.name.as_str();
+            let skin = ctrl.lookup.get_skin(&shard.skin_id)?;
             if first {
                 lines.push(styled_line!(LIST [
                     styled_span!(format!("{:<19}  ", format!("{} ({}):", champ_name, skin_count)); Bold Color::White),
-                    styled_span!(skin_name),
+                    styled_span!(skin.name),
                 ]));
                 first = false;
             } else {
-                lines.push(styled_line!("{:<19}  {}", "", skin_name));
+                lines.push(styled_line!("{:<19}  {}", "", skin.name));
             }
         }
     }

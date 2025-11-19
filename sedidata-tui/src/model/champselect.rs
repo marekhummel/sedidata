@@ -20,7 +20,7 @@ pub struct ChampSelectPlayerInfo {
     pub selected_champion: ChampionId,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct QueueInfo {
     pub queue_id: u16,
     pub _category: String,

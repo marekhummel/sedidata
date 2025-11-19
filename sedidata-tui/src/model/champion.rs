@@ -15,7 +15,7 @@ pub struct Champion {
     pub roles: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Skin {
     pub id: SkinId,
     pub champ_id: ChampionId,
@@ -24,7 +24,7 @@ pub struct Skin {
     pub owned: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Chroma {
     pub id: ChromaId,
     pub skin_id: SkinId,

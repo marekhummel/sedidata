@@ -8,62 +8,62 @@ use crate::model::{
     mastery::Mastery,
 };
 
-pub struct LookupService<'a> {
-    champs: HashMap<ChampionId, &'a Champion>,
-    skins: HashMap<SkinId, &'a Skin>,
-    masteries: HashMap<ChampionId, &'a Mastery>,
-    _challenges: HashMap<i32, &'a Challenge>,
-    queues: HashMap<u16, &'a QueueInfo>,
+pub struct LookupService {
+    champs: HashMap<ChampionId, Champion>,
+    skins: HashMap<SkinId, Skin>,
+    masteries: HashMap<ChampionId, Mastery>,
+    _challenges: HashMap<i32, Challenge>,
+    queues: HashMap<u16, QueueInfo>,
 }
 
-impl<'a> LookupService<'a> {
+impl LookupService {
     pub fn new(
-        champions: &'a [Champion],
-        skins: &'a [Skin],
-        masteries: &'a [Mastery],
-        challenges: &'a [Challenge],
-        queues: &'a [QueueInfo],
+        champions: &[Champion],
+        skins: &[Skin],
+        masteries: &[Mastery],
+        challenges: &[Challenge],
+        queues: &[QueueInfo],
     ) -> Self {
         Self {
-            champs: champions.iter().map(|c| (c.id.clone(), c)).collect(),
-            skins: skins.iter().map(|c| (c.id.clone(), c)).collect(),
-            masteries: masteries.iter().map(|m| (m.champ_id.clone(), m)).collect(),
-            _challenges: challenges.iter().map(|ch| (ch.id, ch)).collect(),
-            queues: queues.iter().map(|q| (q.queue_id, q)).collect(),
+            champs: champions.iter().map(|c| (c.id.clone(), c.clone())).collect(),
+            skins: skins.iter().map(|c| (c.id.clone(), c.clone())).collect(),
+            masteries: masteries.iter().map(|m| (m.champ_id.clone(), m.clone())).collect(),
+            _challenges: challenges.iter().map(|ch| (ch.id, ch.clone())).collect(),
+            queues: queues.iter().map(|q| (q.queue_id, q.clone())).collect(),
         }
     }
 
-    pub fn get_champion(&self, id: &ChampionId) -> Result<&'a Champion, IdNotFoundError> {
+    pub fn get_champion(&self, id: &ChampionId) -> Result<Champion, IdNotFoundError> {
         match self.champs.get(id) {
-            Some(champ) => Ok(*champ),
+            Some(champ) => Ok(champ.clone()),
             None => Err(IdNotFoundError::Champ(id.clone())),
         }
     }
 
-    pub fn get_skin(&self, id: &SkinId) -> Result<&'a Skin, IdNotFoundError> {
+    pub fn get_skin(&self, id: &SkinId) -> Result<Skin, IdNotFoundError> {
         match self.skins.get(id) {
-            Some(skin) => Ok(*skin),
+            Some(skin) => Ok(skin.clone()),
             None => Err(IdNotFoundError::Skin(id.clone())),
         }
     }
 
-    pub fn get_mastery(&self, id: &ChampionId) -> Result<&'a Mastery, IdNotFoundError> {
+    pub fn get_mastery(&self, id: &ChampionId) -> Result<Mastery, IdNotFoundError> {
         match self.masteries.get(id) {
-            Some(mastery) => Ok(*mastery),
+            Some(mastery) => Ok(mastery.clone()),
             None => Err(IdNotFoundError::Champ(id.clone())),
         }
     }
 
-    pub fn _get_challenge(&self, id: i32) -> Result<&'a Challenge, IdNotFoundError> {
+    pub fn _get_challenge(&self, id: i32) -> Result<Challenge, IdNotFoundError> {
         match self._challenges.get(&id) {
-            Some(challenge) => Ok(*challenge),
+            Some(challenge) => Ok(challenge.clone()),
             None => Err(IdNotFoundError::_Challenge(id)),
         }
     }
 
-    pub fn get_queue(&self, id: u16) -> Result<&'a QueueInfo, IdNotFoundError> {
+    pub fn get_queue(&self, id: u16) -> Result<QueueInfo, IdNotFoundError> {
         match self.queues.get(&id) {
-            Some(queue) => Ok(*queue),
+            Some(queue) => Ok(queue.clone()),
             None => Err(IdNotFoundError::Queue(id)),
         }
     }

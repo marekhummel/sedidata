@@ -11,8 +11,8 @@ use std::collections::HashSet;
 // ============================================================================
 
 fn champions_without_skin_view(ctrl: &Controller) -> TextCreationResult {
-    let champs = ctrl.util.get_owned_champions()?;
-    let skins = ctrl.util.get_owned_nobase_skins()?;
+    let champs = ctrl.util.get_owned_champions().recv().unwrap()?;
+    let skins = ctrl.util.get_owned_nobase_skins().recv().unwrap()?;
     let champs_with_skin = skins.iter().map(|s| s.champ_id.clone()).collect::<HashSet<_>>();
     let mut champs_no_skin = champs
         .iter()
@@ -46,14 +46,14 @@ impl_text_view!(
 // ============================================================================
 
 fn chromas_without_skin_view(ctrl: &Controller) -> TextCreationResult {
-    let skins = ctrl.util.get_owned_skins_set()?;
-    let chromas = ctrl.util.get_owned_chromas()?;
+    let skins = ctrl.util.get_owned_skins_set().recv().unwrap()?;
+    let chromas = ctrl.util.get_owned_chromas().recv().unwrap()?;
     let chromas_no_skin = chromas
         .iter()
         .filter(|ch| !skins.contains(&ch.skin_id))
         .collect::<Vec<_>>();
 
-    let skin_shards = &ctrl.manager.get_loot()?.skin_shards;
+    let skin_shards = &ctrl.manager.get_loot().recv().unwrap()?.skin_shards;
     let available_skin_shards = chromas_no_skin
         .iter()
         .filter(|c| skin_shards.iter().any(|ss| ss.skin_id == c.skin_id))

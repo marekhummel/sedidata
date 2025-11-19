@@ -7,16 +7,19 @@ use ratatui::{layout::Rect, text::Line, Frame};
 use crate::service::{data_manager::DataManager, lookup::LookupService, util::UtilService};
 use crate::service::{data_manager::DataRetrievalError, lookup::IdNotFoundError};
 
+pub mod async_data;
 pub mod menu;
 pub mod repl;
 pub mod views;
+
+pub use async_data::AsyncData;
 
 pub type TextCreationResult = Result<Vec<Line<'static>>, ViewError>;
 type ViewResult = Result<(), ViewError>;
 
 pub struct Controller<'a> {
     pub manager: &'a DataManager,
-    pub lookup: &'a LookupService<'a>,
+    pub lookup: &'a LookupService,
     pub util: &'a UtilService<'a>,
 }
 

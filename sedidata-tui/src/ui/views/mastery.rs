@@ -24,8 +24,8 @@ use ratatui::{
 // ============================================================================
 
 fn unplayed_champs_view(ctrl: &Controller) -> TextCreationResult {
-    let champs = ctrl.manager.get_champions()?;
-    let played_champs = ctrl.util.get_played_champions_set()?;
+    let champs = ctrl.manager.get_champions().recv().unwrap()?;
+    let played_champs = ctrl.util.get_played_champions_set().recv().unwrap()?;
 
     let mut unplayed = champs
         .iter()
@@ -76,8 +76,8 @@ impl MasteryView {
     pub fn load_masteries(&mut self, ctrl: &Controller, lvl_range: Option<Vec<u16>>) {
         let masteries: Result<Vec<(Mastery, Champion)>, ViewError> = (|| {
             let mastery_list = match lvl_range {
-                None => ctrl.manager.get_masteries()?.iter().collect(),
-                Some(rng) => ctrl.util.get_masteries_with_level(rng)?,
+                None => ctrl.manager.get_masteries().recv().unwrap()?.to_vec(),
+                Some(rng) => ctrl.util.get_masteries_with_level(rng).recv().unwrap()?,
             };
 
             let mut result = Vec::new();
@@ -377,7 +377,7 @@ impl RenderableView for AllMasteriesView {
         "All Masteries"
     }
 
-    fn interact(&mut self, keys: &[KeyCode]) {
+    fn update(&mut self, _controller: &Controller, keys: &[KeyCode]) {
         self.internal.check_keys(keys);
     }
 
@@ -411,7 +411,7 @@ impl RenderableView for NextMasteryView {
         self.title.as_str()
     }
 
-    fn interact(&mut self, keys: &[KeyCode]) {
+    fn update(&mut self, _controller: &Controller, keys: &[KeyCode]) {
         self.internal.check_keys(keys);
     }
 

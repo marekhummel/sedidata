@@ -1,6 +1,6 @@
 use super::ids::{ChampionId, SkinId};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct JsonLootItem {
     pub display_category: String,
     pub loot_type: String,
@@ -13,7 +13,7 @@ pub struct JsonLootItem {
     pub disenchant_value: u16,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LootItems {
     pub _mastery_tokens: Vec<MasteryToken>,
     pub champion_shards: Vec<ChampionShard>,
@@ -22,30 +22,30 @@ pub struct LootItems {
     pub _ignored: Vec<JsonLootItem>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct _Chest {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MasteryToken {
     pub _champ_id: ChampionId,
     pub _count: u8,
     pub _level: u8,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ChampionShard {
     pub champ_id: ChampionId,
     pub count: u8,
     pub disenchant_value: u16,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SkinShard {
     pub skin_id: SkinId,
     pub _count: u8,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Credits {
     pub blue_essence: u32,
     pub orange_essence: u32,

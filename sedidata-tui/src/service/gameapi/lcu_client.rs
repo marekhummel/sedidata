@@ -1,11 +1,10 @@
 use std::{
-    cell::RefCell,
     collections::{hash_map::Entry, HashMap},
     env, fmt,
     fs::{create_dir, File},
     io::{self, BufRead, Read, Write},
     path::{Path, PathBuf},
-    rc::Rc,
+    sync::{Arc, Mutex},
 };
 
 use base64::{engine::general_purpose, write::EncoderStringWriter};
@@ -29,7 +28,7 @@ pub struct LcuClient {
     write_json: bool,
     load_local_json: bool,
     client: Client,
-    cache: RefCell<HashMap<LcuClientRequestType, Rc<JsonValue>>>,
+    cache: Mutex<HashMap<LcuClientRequestType, Arc<JsonValue>>>,
     base_url: String,
     summoner: Option<Summoner>,
 }
@@ -38,7 +37,7 @@ impl LcuClient {
     pub fn new(read_json_files: bool, write_json: bool) -> Result<Self, LcuClientInitError> {
         let league_install_path = LcuClient::get_or_prompt_league_path()?;
         let (client, base_url) = LcuClient::setup_client(&league_install_path, read_json_files)?;
-        let cache = RefCell::from(HashMap::new());
+        let cache = Mutex::from(HashMap::new());
         Ok(Self {
             write_json,
             load_local_json: read_json_files,
@@ -202,16 +201,16 @@ impl LcuClient {
         })
     }
 
-    pub fn request(&self, request_type: LcuClientRequestType, cache: bool) -> Result<Rc<JsonValue>, LcuRequestError> {
+    pub fn request(&self, request_type: LcuClientRequestType, cache: bool) -> Result<Arc<JsonValue>, LcuRequestError> {
         if self.load_local_json {
             let mut file = File::open(format!("data/{}.json", request_type))?;
             let mut buf = String::new();
             file.read_to_string(&mut buf)?;
             let json = json::parse(buf.as_str()).unwrap();
-            return Ok(Rc::new(json));
+            return Ok(Arc::new(json));
         }
 
-        match self.cache.borrow_mut().entry(request_type.clone()) {
+        match self.cache.lock().unwrap().entry(request_type.clone()) {
             Entry::Occupied(oe) => Ok(oe.get().clone()),
             Entry::Vacant(ve) => {
                 // Get url
@@ -265,11 +264,11 @@ impl LcuClient {
                     let _ = file.write_all(json.pretty(2).as_bytes());
                 }
 
-                let rc_json = Rc::new(json);
+                let arc_json = Arc::new(json);
                 if cache {
-                    ve.insert(rc_json.clone());
+                    ve.insert(arc_json.clone());
                 }
-                Ok(rc_json)
+                Ok(arc_json)
             }
         }
     }
@@ -284,7 +283,7 @@ impl LcuClient {
         self.client = client;
         self.base_url = base_url;
 
-        self.cache.borrow_mut().clear();
+        self.cache.lock().unwrap().clear();
         self.summoner = None;
         Ok(())
     }

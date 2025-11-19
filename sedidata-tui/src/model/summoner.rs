@@ -8,7 +8,7 @@ pub struct Summoner {
     pub puuid: String,
     pub game_name: String,
     pub tag_line: String,
-    pub level: u16,
+    pub level: Option<u16>,
 }
 
 #[derive(Debug, Clone)]
@@ -17,6 +17,7 @@ pub struct RiotApiSummonerResponse {
     pub ranked_stats: Vec<RankedQueueStats>,
 }
 
+#[derive(Debug, Clone)]
 pub struct SummonerWithStats {
     pub summoner: Summoner,
     pub ranked_stats: Option<HashMap<String, RankedQueueStats>>,

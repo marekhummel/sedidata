@@ -100,6 +100,7 @@ impl RiotApiClient {
         let response = client.get(&url).send()?;
 
         if !response.status().is_success() {
+            eprintln!("Error response for {}#{}: {:?}", name, tagline, response);
             return Err(RiotApiRequestError::InvalidResponse(
                 response.status().as_u16(),
                 response.text().unwrap_or_else(|_| "Unknown error".to_string()),

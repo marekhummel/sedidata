@@ -20,7 +20,7 @@ pub trait RenderableView {
     /// Render the view into a ratatui Frame with scroll support
     fn render(&self, rc: RenderContext) -> ViewResult;
 
-    fn interact(&mut self, _keys: &[KeyCode]) {}
+    fn update(&mut self, _controller: &Controller, _keys: &[KeyCode]) {}
 
     fn title(&self) -> &str;
 
@@ -30,7 +30,7 @@ pub trait RenderableView {
     }
 
     /// Called when the view should refresh its data
-    fn refresh(&mut self, _controller: &Controller) -> Result<(), String> {
+    fn refresh_data(&mut self, _controller: &Controller) -> Result<(), String> {
         Ok(())
     }
 }
@@ -210,23 +210,28 @@ macro_rules! impl_text_view {
     // Internal implementation
     (@internal $name:ident, $text_render_fn:expr, $title:expr, $interval:expr) => {
         pub struct $name {
-            lines: Vec<ratatui::text::Line<'static>>,
-            error: Option<String>,
+            data: $crate::ui::AsyncData<Result<Vec<ratatui::text::Line<'static>>, String>>,
         }
 
         impl $name {
-            fn load_data(controller: &Controller) -> Self {
-                match $text_render_fn(controller) {
-                    Ok(lines) => Self { lines, error: None },
-                    Err(e) => Self {
-                        lines: Vec::new(),
-                        error: Some(format!("{}", e)),
-                    },
+            pub fn new(controller: &Controller) -> Self {
+                Self {
+                    data: Self::load_data(controller),
                 }
             }
 
-            pub fn new(controller: &Controller) -> Self {
-                Self::load_data(controller)
+            fn load_data(controller: &Controller) -> $crate::ui::AsyncData<Result<Vec<ratatui::text::Line<'static>>, String>> {
+                let (tx, rx) = std::sync::mpsc::channel();
+
+                // Execute the render function and capture result
+                let result = $text_render_fn(controller).map_err(|e| format!("{}", e));
+
+                // Spawn a thread to send the result
+                std::thread::spawn(move || {
+                    let _ = tx.send(Ok(result));
+                });
+
+                $crate::ui::AsyncData::new(rx)
             }
         }
 
@@ -239,20 +244,48 @@ macro_rules! impl_text_view {
                 $interval
             }
 
-            fn refresh(&mut self, controller: &Controller) -> Result<(), String> {
-                let new_data = Self::load_data(controller);
-                self.lines = new_data.lines;
-                self.error = new_data.error;
+            fn update(&mut self, _controller: &Controller, _keys: &[crossterm::event::KeyCode]) {
+                self.data.try_update();
+            }
+
+            fn refresh_data(&mut self, _controller: &Controller) -> Result<(), String> {
+                self.data = Self::load_data(_controller);
                 Ok(())
             }
 
             fn render(&self, rc: $crate::ui::RenderContext) -> $crate::ui::ViewResult {
-                if let Some(error) = &self.error {
-                    rc.error(error);
+                // Check if still loading
+                if self.data.is_loading() {
+                    let loading_text = vec![$crate::styled_line!("Loading data...")];
+                    let paragraph = ratatui::widgets::Paragraph::new(loading_text)
+                        .block(rc.block)
+                        .wrap(ratatui::widgets::Wrap { trim: false });
+                    rc.frame.render_widget(paragraph, rc.area);
                     return Ok(());
                 }
 
-                let paragraph = ratatui::widgets::Paragraph::new(self.lines.clone())
+                // Check for errors
+                if let Some(err) = self.data.error() {
+                    rc.error(err);
+                    return Ok(());
+                }
+
+                // Get the loaded data
+                let Some(result) = self.data.get_data() else {
+                    rc.error("Data not available");
+                    return Ok(());
+                };
+
+                // Check if the result itself is an error
+                let lines = match result {
+                    Ok(lines) => lines,
+                    Err(e) => {
+                        rc.error(e);
+                        return Ok(());
+                    }
+                };
+
+                let paragraph = ratatui::widgets::Paragraph::new(lines.clone())
                     .block(rc.block)
                     .wrap(ratatui::widgets::Wrap { trim: false })
                     .scroll((rc.scroll_offset, 0));

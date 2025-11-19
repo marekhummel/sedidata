@@ -54,7 +54,7 @@ impl ChallengesOverviewView {
     }
 
     fn load_challenges(ctrl: &Controller) -> Result<Vec<(String, Vec<Challenge>)>, ViewError> {
-        let mut challenges = ctrl.manager.get_challenges()?.to_vec();
+        let mut challenges = ctrl.manager.get_challenges().recv().unwrap()?;
         challenges.retain(|c| !c.is_capstone && !c.is_completed() && c.category != "LEGACY");
 
         // Sort by category first, then by progress percentage (descending) and reward in pts (ascending)
@@ -130,7 +130,7 @@ impl RenderableView for ChallengesOverviewView {
         "Challenges Overview"
     }
 
-    fn interact(&mut self, keys: &[KeyCode]) {
+    fn update(&mut self, _controller: &Controller, keys: &[KeyCode]) {
         if keys.contains(&KeyCode::Char('s')) {
             self.sorting_state = (self.sorting_state + 1) % 4;
 

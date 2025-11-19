@@ -106,7 +106,7 @@ impl App {
     fn refresh_current_view(&mut self, controller: &Controller) {
         if let AppState::ViewingOutput(view) = &mut self.state {
             // Preserve scroll position during auto-refresh
-            let _ = view.refresh(controller);
+            let _ = view.refresh_data(controller);
             self.last_refresh = Some(Instant::now());
         }
     }
@@ -114,7 +114,7 @@ impl App {
     fn manual_refresh(&mut self, controller: &Controller) {
         if let AppState::ViewingOutput(view) = &mut self.state {
             // Reset scroll position on manual refresh
-            let _ = view.refresh(controller);
+            let _ = view.refresh_data(controller);
             self.last_refresh = Some(Instant::now());
             self.scroll_offset = 0;
         }
@@ -129,16 +129,17 @@ impl App {
             let lookup = App::get_lookup_service(manager)?;
             let util = UtilService::new(manager);
 
+            let ctrl = Controller {
+                manager,
+                lookup: &lookup,
+                util: &util,
+            };
+
             loop {
                 let summoner_name = manager.get_summoner().game_name.clone();
 
                 // Check if we should auto-refresh the current view
                 if self.should_refresh_view() {
-                    let ctrl = Controller {
-                        manager,
-                        lookup: &lookup,
-                        util: &util,
-                    };
                     self.refresh_current_view(&ctrl);
                 }
 
@@ -180,11 +181,9 @@ impl App {
                     match &mut self.state {
                         AppState::Menu => self.menu.render(f, chunks[1]),
                         AppState::ViewingOutput(view) => {
-                            // Handle key press
-                            if !self.pressed_keys.is_empty() {
-                                view.interact(&self.pressed_keys);
-                                self.pressed_keys.clear();
-                            }
+                            // Always update view (polls async data)
+                            view.update(&ctrl, &self.pressed_keys);
+                            self.pressed_keys.clear();
 
                             // Render the view
                             let block = Block::default()
@@ -244,11 +243,6 @@ impl App {
                             }
                             KeyCode::Enter if self.is_in_menu() => {
                                 if let Some(factory) = self.menu.get_factory() {
-                                    let ctrl = Controller {
-                                        manager,
-                                        lookup: &lookup,
-                                        util: &util,
-                                    };
                                     let view = factory(&ctrl);
 
                                     terminal.clear()?;
@@ -276,14 +270,14 @@ impl App {
         }
     }
 
-    fn get_lookup_service<'a>(manager: &'a DataManager) -> DataRetrievalResult<LookupService<'a>> {
-        let champions = manager.get_champions()?;
-        let skins = manager.get_skins()?;
-        let masteries = manager.get_masteries()?;
-        let challenges = manager.get_challenges()?;
-        let queues = manager.get_queue_types()?;
+    fn get_lookup_service(manager: &DataManager) -> DataRetrievalResult<LookupService> {
+        let champions = manager.get_champions().recv().unwrap()?;
+        let skins = manager.get_skins().recv().unwrap()?;
+        let masteries = manager.get_masteries().recv().unwrap()?;
+        let challenges = manager.get_challenges().recv().unwrap()?;
+        let queues = manager.get_queue_types().recv().unwrap()?;
 
-        Ok(LookupService::new(champions, skins, masteries, challenges, queues))
+        Ok(LookupService::new(&champions, &skins, &masteries, &challenges, &queues))
     }
 }
 

@@ -1,7 +1,14 @@
-use std::{cell::RefCell, collections::HashMap, fmt, rc::Rc};
+use std::{
+    collections::HashMap,
+    fmt,
+    sync::{
+        mpsc::{self, Receiver},
+        Arc, Mutex,
+    },
+    thread,
+};
 
 use itertools::Itertools;
-use once_cell::sync::OnceCell;
 
 use crate::{
     model::{
@@ -28,15 +35,15 @@ use crate::{
     },
 };
 pub struct DataManager {
-    lcu_client: LcuClient,
-    riot_api_client: RiotApiClient,
-    summoner: OnceCell<Summoner>,
-    champ_info_cache: OnceCell<AllChampionInfo>,
-    masteries_cache: OnceCell<Vec<Mastery>>,
-    loot_cache: OnceCell<LootItems>,
-    challenges_cache: OnceCell<Vec<Challenge>>,
-    queues_cache: OnceCell<Vec<QueueInfo>>,
-    ranked_info_cache: RefCell<HashMap<(String, String), RiotApiSummonerResponse>>,
+    lcu_client: Arc<LcuClient>,
+    riot_api_client: Arc<RiotApiClient>,
+    summoner: Arc<Mutex<Option<Summoner>>>,
+    champ_info_cache: Arc<Mutex<Option<AllChampionInfo>>>,
+    masteries_cache: Arc<Mutex<Option<Vec<Mastery>>>>,
+    loot_cache: Arc<Mutex<Option<LootItems>>>,
+    challenges_cache: Arc<Mutex<Option<Vec<Challenge>>>>,
+    queues_cache: Arc<Mutex<Option<Vec<QueueInfo>>>>,
+    ranked_info_cache: Arc<Mutex<HashMap<(String, String), RiotApiSummonerResponse>>>,
 }
 
 impl DataManager {
@@ -47,168 +54,275 @@ impl DataManager {
         client.set_summoner(summoner.clone());
 
         Ok(Self {
-            lcu_client: client,
-            riot_api_client,
-            summoner: OnceCell::from(summoner),
-            champ_info_cache: OnceCell::new(),
-            masteries_cache: OnceCell::new(),
-            loot_cache: OnceCell::new(),
-            challenges_cache: OnceCell::new(),
-            queues_cache: OnceCell::new(),
-            ranked_info_cache: RefCell::new(HashMap::new()),
+            lcu_client: Arc::new(client),
+            riot_api_client: Arc::new(riot_api_client),
+            summoner: Arc::new(Mutex::new(Some(summoner))),
+            champ_info_cache: Arc::new(Mutex::new(None)),
+            masteries_cache: Arc::new(Mutex::new(None)),
+            loot_cache: Arc::new(Mutex::new(None)),
+            challenges_cache: Arc::new(Mutex::new(None)),
+            queues_cache: Arc::new(Mutex::new(None)),
+            ranked_info_cache: Arc::new(Mutex::new(HashMap::new())),
         })
     }
 
-    pub fn get_summoner(&self) -> &Summoner {
-        self.summoner.get().unwrap()
+    // Generic async wrapper that executes fetch in a thread
+    pub fn async_wrapper<T, F>(&self, fetch_fn: F) -> Receiver<DataRetrievalResult<T>>
+    where
+        T: Send + 'static,
+        F: FnOnce() -> DataRetrievalResult<T> + Send + 'static,
+    {
+        let (tx, rx) = mpsc::channel();
+
+        thread::spawn(move || {
+            let result = fetch_fn();
+            tx.send(result).ok();
+        });
+
+        rx
     }
 
-    pub fn get_champions(&self) -> DataRetrievalResult<&Vec<Champion>> {
-        self.champ_info_cache
-            .get_or_try_init(|| {
-                let champs_json = self.lcu_client.request(LcuClientRequestType::Champions, true)?;
-                let champ_info = parse_champions(Rc::as_ref(&champs_json))?;
-                Ok(champ_info)
-            })
-            .map(|champ_info| &champ_info.champions)
+    pub fn get_summoner(&self) -> Summoner {
+        self.summoner.lock().unwrap().clone().unwrap()
     }
 
-    pub fn get_skins(&self) -> DataRetrievalResult<&Vec<Skin>> {
-        self.champ_info_cache
-            .get_or_try_init(|| {
-                let champs_json = self.lcu_client.request(LcuClientRequestType::Champions, true)?;
-                let champ_info = parse_champions(Rc::as_ref(&champs_json))?;
-                Ok(champ_info)
-            })
-            .map(|champ_info| &champ_info.skins)
-    }
-    pub fn get_chromas(&self) -> DataRetrievalResult<&Vec<Chroma>> {
-        self.champ_info_cache
-            .get_or_try_init(|| {
-                let champs_json = self.lcu_client.request(LcuClientRequestType::Champions, true)?;
-                let champ_info = parse_champions(Rc::as_ref(&champs_json))?;
-                Ok(champ_info)
-            })
-            .map(|champ_info| &champ_info.chromas)
+    pub fn get_champions(&self) -> Receiver<DataRetrievalResult<Vec<Champion>>> {
+        let client = Arc::clone(&self.lcu_client);
+        let cache = Arc::clone(&self.champ_info_cache);
+
+        self.async_wrapper(move || {
+            let mut cache_guard = cache.lock().unwrap();
+
+            if let Some(champ_info) = cache_guard.as_ref() {
+                return Ok(champ_info.champions.clone());
+            }
+
+            let champs_json = client.request(LcuClientRequestType::Champions, true)?;
+            let champ_info = parse_champions(Arc::as_ref(&champs_json))?;
+            let result = champ_info.champions.clone();
+
+            *cache_guard = Some(champ_info);
+            Ok(result)
+        })
     }
 
-    pub fn get_masteries(&self) -> DataRetrievalResult<&Vec<Mastery>> {
-        self.masteries_cache.get_or_try_init(|| {
-            let masteries_json = self.lcu_client.request(LcuClientRequestType::Masteries, true)?;
-            let masteries = parse_masteries(Rc::as_ref(&masteries_json))?;
+    pub fn get_skins(&self) -> Receiver<DataRetrievalResult<Vec<Skin>>> {
+        let client = Arc::clone(&self.lcu_client);
+        let cache = Arc::clone(&self.champ_info_cache);
+
+        self.async_wrapper(move || {
+            let mut cache_guard = cache.lock().unwrap();
+
+            if let Some(champ_info) = cache_guard.as_ref() {
+                return Ok(champ_info.skins.clone());
+            }
+
+            let champs_json = client.request(LcuClientRequestType::Champions, true)?;
+            let champ_info = parse_champions(Arc::as_ref(&champs_json))?;
+            let result = champ_info.skins.clone();
+
+            *cache_guard = Some(champ_info);
+            Ok(result)
+        })
+    }
+
+    pub fn get_chromas(&self) -> Receiver<DataRetrievalResult<Vec<Chroma>>> {
+        let client = Arc::clone(&self.lcu_client);
+        let cache = Arc::clone(&self.champ_info_cache);
+
+        self.async_wrapper(move || {
+            let mut cache_guard = cache.lock().unwrap();
+
+            if let Some(champ_info) = cache_guard.as_ref() {
+                return Ok(champ_info.chromas.clone());
+            }
+
+            let champs_json = client.request(LcuClientRequestType::Champions, true)?;
+            let champ_info = parse_champions(Arc::as_ref(&champs_json))?;
+            let result = champ_info.chromas.clone();
+
+            *cache_guard = Some(champ_info);
+            Ok(result)
+        })
+    }
+
+    pub fn get_masteries(&self) -> Receiver<DataRetrievalResult<Vec<Mastery>>> {
+        let client = Arc::clone(&self.lcu_client);
+        let cache = Arc::clone(&self.masteries_cache);
+
+        self.async_wrapper(move || {
+            let mut cache_guard = cache.lock().unwrap();
+
+            if let Some(masteries) = cache_guard.as_ref() {
+                return Ok(masteries.clone());
+            }
+
+            let masteries_json = client.request(LcuClientRequestType::Masteries, true)?;
+            let masteries = parse_masteries(Arc::as_ref(&masteries_json))?;
+
+            *cache_guard = Some(masteries.clone());
             Ok(masteries)
         })
     }
 
-    pub fn get_loot(&self) -> DataRetrievalResult<&LootItems> {
-        self.loot_cache.get_or_try_init(|| {
-            let loot_json = self.lcu_client.request(LcuClientRequestType::Loot, true)?;
-            let loot = parse_loot(Rc::as_ref(&loot_json))?;
+    pub fn get_loot(&self) -> Receiver<DataRetrievalResult<LootItems>> {
+        let client = Arc::clone(&self.lcu_client);
+        let cache = Arc::clone(&self.loot_cache);
+
+        self.async_wrapper(move || {
+            let mut cache_guard = cache.lock().unwrap();
+
+            if let Some(loot) = cache_guard.as_ref() {
+                return Ok(loot.clone());
+            }
+
+            let loot_json = client.request(LcuClientRequestType::Loot, true)?;
+            let loot = parse_loot(Arc::as_ref(&loot_json))?;
+
+            *cache_guard = Some(loot.clone());
             Ok(loot)
         })
     }
 
-    pub fn get_challenges(&self) -> DataRetrievalResult<&Vec<Challenge>> {
-        self.challenges_cache.get_or_try_init(|| {
-            let challenges_json = self.lcu_client.request(LcuClientRequestType::Challenges, true)?;
-            let challenges = parse_challenges(Rc::as_ref(&challenges_json))?;
+    pub fn get_challenges(&self) -> Receiver<DataRetrievalResult<Vec<Challenge>>> {
+        let client = Arc::clone(&self.lcu_client);
+        let cache = Arc::clone(&self.challenges_cache);
+
+        self.async_wrapper(move || {
+            let mut cache_guard = cache.lock().unwrap();
+
+            if let Some(challenges) = cache_guard.as_ref() {
+                return Ok(challenges.clone());
+            }
+
+            let challenges_json = client.request(LcuClientRequestType::Challenges, true)?;
+            let challenges = parse_challenges(Arc::as_ref(&challenges_json))?;
+
+            *cache_guard = Some(challenges.clone());
             Ok(challenges)
         })
     }
 
-    pub fn get_queue_types(&self) -> DataRetrievalResult<&Vec<QueueInfo>> {
-        self.queues_cache.get_or_try_init(|| {
-            let queues_json = self.lcu_client.request(LcuClientRequestType::QueueTypes, true)?;
-            let queues = parse_queues(Rc::as_ref(&queues_json))?;
+    pub fn get_queue_types(&self) -> Receiver<DataRetrievalResult<Vec<QueueInfo>>> {
+        let client = Arc::clone(&self.lcu_client);
+        let cache = Arc::clone(&self.queues_cache);
+
+        self.async_wrapper(move || {
+            let mut cache_guard = cache.lock().unwrap();
+
+            if let Some(queues) = cache_guard.as_ref() {
+                return Ok(queues.clone());
+            }
+
+            let queues_json = client.request(LcuClientRequestType::QueueTypes, true)?;
+            let queues = parse_queues(Arc::as_ref(&queues_json))?;
+
+            *cache_guard = Some(queues.clone());
             Ok(queues)
         })
     }
 
-    pub fn get_champ_select(&self) -> DataRetrievalResult<Option<ChampSelectSession>> {
-        match self.lcu_client.request(LcuClientRequestType::ChampSelect, false) {
+    pub fn get_champ_select(&self) -> Receiver<DataRetrievalResult<Option<ChampSelectSession>>> {
+        let client = Arc::clone(&self.lcu_client);
+
+        self.async_wrapper(move || match client.request(LcuClientRequestType::ChampSelect, false) {
             Ok(champ_select_json) => {
-                let champ_select_info = parse_champ_select(Rc::as_ref(&champ_select_json))?;
+                let champ_select_info = parse_champ_select(Arc::as_ref(&champ_select_json))?;
                 Ok(Some(champ_select_info))
             }
             Err(LcuRequestError::InvalidResponse(_, _)) => Ok(None),
             Err(err) => Err(err.into()),
-        }
+        })
     }
 
-    pub fn get_ranked_info(&self, players: &[(String, String)]) -> DataRetrievalResult<Vec<SummonerWithStats>> {
-        let mut cache = self.ranked_info_cache.borrow_mut();
+    pub fn get_ranked_info(
+        &self,
+        players: Vec<(String, String)>,
+    ) -> Receiver<DataRetrievalResult<Vec<SummonerWithStats>>> {
+        let riot_client = Arc::clone(&self.riot_api_client);
+        let cache = Arc::clone(&self.ranked_info_cache);
 
-        let (cached, fetch): (Vec<_>, Vec<_>) = players.iter().partition(|p| cache.contains_key(p));
+        self.async_wrapper(move || {
+            let mut cache_guard = cache.lock().unwrap();
 
-        let cached_reponses = cached
-            .into_iter()
-            .map(|(name, tagline)| {
-                (
-                    name.clone(),
-                    tagline.clone(),
-                    Some(cache.get(&(name.clone(), tagline.clone())).unwrap().clone()),
-                )
-            })
-            .collect_vec();
+            let (cached, fetch): (Vec<_>, Vec<_>) = players.iter().partition(|p| cache_guard.contains_key(p));
 
-        // Fetch and update cache
-        let riot_api_response = self
-            .riot_api_client
-            .get_multiple_player_info(&fetch.iter().map(|(n, t)| (n.clone(), t.clone())).collect_vec());
+            let cached_reponses = cached
+                .into_iter()
+                .map(|(name, tagline)| {
+                    (
+                        name.clone(),
+                        tagline.clone(),
+                        Some(cache_guard.get(&(name.clone(), tagline.clone())).unwrap().clone()),
+                    )
+                })
+                .collect_vec();
 
-        let mut results = Vec::new();
-        for (name, tagline, response_json) in riot_api_response {
-            if let Ok(json) = &response_json {
-                if let Ok(parsed) = parse_ranked_stats(json.as_ref()) {
-                    cache.insert((name.clone(), tagline.clone()), parsed.clone());
-                    results.push((name, tagline, Some(parsed)));
-                    continue;
+            // Fetch and update cache
+            let riot_api_response =
+                riot_client.get_multiple_player_info(&fetch.iter().map(|(n, t)| (n.clone(), t.clone())).collect_vec());
+
+            let mut results = Vec::new();
+            for (name, tagline, response_json) in riot_api_response {
+                if let Ok(json) = &response_json {
+                    if let Ok(parsed) = parse_ranked_stats(json.as_ref()) {
+                        cache_guard.insert((name.clone(), tagline.clone()), parsed.clone());
+                        results.push((name, tagline, Some(parsed)));
+                        continue;
+                    }
                 }
+                results.push((name, tagline, None));
             }
-            results.push((name, tagline, None));
-        }
 
-        // Combine cached and fetched
-        Ok(cached_reponses
-            .into_iter()
-            .chain(results)
-            .map(|(name, tagline, resp)| {
-                let summoner = Summoner {
-                    id: 0.into(),
-                    puuid: "".into(),
-                    game_name: name.clone(),
-                    tag_line: tagline.clone(),
-                    level: resp.clone().map(|r| r.level).unwrap_or(0),
-                };
-                SummonerWithStats {
-                    summoner,
-                    ranked_stats: resp.map(|r| {
-                        r.ranked_stats
-                            .iter()
-                            .map(|r| (r.queue_type.clone(), r.clone()))
-                            .collect()
-                    }),
-                }
-            })
-            .collect_vec())
+            // Combine cached and fetched
+            Ok(cached_reponses
+                .into_iter()
+                .chain(results)
+                .map(|(name, tagline, resp)| {
+                    let summoner = Summoner {
+                        id: 0.into(),
+                        puuid: "".into(),
+                        game_name: name.clone(),
+                        tag_line: tagline.clone(),
+                        level: resp.clone().map(|r| r.level),
+                    };
+                    SummonerWithStats {
+                        summoner,
+                        ranked_stats: resp.map(|r| {
+                            r.ranked_stats
+                                .iter()
+                                .map(|r| (r.queue_type.clone(), r.clone()))
+                                .collect()
+                        }),
+                    }
+                })
+                .collect_vec())
+        })
     }
 
     pub fn refresh(&mut self) -> DataRetrievalResult<()> {
-        self.lcu_client.refresh()?;
-        let summoner = DataManager::retrieve_summoner(&mut self.lcu_client)?;
-        self.lcu_client.set_summoner(summoner.clone());
-        self.summoner = OnceCell::from(summoner);
-        self.champ_info_cache = OnceCell::new();
-        self.masteries_cache = OnceCell::new();
-        self.loot_cache = OnceCell::new();
-        self.challenges_cache = OnceCell::new();
-        self.queues_cache = OnceCell::new();
+        // Get mutable reference to lcu_client (need to deref Arc)
+        let client = Arc::get_mut(&mut self.lcu_client).ok_or(DataRetrievalError::ClientRefresh(
+            LcuClientInitError::LocalAppDataNotFound,
+        ))?;
+
+        client.refresh()?;
+        let summoner = DataManager::retrieve_summoner(client)?;
+        client.set_summoner(summoner.clone());
+
+        *self.summoner.lock().unwrap() = Some(summoner);
+        *self.champ_info_cache.lock().unwrap() = None;
+        *self.masteries_cache.lock().unwrap() = None;
+        *self.loot_cache.lock().unwrap() = None;
+        *self.challenges_cache.lock().unwrap() = None;
+        *self.queues_cache.lock().unwrap() = None;
+
         Ok(())
     }
 
     fn retrieve_summoner(client: &mut LcuClient) -> DataRetrievalResult<Summoner> {
         let summoner_json = client.request(LcuClientRequestType::Summoner, true)?;
-        let summoner = parse_summoner(Rc::as_ref(&summoner_json))?;
+        let summoner = parse_summoner(Arc::as_ref(&summoner_json))?;
         Ok(summoner)
     }
 }
