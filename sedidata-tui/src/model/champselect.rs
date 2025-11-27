@@ -28,4 +28,5 @@ pub struct QueueInfo {
     pub _gamemode: String,
     pub _type_descriptor: String,
     pub select_mode_group: String,
+    pub pick_mode: String,
 }

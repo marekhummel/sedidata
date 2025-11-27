@@ -35,6 +35,11 @@ pub fn parse_queues(json: &JsonValue) -> Result<Vec<QueueInfo>, ParsingError> {
                 .ok_or(ParsingError::InvalidType("gameSelectModeGroup".into()))?
                 .to_string();
 
+            let pick_mode = queue_obj["gameTypeConfig"]["pickMode"]
+                .as_str()
+                .ok_or(ParsingError::InvalidType("pickMode".into()))?
+                .to_string();
+
             queues.push(QueueInfo {
                 queue_id,
                 _category,
@@ -42,6 +47,7 @@ pub fn parse_queues(json: &JsonValue) -> Result<Vec<QueueInfo>, ParsingError> {
                 _gamemode,
                 _type_descriptor,
                 select_mode_group,
+                pick_mode,
             });
         } else {
             return Err(ParsingError::InvalidType("children".into()));
