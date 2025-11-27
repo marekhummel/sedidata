@@ -13,6 +13,13 @@ This repository contains a Rust workspace with **two applications**:
 Both applications share this repository but are built and deployed independently.
 
 
+## Etymology
+- Sanskrit “Siddhi” = mastery
+- Latin “Sedes” = seat/position (→ rank)
+- Latin “Sedulus" = diligent, skillful, persistent
+- => "Sedi"
+
+
 ## Deployment Overview
 
 ### CI/CD Pipeline

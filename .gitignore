@@ -1,8 +1,12 @@
 /.vscode
-/data
-/target
+
 /sedidata-tui/target
 /sedidata-server/target
 /shared/target
 *.lnk
 *.exe
+
+/data
+/target
+debug.log
+cache.json
