@@ -3,6 +3,7 @@ use core::fmt;
 pub mod challenge;
 pub mod champion;
 pub mod champselect;
+pub mod livegame;
 pub mod loot;
 pub mod mastery;
 pub mod queues;

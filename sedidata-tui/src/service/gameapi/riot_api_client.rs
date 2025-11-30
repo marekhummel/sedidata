@@ -21,7 +21,7 @@ pub struct RiotApiClient {
 
 impl RiotApiClient {
     pub fn new() -> Result<Self, RiotApiClientInitError> {
-        let client = Client::builder().timeout(Duration::from_secs(30)).build()?;
+        let client = Client::builder().timeout(Duration::from_secs(90)).build()?;
 
         let server_alive = Arc::new(AtomicBool::new(false));
 
@@ -100,7 +100,6 @@ impl RiotApiClient {
         let response = client.get(&url).send()?;
 
         if !response.status().is_success() {
-            eprintln!("Error response for {}#{}: {:?}", name, tagline, response);
             return Err(RiotApiRequestError::InvalidResponse(
                 response.status().as_u16(),
                 response.text().unwrap_or_else(|_| "Unknown error".to_string()),

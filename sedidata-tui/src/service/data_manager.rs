@@ -14,17 +14,19 @@ use crate::{
     model::{
         challenge::Challenge,
         champion::{AllChampionInfo, Champion, Chroma, Skin},
-        champselect::{ChampSelectSession, QueueInfo},
+        game::{ChampSelectSession, LiveGameSession, QueueInfo},
         loot::LootItems,
         mastery::Mastery,
         summoner::{RiotApiSummonerResponse, Summoner, SummonerWithStats},
     },
     service::gameapi::{
         lcu_client::{LcuClient, LcuClientInitError, LcuClientRequestType, LcuRequestError},
+        live_game_client::{LiveGameClient, LiveGameRequestError},
         parsing::{
             challenge::parse_challenges,
             champion::parse_champions,
             champselect::parse_champ_select,
+            livegame::parse_live_game,
             loot::parse_loot,
             mastery::parse_masteries,
             queues::parse_queues,
@@ -36,6 +38,7 @@ use crate::{
 };
 pub struct DataManager {
     lcu_client: Arc<LcuClient>,
+    live_game_client: Arc<LiveGameClient>,
     riot_api_client: Arc<RiotApiClient>,
     summoner: Arc<Mutex<Option<Summoner>>>,
     champ_info_cache: Arc<Mutex<Option<AllChampionInfo>>>,
@@ -49,12 +52,14 @@ pub struct DataManager {
 impl DataManager {
     pub fn new(load_local: bool, write_responses: bool) -> Result<Self, DataManagerInitError> {
         let mut client = LcuClient::new(load_local, write_responses)?;
+        let live_game_client = LiveGameClient::new(load_local, write_responses);
         let riot_api_client = RiotApiClient::new()?;
         let summoner = DataManager::retrieve_summoner(&mut client)?;
         client.set_summoner(summoner.clone());
 
         Ok(Self {
             lcu_client: Arc::new(client),
+            live_game_client: Arc::new(live_game_client),
             riot_api_client: Arc::new(riot_api_client),
             summoner: Arc::new(Mutex::new(Some(summoner))),
             champ_info_cache: Arc::new(Mutex::new(None)),
@@ -231,6 +236,20 @@ impl DataManager {
                 Ok(Some(champ_select_info))
             }
             Err(LcuRequestError::InvalidResponse(_, _)) => Ok(None),
+            Err(LcuRequestError::LocalFileError(_)) => Ok(None),
+            Err(err) => Err(err.into()),
+        })
+    }
+
+    pub fn get_live_game(&self) -> Receiver<DataRetrievalResult<Option<LiveGameSession>>> {
+        let client = Arc::clone(&self.live_game_client);
+
+        self.async_wrapper(move || match client.request() {
+            Ok(live_game_json) => {
+                let live_game_info = parse_live_game(&live_game_json)?;
+                Ok(Some(live_game_info))
+            }
+            Err(LiveGameRequestError::LocalFileError(_)) => Ok(None),
             Err(err) => Err(err.into()),
         })
     }
@@ -369,6 +388,7 @@ impl From<DataRetrievalError> for DataManagerInitError {
 #[derive(Debug)]
 pub enum DataRetrievalError {
     LcuClient(LcuRequestError),
+    LiveGameClient(LiveGameRequestError),
     RiotApiClient(RiotApiRequestError),
     ClientRefresh(LcuClientInitError),
     Parsing(ParsingError),
@@ -378,6 +398,7 @@ impl fmt::Display for DataRetrievalError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             DataRetrievalError::LcuClient(err) => write!(f, "Client error: {}", err),
+            DataRetrievalError::LiveGameClient(err) => write!(f, "Live game client error: {}", err),
             DataRetrievalError::RiotApiClient(err) => write!(f, "Riot API client error: {}", err),
             DataRetrievalError::ClientRefresh(err) => write!(f, "Refresh error: {}", err),
             DataRetrievalError::Parsing(err) => write!(f, "Parsing error: {}", err),
@@ -388,6 +409,12 @@ impl fmt::Display for DataRetrievalError {
 impl From<LcuRequestError> for DataRetrievalError {
     fn from(error: LcuRequestError) -> Self {
         Self::LcuClient(error)
+    }
+}
+
+impl From<LiveGameRequestError> for DataRetrievalError {
+    fn from(error: LiveGameRequestError) -> Self {
+        Self::LiveGameClient(error)
     }
 }
 

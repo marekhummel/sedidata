@@ -1,6 +1,6 @@
 pub mod challenge;
 pub mod champion;
-pub mod champselect;
+pub mod game;
 pub mod ids;
 pub mod loot;
 pub mod mastery;

@@ -1,7 +1,7 @@
 use json::JsonValue;
 
 use crate::model::{
-    champselect::{ChampSelectPlayerInfo, ChampSelectSession},
+    game::{ChampSelectPlayerInfo, ChampSelectSession},
     ids::ChampionId,
 };
 
@@ -9,6 +9,12 @@ use super::ParsingError;
 
 pub fn parse_champ_select(json: &JsonValue) -> Result<ChampSelectSession, ParsingError> {
     if let JsonValue::Object(obj) = json {
+        // Session ID (used to detect changes between updates)
+        let session_id = obj["id"]
+            .as_str()
+            .ok_or(ParsingError::InvalidType("id".into()))?
+            .to_string();
+
         // Queue
         let queue_id = obj["queueId"]
             .as_u16()
@@ -28,6 +34,7 @@ pub fn parse_champ_select(json: &JsonValue) -> Result<ChampSelectSession, Parsin
         let their_team = parse_team_players(&obj["theirTeam"], false)?;
 
         return Ok(ChampSelectSession {
+            session_id,
             queue_id,
             local_player_cell: local_player_cell_id,
             benched_champs: bench,

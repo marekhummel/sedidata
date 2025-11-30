@@ -1,6 +1,6 @@
 use json::JsonValue;
 
-use crate::model::champselect::QueueInfo;
+use crate::model::game::QueueInfo;
 
 use super::ParsingError;
 
@@ -46,7 +46,7 @@ pub fn parse_queues(json: &JsonValue) -> Result<Vec<QueueInfo>, ParsingError> {
                 _description,
                 _gamemode,
                 _type_descriptor,
-                select_mode_group,
+                _select_mode_group: select_mode_group,
                 pick_mode,
             });
         } else {

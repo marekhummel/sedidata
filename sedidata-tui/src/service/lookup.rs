@@ -3,7 +3,7 @@ use std::{collections::HashMap, fmt};
 use crate::model::{
     challenge::Challenge,
     champion::{Champion, Skin},
-    champselect::QueueInfo,
+    game::QueueInfo,
     ids::{ChampionId, SkinId},
     mastery::Mastery,
 };

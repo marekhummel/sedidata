@@ -4,7 +4,7 @@ use crate::{
     empty_row, header_row, impl_text_view,
     model::{
         champion::Champion,
-        champselect::{ChampSelectPlayerInfo, ChampSelectSession},
+        game::{ChampSelectSession, GameState, LiveGameSession, PlayerInfo},
         ids::ChampionId,
         mastery::Mastery,
         summoner::SummonerWithStats,
@@ -18,9 +18,9 @@ use crate::{
 };
 use itertools::{EitherOrBoth, Itertools};
 use ratatui::{
-    layout::Constraint,
+    layout::{Alignment, Constraint},
     style::{Color, Modifier, Style},
-    widgets::{Cell, Row, Table},
+    widgets::{Block, Cell, Paragraph, Row, Table},
 };
 
 // ============================================================================
@@ -150,19 +150,36 @@ impl_text_view!(ChampSelectAramView, champ_select_aram_view, "ARAM Champ Select 
 // ==========================================================================
 
 pub struct LivePlayerInfoView {
-    cs_data: AsyncData<Option<ChampSelectSession>>,
+    cs_data: Option<AsyncData<Option<ChampSelectSession>>>,
+    live_game_data: Option<AsyncData<Option<LiveGameSession>>>,
     players_data: Option<AsyncData<Vec<SummonerWithStats>>>,
+    game_state: Option<GameState>,
+    self_info: (String, String),
 }
 
 impl LivePlayerInfoView {
     pub fn new(ctrl: &Controller) -> Self {
-        // Execute the first fetch immediately (champ select)
-        let rx = ctrl.manager.get_champ_select();
+        let summoner = &ctrl.manager.get_summoner();
 
-        Self {
-            cs_data: AsyncData::new(rx),
+        let mut view = Self {
+            cs_data: None,
+            live_game_data: None,
+            game_state: None,
             players_data: None,
-        }
+            self_info: (summoner.game_name.clone(), summoner.tag_line.clone()),
+        };
+        view.start_session_requests(ctrl);
+        view
+    }
+
+    fn start_session_requests(&mut self, ctrl: &Controller) {
+        // Start both fetches simultaneously
+        let cs_rx = ctrl.manager.get_champ_select();
+        let live_rx = ctrl.manager.get_live_game();
+
+        self.cs_data = Some(AsyncData::new(cs_rx));
+        self.live_game_data = Some(AsyncData::new(live_rx));
+        self.players_data = None;
     }
 
     fn columns(&self) -> [Constraint; 8] {
@@ -179,12 +196,12 @@ impl LivePlayerInfoView {
     }
 
     fn format_position(position: &str) -> &str {
-        match position {
-            "top" => "Top",
-            "jungle" => "Jungle",
-            "middle" => "Mid",
-            "bottom" => "Bot",
-            "utility" => "Support",
+        match position.to_uppercase().as_str() {
+            "TOP" => "Top",
+            "JUNGLE" => "Jungle",
+            "MIDDLE" => "Mid",
+            "BOTTOM" => "Bot",
+            "UTILITY" => "Support",
             _ => "Fill",
         }
     }
@@ -235,11 +252,15 @@ impl LivePlayerInfoView {
 
     fn render_player_rows<'b>(
         &'b self,
-        player: &'b ChampSelectPlayerInfo,
+        player: &'b PlayerInfo,
         summ_stats_opt: Option<&'b SummonerWithStats>,
     ) -> Vec<Row<'b>> {
         // Player info
-        let player_name = format!("{}#{}", player.game_name, player.tag_line);
+        let player_name = if !player.game_name.is_empty() {
+            styled_line!("{}#{}", player.game_name, player.tag_line; Color::White)
+        } else {
+            styled_line!("<Player is private>"; Color::DarkGray)
+        };
         let player_cells = vec![
             Cell::from(if player.is_ally {
                 styled_line!("Ally"; Color::Blue)
@@ -248,8 +269,10 @@ impl LivePlayerInfoView {
             }),
             Cell::from(Self::format_position(&player.position)),
             Cell::from(player_name),
-            Cell::from(summ_stats_opt.map_or("?".to_string(), |s| {
-                s.summoner.level.map_or("---".to_string(), |level| level.to_string())
+            Cell::from(summ_stats_opt.map_or(styled_span!("?"; Color::DarkGray), |s| {
+                s.summoner.level.map_or(styled_span!("---"; Color::DarkGray), |level| {
+                    styled_span!(level.to_string())
+                })
             })),
         ];
 
@@ -263,11 +286,14 @@ impl LivePlayerInfoView {
                 Cell::from(styled_span!("?"; Color::DarkGray)),
             ]),
             Some(summ_stats) => match summ_stats.ranked_stats {
-                None => ranked_cells.push(vec![
-                    Cell::from(styled_span!("No data"; Color::DarkGray)),
-                    Cell::from(styled_span!("---"; Color::DarkGray)),
-                    Cell::from(styled_span!("---"; Color::DarkGray)),
-                    Cell::from(styled_span!("---"; Color::DarkGray)),
+                None => ranked_cells.extend([
+                    vec![
+                        Cell::from(styled_span!("No data"; Color::DarkGray)),
+                        Cell::from(styled_span!("---"; Color::DarkGray)),
+                        Cell::from(styled_span!("---"; Color::DarkGray)),
+                        Cell::from(styled_span!("---"; Color::DarkGray)),
+                    ],
+                    vec![Cell::from(""), Cell::from(""), Cell::from(""), Cell::from("")],
                 ]),
                 Some(ref ranked_stats) => {
                     for queue in &["RANKED_SOLO_5x5", "RANKED_FLEX_SR"] {
@@ -290,7 +316,7 @@ impl LivePlayerInfoView {
                             }
                             None => ranked_cells.push(vec![
                                 Cell::from(Self::format_queue_type(queue)),
-                                Cell::from("Unranked"),
+                                Cell::from(styled_span!("Unranked"; Color::DarkGray)),
                                 Cell::from(""),
                                 Cell::from(""),
                             ]),
@@ -345,113 +371,252 @@ impl RenderableView for LivePlayerInfoView {
     }
 
     fn update(&mut self, ctrl: &Controller, _keys: &[crossterm::event::KeyCode]) {
-        // Update champ select data
-        self.cs_data.try_update();
+        // Update sources if they are active
+        if let Some(cs_data) = &mut self.cs_data {
+            cs_data.try_update();
+        }
+        if let Some(live_data) = &mut self.live_game_data {
+            live_data.try_update();
+        }
+        if let Some(players_data) = &mut self.players_data {
+            players_data.try_update();
+        }
 
-        // If champ select is loaded and we haven't started the players fetch yet, extract player names
-        if !self.cs_data.is_loading() && self.players_data.is_none() {
-            if let Some(Some(session)) = self.cs_data.get_data() {
-                // Extract player names for later use in refresh
-                let player_names: Vec<_> = session
-                    .my_team
-                    .iter()
-                    .chain(session.their_team.iter())
-                    .map(|pi| (pi.game_name.clone(), pi.tag_line.clone()))
-                    .collect();
+        // Check if live game finished first
+        if let Some(live_data) = &self.live_game_data {
+            if !live_data.is_loading() && live_data.error().is_none() {
+                if let Some(Some(session)) = live_data.get_data() {
+                    let session = session.clone();
+                    self.cs_data = None; // Cancel champ select request
+                    self.live_game_data = None;
 
-                let rx = ctrl.manager.get_ranked_info(player_names);
-                self.players_data = Some(AsyncData::new(rx));
+                    // Only update if this is a new live game session
+                    let is_new_session = match &self.game_state {
+                        Some(GameState::LiveGame {
+                            session: curr_session, ..
+                        }) => session != *curr_session,
+                        _ => true,
+                    };
+
+                    if is_new_session {
+                        // LiveGame is available, use it
+                        self.game_state = Some(GameState::LiveGame { session, players: None });
+
+                        // Extract player names and fetch ranked info
+                        let player_names: Vec<_> = self
+                            .game_state
+                            .as_ref()
+                            .unwrap()
+                            .player_infos(&self.self_info)
+                            .into_iter()
+                            .map(|p| (p.game_name, p.tag_line))
+                            .collect();
+
+                        let rx = ctrl.manager.get_ranked_info(player_names);
+                        self.players_data = Some(AsyncData::new(rx));
+                    }
+                }
             }
         }
 
-        // Update players data if it exists
-        if let Some(players_data) = &mut self.players_data {
-            players_data.try_update();
+        // Check if champ select finished (if we still don't have a game or it's a new session)
+        if let Some(cs_data) = &self.cs_data {
+            if !cs_data.is_loading() && cs_data.error().is_none() {
+                if let Some(Some(session)) = cs_data.get_data() {
+                    let session = session.clone();
+                    self.cs_data = None;
+                    self.live_game_data = None; // Cancel live game request
+
+                    // Only update if this is a new champ select session
+                    let is_new_session = match &self.game_state {
+                        Some(GameState::ChampSelect {
+                            session: old_session, ..
+                        }) => session != *old_session,
+                        _ => true,
+                    };
+
+                    if is_new_session {
+                        // New ChampSelect is available, use it
+                        self.game_state = Some(GameState::ChampSelect { session, players: None });
+
+                        // Extract player names and fetch ranked info
+                        let player_names: Vec<_> = self
+                            .game_state
+                            .as_ref()
+                            .unwrap()
+                            .player_infos(&self.self_info)
+                            .into_iter()
+                            .map(|p| (p.game_name, p.tag_line))
+                            .collect();
+
+                        let rx = ctrl.manager.get_ranked_info(player_names);
+                        self.players_data = Some(AsyncData::new(rx));
+                    }
+                }
+            }
+        }
+
+        // If ranked player data finished, merge it into the game state
+        if let Some(players_data) = &self.players_data {
+            if !players_data.is_loading() {
+                if let Some(players) = players_data.get_data() {
+                    if let Some(gs) = &mut self.game_state {
+                        let cloned = players.clone();
+                        match gs {
+                            GameState::ChampSelect { players, .. } => *players = Some(cloned),
+                            GameState::LiveGame { players, .. } => *players = Some(cloned),
+                            _ => {}
+                        }
+                    }
+                    self.players_data = None;
+                } else if let Some(err) = players_data.error() {
+                    // TODO ?
+                    self.game_state = Some(GameState::Error(err.to_string()));
+                    self.players_data = None;
+                }
+            }
+        }
+
+        // If both session requests finished but we still have no game state, decide NotInGame vs Error
+        let cs_finished = self.cs_data.as_ref().is_some_and(|d| !d.is_loading());
+        let live_finished = self.live_game_data.as_ref().is_some_and(|d| !d.is_loading());
+        if cs_finished && live_finished {
+            self.cs_data = None;
+            self.live_game_data = None;
+            self.players_data = None;
+
+            let mut error = String::new();
+            if let Some(cs_err) = self.cs_data.as_ref().and_then(|d| d.error()) {
+                error.push_str(&format!("Champ Select Error: {}\n", cs_err));
+            }
+            if let Some(live_err) = self.live_game_data.as_ref().and_then(|d| d.error()) {
+                error.push_str(&format!("Live Game Error: {}\n", live_err));
+            }
+
+            if error.is_empty() {
+                self.game_state = Some(GameState::NotInGame);
+            } else {
+                self.game_state = Some(GameState::Error(error));
+            }
+        }
+    }
+
+    fn auto_refresh_interval(&self) -> Option<f32> {
+        match self.game_state {
+            None => Some(1.0),
+            Some(GameState::Error(_)) => None,
+            Some(GameState::NotInGame) => Some(1.0),
+            Some(_) => Some(5.0),
         }
     }
 
     fn refresh_data(&mut self, controller: &Controller) -> Result<(), String> {
-        let rx = controller.manager.get_champ_select();
+        // Only refresh if we're not currently loading
+        let is_loading = self.cs_data.as_ref().is_some_and(|d| d.is_loading())
+            || self.live_game_data.as_ref().is_some_and(|d| d.is_loading())
+            || self.players_data.as_ref().is_some_and(|d| d.is_loading());
 
-        self.cs_data = AsyncData::new(rx);
-        self.players_data = None;
+        if !is_loading {
+            self.start_session_requests(controller);
+        }
         Ok(())
     }
 
     fn render(&self, rc: RenderContext) -> ViewResult {
-        // Check if champ select is still loading
-        if self.cs_data.is_loading() {
-            let loading_text = vec![styled_line!("Loading champ select data...")];
+        // Decide what to render based on the game state
+        let Some(game_state) = &self.game_state else {
+            let loading_text = vec![styled_line!("Loading game data...")];
             let paragraph = ratatui::widgets::Paragraph::new(loading_text)
                 .block(rc.block)
                 .wrap(ratatui::widgets::Wrap { trim: false });
             rc.frame.render_widget(paragraph, rc.area);
             return Ok(());
-        }
-
-        // Check for error in champ select fetch
-        if let Some(error) = self.cs_data.error() {
-            rc.error(error);
-            return Ok(());
-        }
-
-        // Get the champ select data
-        let cs_session = match self.cs_data.get_data() {
-            Some(Some(session)) => session,
-            Some(None) => {
-                rc.error("Not in champ select!");
-                return Ok(());
-            }
-            None => {
-                rc.error("Champ select data not available");
-                return Ok(());
-            }
         };
 
-        // Check if player data request finsihed with an error
-        let players_data = self.players_data.as_ref().unwrap();
-        if let Some(error) = players_data.error() {
-            rc.error(error);
-            return Ok(());
+        match game_state {
+            GameState::NotInGame => {
+                let not_in_game_text = vec![styled_line!(
+                    "Not in a game or champ select. Waiting for game to start..."
+                )];
+                let paragraph = ratatui::widgets::Paragraph::new(not_in_game_text)
+                    .block(rc.block)
+                    .wrap(ratatui::widgets::Wrap { trim: false });
+                rc.frame.render_widget(paragraph, rc.area);
+                Ok(())
+            }
+            GameState::Error(msg) => {
+                rc.error(msg);
+                Ok(())
+            }
+            GameState::ChampSelect { .. } | GameState::LiveGame { .. } => {
+                let summoners = game_state.ranked_players();
+                let mut players = game_state.player_infos(&self.self_info);
+                players.sort_by_key(|p| (!p.is_ally, Self::position_sort_key(&p.position)));
+
+                // Render rows
+                let mut ally_rows = vec![];
+                let mut enemy_rows = vec![];
+
+                for player in &players {
+                    let stats = summoners.and_then(|ss| {
+                        ss.iter().find(|s| {
+                            s.summoner.game_name == player.game_name && s.summoner.tag_line == player.tag_line
+                        })
+                    });
+
+                    let target_vec = if player.is_ally {
+                        &mut ally_rows
+                    } else {
+                        &mut enemy_rows
+                    };
+                    target_vec.extend(self.render_player_rows(player, stats));
+                    target_vec.push(empty_row!(8));
+                }
+
+                // Combine and add separator if enemies are given
+                let mut rows = vec![];
+                rows.extend(ally_rows);
+                if !enemy_rows.is_empty() {
+                    rows.push(empty_row!(8));
+                    rows.push(empty_row!(8));
+                    rows.extend(enemy_rows);
+                }
+
+                // Render table
+                let visible_rows: Vec<_> = rows.into_iter().skip(rc.scroll_offset as usize).collect();
+
+                let table = Table::new(visible_rows, self.columns())
+                    .header(
+                        header_row!("Team", "Position", "Player", "Level", "Queue", "Rank", "LP", "W/L")
+                            .style(Style::default().fg(Color::LightBlue).add_modifier(Modifier::BOLD))
+                            .bottom_margin(1),
+                    )
+                    .block(rc.block)
+                    .column_spacing(2)
+                    .style(Style::default().fg(Color::White));
+
+                // Reserve the table area and render it
+                rc.frame.render_widget(table, rc.area);
+
+                // Add hint text below the table (same horizontal area, one line from bottom)
+                let hint = styled_line!(
+                    "Note: Ranked info may take up to a minute on first request."; Color::DarkGray
+                )
+                .alignment(Alignment::Center);
+                let hint_paragraph = Paragraph::new(vec![hint]).block(Block::default());
+
+                // Place hint at the bottom line of the area if possible (respect the block of table)
+                let mut hint_area = rc.area;
+                if hint_area.height > 0 {
+                    hint_area.x += 1;
+                    hint_area.width = hint_area.width.saturating_sub(2);
+                    hint_area.y += hint_area.height.saturating_sub(2);
+                    hint_area.height = 1;
+                    rc.frame.render_widget(hint_paragraph, hint_area);
+                }
+
+                Ok(())
+            }
         }
-
-        let mut rows = vec![];
-
-        // Sort players by team and position
-        let mut sorted_cs = cs_session
-            .my_team
-            .iter()
-            .chain(cs_session.their_team.iter())
-            .collect_vec();
-        sorted_cs.sort_by_key(|p| (p.is_ally, Self::position_sort_key(&p.position)));
-
-        let summoners = players_data.get_data();
-
-        for player in &sorted_cs {
-            let stats = summoners.map(|ss| {
-                ss.iter()
-                    .find(|s| s.summoner.game_name == player.game_name && s.summoner.tag_line == player.tag_line)
-                    .unwrap()
-            });
-
-            rows.extend(self.render_player_rows(player, stats));
-            rows.push(empty_row!(8));
-        }
-
-        // Skip rows based on scroll offset
-        let visible_rows: Vec<_> = rows.into_iter().skip(rc.scroll_offset as usize).collect();
-
-        let table = Table::new(visible_rows, self.columns())
-            .header(
-                header_row!("Team", "Position", "Player", "Level", "Queue", "Rank", "LP", "W/L")
-                    .style(Style::default().fg(Color::LightBlue).add_modifier(Modifier::BOLD))
-                    .bottom_margin(1),
-            )
-            .block(rc.block)
-            .column_spacing(2)
-            .style(Style::default().fg(Color::White));
-        rc.frame.render_widget(table, rc.area);
-
-        Ok(())
     }
 }
