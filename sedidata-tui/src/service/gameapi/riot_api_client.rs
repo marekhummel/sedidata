@@ -90,6 +90,10 @@ impl RiotApiClient {
     }
 
     fn fetch_player_info(client: &Client, name: &str, tagline: &str) -> Result<Arc<JsonValue>, RiotApiRequestError> {
+        if name.is_empty() || tagline.is_empty() {
+            return Ok(Arc::new(JsonValue::Null));
+        }
+
         let url = format!(
             "{}/league?name={}&tagline={}",
             BASE_URL,

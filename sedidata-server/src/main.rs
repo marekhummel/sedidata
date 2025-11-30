@@ -55,6 +55,17 @@ async fn main() {
 async fn get_league_entries(Query(params): Query<AccountRequest>, State(state): State<AppState>) -> impl IntoResponse {
     println!("Request received for Riot ID: {}#{}", params.name, params.tagline);
 
+    // Return 422 if name is empty
+    if params.name.trim().is_empty() {
+        return (
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Json(ErrorResponse {
+                error: "name must not be empty".to_string(),
+            }),
+        )
+            .into_response();
+    }
+
     let client = reqwest::Client::new();
 
     // Check PUUID cache first
