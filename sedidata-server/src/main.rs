@@ -28,8 +28,7 @@ struct AppState {
 #[tokio::main]
 async fn main() {
     // Load API key from environment variable
-    // let api_key = env::var("RIOT_API_KEY").expect("RIOT_API_KEY environment variable must be set");
-    let api_key = "RGAPI-86566fb9-77f4-4d97-b8fb-6b9421252ddc".to_string();
+    let api_key = env::var("RIOT_API_KEY").expect("RIOT_API_KEY environment variable must be set");
     // Initialize cache
     let cache = Cache::new();
 
