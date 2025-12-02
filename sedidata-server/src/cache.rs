@@ -3,63 +3,86 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::Path, sync::Arc};
 use tokio::sync::RwLock;
 
-use crate::model::LeagueEntry;
+use crate::model::{ChampionMastery, LeagueEntry};
 
 const CACHE_FILE: &str = "cache.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PuuidCache {
+pub struct PuuidCacheEntry {
     pub puuid: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PlayerDataCache {
+pub struct PlayerDataCacheEntry {
     pub level: u64,
     pub ranked_stats: Vec<LeagueEntry>,
     pub cached_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChampionMasteryCacheEntry {
+    pub mastery: ChampionMastery,
+    pub cached_at: chrono::DateTime<chrono::Utc>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 struct CacheData {
     #[serde(serialize_with = "serialize_tuple_map", deserialize_with = "deserialize_tuple_map")]
-    puuid_cache: HashMap<(String, String), PuuidCache>,
-    player_data_cache: HashMap<String, PlayerDataCache>,
+    puuid_cache: HashMap<(String, String), PuuidCacheEntry>,
+
+    player_data_cache: HashMap<String, PlayerDataCacheEntry>,
+
+    #[serde(serialize_with = "serialize_tuple_map", deserialize_with = "deserialize_tuple_map")]
+    champion_mastery_cache: HashMap<(String, String), ChampionMasteryCacheEntry>,
 }
 
-fn serialize_tuple_map<S>(map: &HashMap<(String, String), PuuidCache>, serializer: S) -> Result<S::Ok, S::Error>
+#[derive(Serialize, Deserialize)]
+struct Pair {
+    first: String,
+    second: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct TupleEntry<V> {
+    key: Pair,
+    value: V,
+}
+
+fn serialize_tuple_map<V, S>(map: &HashMap<(String, String), V>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
+    V: Serialize,
 {
-    use serde::ser::SerializeMap;
-    let mut seq = serializer.serialize_map(Some(map.len()))?;
-    for ((name, tag), value) in map {
-        let key = format!("{}#{}", name, tag);
-        seq.serialize_entry(&key, value)?;
-    }
-    seq.end()
+    let entries: Vec<TupleEntry<&V>> = map
+        .iter()
+        .map(|((first, second), value)| TupleEntry {
+            key: Pair {
+                first: first.clone(),
+                second: second.clone(),
+            },
+            value,
+        })
+        .collect();
+
+    entries.serialize(serializer)
 }
 
-fn deserialize_tuple_map<'de, D>(deserializer: D) -> Result<HashMap<(String, String), PuuidCache>, D::Error>
+fn deserialize_tuple_map<'de, V, D>(deserializer: D) -> Result<HashMap<(String, String), V>, D::Error>
 where
     D: serde::Deserializer<'de>,
+    V: Deserialize<'de>,
 {
-    let map: HashMap<String, PuuidCache> = HashMap::deserialize(deserializer)?;
-    Ok(map
+    let entries: Vec<TupleEntry<V>> = Vec::deserialize(deserializer)?;
+    Ok(entries
         .into_iter()
-        .filter_map(|(key, value)| {
-            let parts: Vec<&str> = key.split('#').collect();
-            if parts.len() == 2 {
-                Some(((parts[0].to_string(), parts[1].to_string()), value))
-            } else {
-                None
-            }
-        })
+        .map(|entry| ((entry.key.first, entry.key.second), entry.value))
         .collect())
 }
 
 pub struct Cache {
-    puuid_cache: Arc<RwLock<HashMap<(String, String), PuuidCache>>>,
-    player_data_cache: Arc<RwLock<HashMap<String, PlayerDataCache>>>,
+    puuid_cache: Arc<RwLock<HashMap<(String, String), PuuidCacheEntry>>>,
+    player_data_cache: Arc<RwLock<HashMap<String, PlayerDataCacheEntry>>>,
+    champion_mastery_cache: Arc<RwLock<HashMap<(String, String), ChampionMasteryCacheEntry>>>,
 }
 
 impl Clone for Cache {
@@ -67,44 +90,52 @@ impl Clone for Cache {
         Self {
             puuid_cache: Arc::clone(&self.puuid_cache),
             player_data_cache: Arc::clone(&self.player_data_cache),
+            champion_mastery_cache: Arc::clone(&self.champion_mastery_cache),
         }
     }
 }
 
 impl Cache {
     pub fn new() -> Self {
-        let (puuid_cache, player_data_cache) = Self::load_from_disk();
+        let (puuid_cache, player_data_cache, champion_mastery_cache) = Self::load_from_disk();
 
         Self {
             puuid_cache: Arc::new(RwLock::new(puuid_cache)),
             player_data_cache: Arc::new(RwLock::new(player_data_cache)),
+            champion_mastery_cache: Arc::new(RwLock::new(champion_mastery_cache)),
         }
     }
 
-    fn load_from_disk() -> (HashMap<(String, String), PuuidCache>, HashMap<String, PlayerDataCache>) {
+    #[allow(clippy::type_complexity)]
+    fn load_from_disk() -> (
+        HashMap<(String, String), PuuidCacheEntry>,
+        HashMap<String, PlayerDataCacheEntry>,
+        HashMap<(String, String), ChampionMasteryCacheEntry>,
+    ) {
         if !Path::new(CACHE_FILE).exists() {
             println!("No cache file found, starting with empty cache");
-            return (HashMap::new(), HashMap::new());
+            return (HashMap::new(), HashMap::new(), HashMap::new());
         }
 
         match std::fs::read_to_string(CACHE_FILE) {
             Ok(contents) => match serde_json::from_str::<CacheData>(&contents) {
                 Ok(data) => {
                     println!(
-                        "Loaded cache: {} PUUIDs, {} player data entries",
+                        "Loaded cache: {} PUUIDs, {} player data entries, {} champion mastery entries",
                         data.puuid_cache.len(),
-                        data.player_data_cache.len()
+                        data.player_data_cache.len(),
+                        data.champion_mastery_cache.len()
                     );
-                    (data.puuid_cache, data.player_data_cache)
+                    (data.puuid_cache, data.player_data_cache, data.champion_mastery_cache)
                 }
                 Err(e) => {
                     eprintln!("Failed to parse cache file: {}", e);
-                    (HashMap::new(), HashMap::new())
+                    (HashMap::new(), HashMap::new(), HashMap::new())
                 }
             },
             Err(e) => {
                 eprintln!("Failed to read cache file: {}", e);
-                (HashMap::new(), HashMap::new())
+                (HashMap::new(), HashMap::new(), HashMap::new())
             }
         }
     }
@@ -112,10 +143,12 @@ impl Cache {
     async fn save_to_disk(&self) {
         let puuid_cache = self.puuid_cache.read().await.clone();
         let player_data_cache = self.player_data_cache.read().await.clone();
+        let champion_mastery_cache = self.champion_mastery_cache.read().await.clone();
 
         let data = CacheData {
             puuid_cache,
             player_data_cache,
+            champion_mastery_cache,
         };
 
         match serde_json::to_string_pretty(&data) {
@@ -141,16 +174,16 @@ impl Cache {
 
     pub async fn store_puuid(&self, name: String, tagline: String, puuid: String) {
         let mut cache = self.puuid_cache.write().await;
-        cache.insert((name, tagline), PuuidCache { puuid });
+        cache.insert((name, tagline), PuuidCacheEntry { puuid });
         drop(cache);
         self.save_to_disk().await;
     }
 
-    pub async fn get_player_data(&self, puuid: &str) -> Option<PlayerDataCache> {
+    pub async fn get_player_data(&self, puuid: &str) -> Option<PlayerDataCacheEntry> {
         let cache = self.player_data_cache.read().await;
         let entry = cache.get(puuid)?;
 
-        // Check if cached today
+        // Check if cached in the last hour
         let now = Utc::now();
         let age = now.signed_duration_since(entry.cached_at);
 
@@ -161,9 +194,33 @@ impl Cache {
         let mut cache = self.player_data_cache.write().await;
         cache.insert(
             puuid,
-            PlayerDataCache {
+            PlayerDataCacheEntry {
                 level,
                 ranked_stats,
+                cached_at: Utc::now(),
+            },
+        );
+        drop(cache);
+        self.save_to_disk().await;
+    }
+
+    pub async fn get_champion_mastery(&self, puuid: &str, champion: &str) -> Option<ChampionMasteryCacheEntry> {
+        let cache = self.champion_mastery_cache.read().await;
+        let entry = cache.get(&(puuid.to_string(), champion.to_string()))?;
+
+        // Check if cached in the last hour
+        let now = Utc::now();
+        let age = now.signed_duration_since(entry.cached_at);
+
+        (age < Duration::hours(1)).then_some(entry.clone())
+    }
+
+    pub async fn store_champion_mastery(&self, puuid: String, champion: String, mastery: ChampionMastery) {
+        let mut cache = self.champion_mastery_cache.write().await;
+        cache.insert(
+            (puuid, champion),
+            ChampionMasteryCacheEntry {
+                mastery,
                 cached_at: Utc::now(),
             },
         );

@@ -68,49 +68,107 @@ async fn get_league_entries(Query(params): Query<AccountRequest>, State(state): 
 
     let client = reqwest::Client::new();
 
-    // Check PUUID cache first
-    let puuid = if let Some(cached_puuid) = state.cache.get_puuid(&params.name, &params.tagline).await {
-        println!("  PUUID found in cache");
-        cached_puuid
-    } else {
-        println!("  Fetching PUUID from Riot API");
-        let fetched_puuid = match request_puuid(&params.name, &params.tagline, &state, &client).await {
-            Ok(puuid) => puuid,
-            Err(resp) => return resp,
-        };
-
-        // Cache the PUUID permanently
-        println!("  PUUID cached");
-        state
-            .cache
-            .store_puuid(params.name.clone(), params.tagline.clone(), fetched_puuid.clone())
-            .await;
-        fetched_puuid
+    // 1) Resolve PUUID
+    let puuid = match get_or_request_puuid(&params, &state, &client).await {
+        Ok(p) => p,
+        Err(resp) => return resp,
     };
 
-    // Check player data cache
-    if let Some(cached_data) = state.cache.get_player_data(&puuid).await {
-        println!("  Player data found in cache (from today)");
-        let entries_json = serde_json::to_string(&cached_data.ranked_stats).unwrap_or_else(|_| "[]".to_string());
-        let combined_json = format!(r#"{{"level":{},"ranked_stats":{}}}"#, cached_data.level, entries_json);
-        return (StatusCode::OK, combined_json).into_response();
-    }
-
-    println!("  Fetching fresh player data from Riot API");
-    let (entries, level) = match request_player_data(&puuid, &state, &client).await {
+    // 2) Resolve player data (cached or fresh)
+    let (entries, level) = match get_or_request_player_data(&puuid, &state, &client).await {
         Ok(data) => data,
         Err(resp) => return resp,
     };
 
-    // Cache the player data
-    println!("  Player data cached");
-    state.cache.store_player_data(puuid, level, entries.clone()).await;
+    // 3) Resolve optional champion mastery
+    let mastery = if let Some(champion) = &params.champion {
+        match get_or_request_champion_mastery(&puuid, champion, &state, &client).await {
+            Ok(m) => Some(m),
+            Err(resp) => return resp,
+        }
+    } else {
+        None
+    };
 
-    // Combine into response JSON
+    // 4) Combine into response JSON
     let entries_json = serde_json::to_string(&entries).unwrap_or_else(|_| "[]".to_string());
-    let combined_json = format!(r#"{{"level":{},"ranked_stats":{}}}"#, level, entries_json);
+    let mastery_json = mastery
+        .as_ref()
+        .map(|m| serde_json::to_string(m).unwrap_or_else(|_| "null".to_string()))
+        .unwrap_or_else(|| "null".to_string());
+
+    let combined_json = format!(
+        r#"{{"level":{},"ranked_stats":{},"champion_mastery":{}}}"#,
+        level, entries_json, mastery_json
+    );
 
     (StatusCode::OK, combined_json).into_response()
+}
+
+async fn get_or_request_puuid(
+    params: &AccountRequest,
+    state: &AppState,
+    client: &reqwest::Client,
+) -> Result<String, axum::response::Response> {
+    if let Some(cached_puuid) = state.cache.get_puuid(&params.name, &params.tagline).await {
+        println!("  PUUID found in cache");
+        return Ok(cached_puuid);
+    }
+
+    println!("  Fetching PUUID from Riot API");
+    let fetched_puuid = request_puuid(&params.name, &params.tagline, state, client).await?;
+
+    println!("  PUUID cached");
+    state
+        .cache
+        .store_puuid(params.name.clone(), params.tagline.clone(), fetched_puuid.clone())
+        .await;
+    Ok(fetched_puuid)
+}
+
+async fn get_or_request_player_data(
+    puuid: &str,
+    state: &AppState,
+    client: &reqwest::Client,
+) -> Result<(Vec<LeagueEntry>, u64), axum::response::Response> {
+    if let Some(cached) = state.cache.get_player_data(puuid).await {
+        println!("  Player data found in cache (from last hour)");
+        return Ok((cached.ranked_stats, cached.level));
+    }
+
+    println!("  Fetching fresh player data from Riot API");
+    let (entries, level) = request_player_data(puuid, state, client).await?;
+
+    println!("  Player data cached");
+    state
+        .cache
+        .store_player_data(puuid.to_string(), level, entries.clone())
+        .await;
+
+    Ok((entries, level))
+}
+
+async fn get_or_request_champion_mastery(
+    puuid: &str,
+    champion: &str,
+    state: &AppState,
+    client: &reqwest::Client,
+) -> Result<ChampionMastery, axum::response::Response> {
+    if let Some(cached) = state.cache.get_champion_mastery(puuid, champion).await {
+        println!("  Champion mastery found in cache (from last hour)");
+        return Ok(cached.mastery);
+    }
+
+    println!("  Fetching champion mastery from Riot API");
+    let mastery = request_champion_mastery(puuid, champion, state, client).await?;
+
+    println!("  Champion mastery cached");
+    state
+        .cache
+        .store_champion_mastery(puuid.to_string(), champion.to_string(), mastery.clone())
+        .await;
+
+    Ok(mastery)
 }
 
 async fn request_puuid(
@@ -119,7 +177,6 @@ async fn request_puuid(
     state: &AppState,
     client: &reqwest::Client,
 ) -> Result<String, axum::response::Response> {
-    // Step 1: Get PUUID from Riot ID
     let account_url = format!(
         "https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{}/{}",
         name, tagline
@@ -197,6 +254,67 @@ async fn request_player_data(
     let entries = extract_league_entries(league_response).await?;
     let level = extract_level(summoner_response).await?;
     Ok((entries, level))
+}
+
+async fn request_champion_mastery(
+    puuid: &str,
+    champion: &str,
+    state: &AppState,
+    client: &reqwest::Client,
+) -> Result<ChampionMastery, axum::response::Response> {
+    let url = format!(
+        "https://euw1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/{}/by-champion/{}",
+        puuid, champion
+    );
+
+    let response = client.get(&url).header("X-Riot-Token", &state.api_key).send().await;
+
+    match response {
+        Ok(resp) => {
+            if resp.status().is_success() {
+                match resp.json::<serde_json::Value>().await {
+                    Ok(json) => {
+                        let champion_level = json["championLevel"].as_u64().unwrap_or(0);
+                        let champion_points = json["championPoints"].as_u64().unwrap_or(0);
+                        Ok(ChampionMastery {
+                            champion_level,
+                            champion_points,
+                        })
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to parse champion mastery response: {}", e);
+                        Err((
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            Json(ErrorResponse {
+                                error: "Failed to parse champion mastery from Riot API".to_string(),
+                            }),
+                        )
+                            .into_response())
+                    }
+                }
+            } else {
+                let status = resp.status();
+                eprintln!("Riot API returned error for champion mastery: {}", status);
+                Err((
+                    StatusCode::BAD_GATEWAY,
+                    Json(ErrorResponse {
+                        error: format!("Riot API returned error for champion mastery: {}", status),
+                    }),
+                )
+                    .into_response())
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to connect to Riot API for champion mastery: {}", e);
+            Err((
+                StatusCode::BAD_GATEWAY,
+                Json(ErrorResponse {
+                    error: "Failed to connect to Riot API for champion mastery".to_string(),
+                }),
+            )
+                .into_response())
+        }
+    }
 }
 
 async fn extract_level(response: Result<Response, reqwest::Error>) -> Result<u64, axum::response::Response> {

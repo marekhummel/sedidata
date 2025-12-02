@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct AccountRequest {
     pub name: String,
     pub tagline: String,
+    pub champion: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -32,6 +33,13 @@ pub struct LeagueEntry {
     pub veteran: bool,
     pub fresh_blood: bool,
     pub inactive: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChampionMastery {
+    pub champion_level: u64,
+    pub champion_points: u64,
 }
 
 #[derive(Debug, Serialize)]
