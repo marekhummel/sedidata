@@ -43,7 +43,7 @@ pub fn parse_live_game(json: &JsonValue) -> Result<LiveGameSession, ParsingError
                     game_name,
                     tag_line,
                     position,
-                    _champion_name: champion_name,
+                    champion_name,
                     team,
                     _is_bot: is_bot,
                 });

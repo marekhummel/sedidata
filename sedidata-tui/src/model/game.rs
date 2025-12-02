@@ -1,5 +1,7 @@
 use itertools::Itertools;
 
+use crate::model::champion::Champion;
+
 use super::{ids::ChampionId, summoner::SummonerWithStats};
 
 #[derive(Debug, Clone)]
@@ -44,7 +46,7 @@ pub struct LiveGamePlayerInfo {
     pub game_name: String,
     pub tag_line: String,
     pub position: String,
-    pub _champion_name: String,
+    pub champion_name: String,
     pub team: String,
     pub _is_bot: bool,
 }
@@ -52,12 +54,14 @@ pub struct LiveGamePlayerInfo {
 #[derive(Debug, Clone)]
 pub enum GameState {
     ChampSelect {
-        session: ChampSelectSession,
-        players: Option<Vec<SummonerWithStats>>,
+        session_info: ChampSelectSession,
+        players: Vec<PlayerInfo>,
+        ranked_info: Option<Vec<SummonerWithStats>>,
     },
     LiveGame {
-        session: LiveGameSession,
-        players: Option<Vec<SummonerWithStats>>,
+        session_info: LiveGameSession,
+        players: Vec<PlayerInfo>,
+        ranked_info: Option<Vec<SummonerWithStats>>,
     },
     NotInGame,
     Error(String),
@@ -69,52 +73,7 @@ pub struct PlayerInfo {
     pub tag_line: String,
     pub position: String,
     pub is_ally: bool,
-}
-
-impl GameState {
-    pub fn ranked_players(&self) -> Option<&[SummonerWithStats]> {
-        match self {
-            GameState::ChampSelect { players: Some(p), .. } | GameState::LiveGame { players: Some(p), .. } => {
-                Some(p.as_slice())
-            }
-            _ => None,
-        }
-    }
-
-    pub fn player_infos(&self, ally: &(String, String)) -> Vec<PlayerInfo> {
-        match self {
-            GameState::ChampSelect { session, .. } => session
-                .my_team
-                .iter()
-                .chain(session.their_team.iter())
-                .map(|p| PlayerInfo {
-                    game_name: p.game_name.clone(),
-                    tag_line: p.tag_line.clone(),
-                    position: p.position.clone(),
-                    is_ally: p.is_ally,
-                })
-                .collect(),
-            GameState::LiveGame { session, .. } => {
-                let ally_team = session
-                    .players
-                    .iter()
-                    .find(|p| p.game_name == ally.0 && p.tag_line == ally.1)
-                    .map(|p| p.team.clone())
-                    .unwrap();
-                session
-                    .players
-                    .iter()
-                    .map(|p| PlayerInfo {
-                        game_name: p.game_name.clone(),
-                        tag_line: p.tag_line.clone(),
-                        position: p.position.clone(),
-                        is_ally: p.team == ally_team,
-                    })
-                    .collect()
-            }
-            _ => Vec::new(),
-        }
-    }
+    pub champion: Option<Champion>,
 }
 
 impl PartialEq for ChampSelectSession {

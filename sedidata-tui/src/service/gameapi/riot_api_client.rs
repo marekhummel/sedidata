@@ -11,6 +11,8 @@ use std::{
 use json::JsonValue;
 use reqwest::blocking::Client;
 
+use crate::model::ids::ChampionId;
+
 const BASE_URL: &str = "https://sedidata-server.onrender.com";
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5 * 60); // 5 minutes
 
@@ -52,12 +54,12 @@ impl RiotApiClient {
 
     pub fn get_multiple_player_info(
         &self,
-        players: &[(String, String)],
+        players: &[(String, String, Option<ChampionId>)],
     ) -> Vec<(String, String, Result<Arc<JsonValue>, RiotApiRequestError>)> {
         if !self.server_alive.load(Ordering::Relaxed) {
             return players
                 .iter()
-                .map(|(name, tagline)| {
+                .map(|(name, tagline, _)| {
                     (
                         name.clone(),
                         tagline.clone(),
@@ -70,14 +72,15 @@ impl RiotApiClient {
         let (tx, rx) = mpsc::channel();
 
         // Spawn a thread for each request
-        for (name, tagline) in players {
+        for (name, tagline, champ) in players {
             let client = self.client.clone();
             let tx = tx.clone();
             let name = name.clone();
             let tagline = tagline.clone();
+            let champ = champ.clone();
 
             thread::spawn(move || {
-                let result = Self::fetch_player_info(&client, &name, &tagline);
+                let result = Self::fetch_player_info(&client, &name, &tagline, &champ);
                 let _ = tx.send((name, tagline, result));
             });
         }
@@ -89,17 +92,26 @@ impl RiotApiClient {
         rx.into_iter().collect()
     }
 
-    fn fetch_player_info(client: &Client, name: &str, tagline: &str) -> Result<Arc<JsonValue>, RiotApiRequestError> {
+    fn fetch_player_info(
+        client: &Client,
+        name: &str,
+        tagline: &str,
+        champ: &Option<ChampionId>,
+    ) -> Result<Arc<JsonValue>, RiotApiRequestError> {
         if name.is_empty() || tagline.is_empty() {
             return Ok(Arc::new(JsonValue::Null));
         }
 
-        let url = format!(
+        let mut url = format!(
             "{}/league?name={}&tagline={}",
             BASE_URL,
             urlencoding::encode(name),
             urlencoding::encode(tagline)
         );
+
+        if let Some(champ_id) = champ {
+            url.push_str(&format!("&champion={}", champ_id.0));
+        }
 
         let response = client.get(&url).send()?;
 

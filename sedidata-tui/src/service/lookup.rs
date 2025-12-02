@@ -10,6 +10,7 @@ use crate::model::{
 
 pub struct LookupService {
     champs: HashMap<ChampionId, Champion>,
+    champs_name: HashMap<String, Champion>,
     skins: HashMap<SkinId, Skin>,
     masteries: HashMap<ChampionId, Mastery>,
     _challenges: HashMap<i32, Challenge>,
@@ -26,6 +27,7 @@ impl LookupService {
     ) -> Self {
         Self {
             champs: champions.iter().map(|c| (c.id.clone(), c.clone())).collect(),
+            champs_name: champions.iter().map(|c| (c.name.to_lowercase(), c.clone())).collect(),
             skins: skins.iter().map(|c| (c.id.clone(), c.clone())).collect(),
             masteries: masteries.iter().map(|m| (m.champ_id.clone(), m.clone())).collect(),
             _challenges: challenges.iter().map(|ch| (ch.id, ch.clone())).collect(),
@@ -37,6 +39,13 @@ impl LookupService {
         match self.champs.get(id) {
             Some(champ) => Ok(champ.clone()),
             None => Err(IdNotFoundError::Champ(id.clone())),
+        }
+    }
+
+    pub fn get_champion_name(&self, name: &str) -> Result<Champion, IdNotFoundError> {
+        match self.champs_name.get(&name.to_lowercase()) {
+            Some(champ) => Ok(champ.clone()),
+            None => Err(IdNotFoundError::ChampName(name.to_string())),
         }
     }
 
@@ -72,6 +81,7 @@ impl LookupService {
 #[derive(Debug)]
 pub enum IdNotFoundError {
     Champ(ChampionId),
+    ChampName(String),
     Skin(SkinId),
     _Challenge(i32),
     Queue(u16),
@@ -81,6 +91,7 @@ impl fmt::Display for IdNotFoundError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             IdNotFoundError::Champ(id) => write!(f, "Champion ID not found: {}", id),
+            IdNotFoundError::ChampName(name) => write!(f, "Champion name not found: {}", name),
             IdNotFoundError::Skin(id) => write!(f, "Skin ID not found: {}", id),
             IdNotFoundError::_Challenge(id) => write!(f, "Challenge ID not found: {}", id),
             IdNotFoundError::Queue(id) => write!(f, "Queue ID not found: {}", id),

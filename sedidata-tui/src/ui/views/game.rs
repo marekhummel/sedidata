@@ -16,7 +16,7 @@ use crate::{
         ViewResult,
     },
 };
-use itertools::{EitherOrBoth, Itertools};
+use itertools::Itertools;
 use ratatui::{
     layout::{Alignment, Constraint},
     style::{Color, Modifier, Style},
@@ -182,16 +182,17 @@ impl LivePlayerInfoView {
         self.players_data = None;
     }
 
-    fn columns(&self) -> [Constraint; 8] {
+    fn columns(&self) -> [Constraint; 9] {
         [
             Constraint::Length(6),  // Team
-            Constraint::Length(12), // Position
+            Constraint::Length(10), // Position
             Constraint::Length(30), // Player Name
             Constraint::Length(6),  // Level
             Constraint::Length(14), // Queue Type
             Constraint::Length(12), // Rank
             Constraint::Length(5),  // LP
             Constraint::Length(20), // Wins / Losses
+            Constraint::Length(22), // Mastery
         ]
     }
 
@@ -250,6 +251,23 @@ impl LivePlayerInfoView {
         }
     }
 
+    fn format_mastery(mastery: &(u16, u32)) -> String {
+        format!(
+            "{} pts (Lvl {})",
+            mastery
+                .1
+                .to_string()
+                .as_bytes()
+                .rchunks(3)
+                .rev()
+                .map(std::str::from_utf8)
+                .collect::<Result<Vec<_>, _>>()
+                .map(|parts| parts.join(","))
+                .unwrap(),
+            mastery.0
+        )
+    }
+
     fn render_player_rows<'b>(
         &'b self,
         player: &'b PlayerInfo,
@@ -279,12 +297,10 @@ impl LivePlayerInfoView {
         // Ranked info
         let mut ranked_cells = vec![];
         match summ_stats_opt {
-            None => ranked_cells.push(vec![
-                Cell::from(styled_span!("?"; Color::DarkGray)),
-                Cell::from(styled_span!("?"; Color::DarkGray)),
-                Cell::from(styled_span!("?"; Color::DarkGray)),
-                Cell::from(styled_span!("?"; Color::DarkGray)),
-            ]),
+            None => {
+                ranked_cells.push(std::iter::repeat_n(Cell::from(styled_span!("?"; Color::DarkGray)), 5).collect_vec())
+            }
+
             Some(summ_stats) => match summ_stats.ranked_stats {
                 None => ranked_cells.extend([
                     vec![
@@ -293,7 +309,7 @@ impl LivePlayerInfoView {
                         Cell::from(styled_span!("---"; Color::DarkGray)),
                         Cell::from(styled_span!("---"; Color::DarkGray)),
                     ],
-                    vec![Cell::from(""), Cell::from(""), Cell::from(""), Cell::from("")],
+                    std::iter::repeat_n(Cell::from(""), 4).collect::<Vec<_>>(),
                 ]),
                 Some(ref ranked_stats) => {
                     for queue in &["RANKED_SOLO_5x5", "RANKED_FLEX_SR"] {
@@ -322,46 +338,40 @@ impl LivePlayerInfoView {
                             ]),
                         }
                     }
-
-                    for (queue, stats) in ranked_stats
-                        .iter()
-                        .filter(|q| q.0 != "RANKED_SOLO_5x5" && q.0 != "RANKED_FLEX_SR")
-                    {
-                        let rank_color = Self::get_rank_color(&stats.tier);
-                        ranked_cells.push(vec![
-                            Cell::from(Self::format_queue_type(queue)),
-                            Cell::from(styled_span!(Self::format_rank(&stats.tier, &stats.division); rank_color)),
-                            Cell::from(stats.league_points.to_string()),
-                            Cell::from(styled_line!(
-                                "{:>3}/{:>3} ({:.1} %)",
-                                stats.wins,
-                                stats.losses,
-                                stats.wins as f64 / (stats.wins + stats.losses) as f64 * 100.0
-                            )),
-                        ]);
-                    }
                 }
             },
         }
 
-        ranked_cells
-            .into_iter()
-            .zip_longest(vec![player_cells])
-            .map(|zip| match zip {
-                EitherOrBoth::Both(ranked, player) => {
-                    let mut all_cells = vec![];
-                    all_cells.extend(player);
-                    all_cells.extend(ranked);
-                    Row::new(all_cells)
-                }
-                EitherOrBoth::Left(ranked) => {
-                    let mut all_cells = vec![Cell::from(""), Cell::from(""), Cell::from(""), Cell::from("")];
-                    all_cells.extend(ranked);
-                    Row::new(all_cells)
-                }
-                EitherOrBoth::Right(_) => unreachable!(),
-            })
-            .collect::<Vec<_>>()
+        // Mastery
+        let mastery_cell = match &summ_stats_opt.map(|s| s.champion_mastery.as_ref()) {
+            Some(Some(mastery)) => Cell::from(styled_span!(Self::format_mastery(mastery); Color::White)),
+            Some(None) => Cell::from(styled_span!("N/A"; Color::DarkGray)),
+            None => Cell::from(styled_span!("---"; Color::DarkGray)),
+        };
+
+        // Final rows
+        match ranked_cells.as_slice() {
+            [no_data] => {
+                let mut all_cells = vec![];
+                all_cells.extend(player_cells);
+                all_cells.extend(no_data.clone());
+                all_cells.push(mastery_cell);
+                vec![Row::new(all_cells)]
+            }
+            [soloduo, flex] => {
+                let mut all_cells1 = vec![];
+                all_cells1.extend(player_cells);
+                all_cells1.extend(soloduo.clone());
+                all_cells1.push(mastery_cell);
+
+                let mut all_cells2 = vec![];
+                all_cells2.extend(vec![Cell::from(""), Cell::from(""), Cell::from(""), Cell::from("")]);
+                all_cells2.extend(flex.clone());
+                all_cells2.push(Cell::from(""));
+                vec![Row::new(all_cells1), Row::new(all_cells2)]
+            }
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -393,24 +403,49 @@ impl RenderableView for LivePlayerInfoView {
                     // Only update if this is a new live game session
                     let is_new_session = match &self.game_state {
                         Some(GameState::LiveGame {
-                            session: curr_session, ..
+                            session_info: curr_session,
+                            ..
                         }) => session != *curr_session,
                         _ => true,
                     };
 
                     if is_new_session {
                         // LiveGame is available, use it
-                        self.game_state = Some(GameState::LiveGame { session, players: None });
+                        let ally_team = session
+                            .players
+                            .iter()
+                            .find(|p| (p.game_name.clone(), p.tag_line.clone()) == self.self_info)
+                            .map(|p| p.team.clone())
+                            .unwrap();
+                        let player_infos = session
+                            .players
+                            .iter()
+                            .map(|p| PlayerInfo {
+                                game_name: p.game_name.clone(),
+                                tag_line: p.tag_line.clone(),
+                                position: p.position.clone(),
+                                is_ally: p.team == ally_team,
+                                champion: ctrl.lookup.get_champion_name(&p.champion_name).ok(),
+                            })
+                            .collect_vec();
 
                         // Extract player names and fetch ranked info
-                        let player_names: Vec<_> = self
-                            .game_state
-                            .as_ref()
-                            .unwrap()
-                            .player_infos(&self.self_info)
-                            .into_iter()
-                            .map(|p| (p.game_name, p.tag_line))
-                            .collect();
+                        let player_names = player_infos
+                            .iter()
+                            .map(|p| {
+                                (
+                                    p.game_name.clone(),
+                                    p.tag_line.clone(),
+                                    p.champion.as_ref().map(|c| c.id.clone()),
+                                )
+                            })
+                            .collect_vec();
+
+                        self.game_state = Some(GameState::LiveGame {
+                            session_info: session,
+                            players: player_infos,
+                            ranked_info: None,
+                        });
 
                         let rx = ctrl.manager.get_ranked_info(player_names);
                         self.players_data = Some(AsyncData::new(rx));
@@ -430,24 +465,38 @@ impl RenderableView for LivePlayerInfoView {
                     // Only update if this is a new champ select session
                     let is_new_session = match &self.game_state {
                         Some(GameState::ChampSelect {
-                            session: old_session, ..
+                            session_info: old_session,
+                            ..
                         }) => session != *old_session,
                         _ => true,
                     };
 
                     if is_new_session {
-                        // New ChampSelect is available, use it
-                        self.game_state = Some(GameState::ChampSelect { session, players: None });
+                        let player_infos = session
+                            .my_team
+                            .iter()
+                            .chain(session.their_team.iter())
+                            .map(|p| PlayerInfo {
+                                game_name: p.game_name.clone(),
+                                tag_line: p.tag_line.clone(),
+                                position: p.position.clone(),
+                                is_ally: p.is_ally,
+                                champion: ctrl.lookup.get_champion(&p.selected_champion).ok(),
+                            })
+                            .collect_vec();
 
                         // Extract player names and fetch ranked info
-                        let player_names: Vec<_> = self
-                            .game_state
-                            .as_ref()
-                            .unwrap()
-                            .player_infos(&self.self_info)
-                            .into_iter()
-                            .map(|p| (p.game_name, p.tag_line))
-                            .collect();
+                        let player_names = player_infos
+                            .iter()
+                            .map(|p| (p.game_name.clone(), p.tag_line.clone(), None))
+                            .collect_vec();
+
+                        // New ChampSelect is available, use it
+                        self.game_state = Some(GameState::ChampSelect {
+                            session_info: session,
+                            players: player_infos,
+                            ranked_info: None,
+                        });
 
                         let rx = ctrl.manager.get_ranked_info(player_names);
                         self.players_data = Some(AsyncData::new(rx));
@@ -463,8 +512,12 @@ impl RenderableView for LivePlayerInfoView {
                     if let Some(gs) = &mut self.game_state {
                         let cloned = players.clone();
                         match gs {
-                            GameState::ChampSelect { players, .. } => *players = Some(cloned),
-                            GameState::LiveGame { players, .. } => *players = Some(cloned),
+                            GameState::ChampSelect {
+                                ranked_info: players, ..
+                            } => *players = Some(cloned),
+                            GameState::LiveGame {
+                                ranked_info: players, ..
+                            } => *players = Some(cloned),
                             _ => {}
                         }
                     }
@@ -548,16 +601,22 @@ impl RenderableView for LivePlayerInfoView {
                 rc.error(msg);
                 Ok(())
             }
-            GameState::ChampSelect { .. } | GameState::LiveGame { .. } => {
-                let summoners = game_state.ranked_players();
-                let mut players = game_state.player_infos(&self.self_info);
-                players.sort_by_key(|p| (!p.is_ally, Self::position_sort_key(&p.position)));
+            GameState::ChampSelect {
+                players, ranked_info, ..
+            }
+            | GameState::LiveGame {
+                players, ranked_info, ..
+            } => {
+                let summoners = ranked_info.as_ref();
 
                 // Render rows
                 let mut ally_rows = vec![];
                 let mut enemy_rows = vec![];
 
-                for player in &players {
+                for player in players
+                    .iter()
+                    .sorted_by_key(|p| (!p.is_ally, Self::position_sort_key(&p.position)))
+                {
                     let stats = summoners.and_then(|ss| {
                         ss.iter().find(|s| {
                             s.summoner.game_name == player.game_name && s.summoner.tag_line == player.tag_line
@@ -570,15 +629,15 @@ impl RenderableView for LivePlayerInfoView {
                         &mut enemy_rows
                     };
                     target_vec.extend(self.render_player_rows(player, stats));
-                    target_vec.push(empty_row!(8));
+                    target_vec.push(empty_row!(9));
                 }
 
                 // Combine and add separator if enemies are given
                 let mut rows = vec![];
                 rows.extend(ally_rows);
                 if !enemy_rows.is_empty() {
-                    rows.push(empty_row!(8));
-                    rows.push(empty_row!(8));
+                    rows.push(empty_row!(9));
+                    rows.push(empty_row!(9));
                     rows.extend(enemy_rows);
                 }
 
@@ -587,7 +646,7 @@ impl RenderableView for LivePlayerInfoView {
 
                 let table = Table::new(visible_rows, self.columns())
                     .header(
-                        header_row!("Team", "Position", "Player", "Level", "Queue", "Rank", "LP", "W/L")
+                        header_row!("Team", "Position", "Player", "Level", "Queue", "Rank", "LP", "W/L", "Mastery")
                             .style(Style::default().fg(Color::LightBlue).add_modifier(Modifier::BOLD))
                             .bottom_margin(1),
                     )
@@ -600,7 +659,7 @@ impl RenderableView for LivePlayerInfoView {
 
                 // Add hint text below the table (same horizontal area, one line from bottom)
                 let hint = styled_line!(
-                    "Note: Ranked info may take up to a minute on first request."; Color::DarkGray
+                    "Note: Ranked / Mastery info may take up to a minute on first request."; Color::DarkGray
                 )
                 .alignment(Alignment::Center);
                 let hint_paragraph = Paragraph::new(vec![hint]).block(Block::default());

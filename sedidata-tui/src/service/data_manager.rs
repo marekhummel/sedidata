@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     fmt,
     sync::{
         mpsc::{self, Receiver},
@@ -15,9 +14,10 @@ use crate::{
         challenge::Challenge,
         champion::{AllChampionInfo, Champion, Chroma, Skin},
         game::{ChampSelectSession, LiveGameSession, QueueInfo},
+        ids::ChampionId,
         loot::LootItems,
         mastery::Mastery,
-        summoner::{RiotApiSummonerResponse, Summoner, SummonerWithStats},
+        summoner::{Summoner, SummonerWithStats},
     },
     service::gameapi::{
         lcu_client::{LcuClient, LcuClientInitError, LcuClientRequestType, LcuRequestError},
@@ -46,7 +46,6 @@ pub struct DataManager {
     loot_cache: Arc<Mutex<Option<LootItems>>>,
     challenges_cache: Arc<Mutex<Option<Vec<Challenge>>>>,
     queues_cache: Arc<Mutex<Option<Vec<QueueInfo>>>>,
-    ranked_info_cache: Arc<Mutex<HashMap<(String, String), RiotApiSummonerResponse>>>,
 }
 
 impl DataManager {
@@ -67,7 +66,6 @@ impl DataManager {
             loot_cache: Arc::new(Mutex::new(None)),
             challenges_cache: Arc::new(Mutex::new(None)),
             queues_cache: Arc::new(Mutex::new(None)),
-            ranked_info_cache: Arc::new(Mutex::new(HashMap::new())),
         })
     }
 
@@ -256,36 +254,18 @@ impl DataManager {
 
     pub fn get_ranked_info(
         &self,
-        players: Vec<(String, String)>,
+        players: Vec<(String, String, Option<ChampionId>)>,
     ) -> Receiver<DataRetrievalResult<Vec<SummonerWithStats>>> {
         let riot_client = Arc::clone(&self.riot_api_client);
-        let cache = Arc::clone(&self.ranked_info_cache);
 
         self.async_wrapper(move || {
-            let mut cache_guard = cache.lock().unwrap();
-
-            let (cached, fetch): (Vec<_>, Vec<_>) = players.iter().partition(|p| cache_guard.contains_key(p));
-
-            let cached_reponses = cached
-                .into_iter()
-                .map(|(name, tagline)| {
-                    (
-                        name.clone(),
-                        tagline.clone(),
-                        Some(cache_guard.get(&(name.clone(), tagline.clone())).unwrap().clone()),
-                    )
-                })
-                .collect_vec();
-
             // Fetch and update cache
-            let riot_api_response =
-                riot_client.get_multiple_player_info(&fetch.iter().map(|(n, t)| (n.clone(), t.clone())).collect_vec());
+            let riot_api_response = riot_client.get_multiple_player_info(&players.iter().cloned().collect_vec());
 
             let mut results = Vec::new();
             for (name, tagline, response_json) in riot_api_response {
                 if let Ok(json) = &response_json {
                     if let Ok(parsed) = parse_ranked_stats(json.as_ref()) {
-                        cache_guard.insert((name.clone(), tagline.clone()), parsed.clone());
                         results.push((name, tagline, Some(parsed)));
                         continue;
                     }
@@ -293,10 +273,9 @@ impl DataManager {
                 results.push((name, tagline, None));
             }
 
-            // Combine cached and fetched
-            Ok(cached_reponses
+            // Map to SummonerWithStats and return
+            Ok(results
                 .into_iter()
-                .chain(results)
                 .map(|(name, tagline, resp)| {
                     let summoner = Summoner {
                         id: 0.into(),
@@ -307,12 +286,13 @@ impl DataManager {
                     };
                     SummonerWithStats {
                         summoner,
-                        ranked_stats: resp.map(|r| {
+                        ranked_stats: resp.as_ref().map(|r| {
                             r.ranked_stats
                                 .iter()
                                 .map(|r| (r.queue_type.clone(), r.clone()))
                                 .collect()
                         }),
+                        champion_mastery: resp.as_ref().and_then(|r| r.champion_mastery_info),
                     }
                 })
                 .collect_vec())

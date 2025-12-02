@@ -15,12 +15,14 @@ pub struct Summoner {
 pub struct RiotApiSummonerResponse {
     pub level: u16,
     pub ranked_stats: Vec<RankedQueueStats>,
+    pub champion_mastery_info: Option<(u16, u32)>,
 }
 
 #[derive(Debug, Clone)]
 pub struct SummonerWithStats {
     pub summoner: Summoner,
     pub ranked_stats: Option<HashMap<String, RankedQueueStats>>,
+    pub champion_mastery: Option<(u16, u32)>,
 }
 
 #[derive(Debug, Clone)]

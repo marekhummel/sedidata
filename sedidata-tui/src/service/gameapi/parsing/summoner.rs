@@ -82,9 +82,23 @@ pub fn parse_ranked_stats(json: &JsonValue) -> Result<RiotApiSummonerResponse, P
             }
         }
 
+        let mut champion_mastery_info = None;
+        if let JsonValue::Object(mastery_info) = &obj["champion_mastery"] {
+            let champion_level = mastery_info["championLevel"]
+                .as_u16()
+                .ok_or(ParsingError::InvalidType("championLevel".into()))?;
+
+            let champion_points = mastery_info["championPoints"]
+                .as_u32()
+                .ok_or(ParsingError::InvalidType("championPoints".into()))?;
+
+            champion_mastery_info = Some((champion_level, champion_points));
+        }
+
         return Ok(RiotApiSummonerResponse {
             level,
             ranked_stats: stats,
+            champion_mastery_info,
         });
     }
 
