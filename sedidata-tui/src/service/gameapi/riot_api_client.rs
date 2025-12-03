@@ -1,9 +1,6 @@
 use std::{
     fmt,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        mpsc, Arc,
-    },
+    sync::{mpsc, Arc},
     thread,
     time::Duration,
 };
@@ -18,36 +15,31 @@ const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5 * 60); // 5 minutes
 
 pub struct RiotApiClient {
     client: Client,
-    server_alive: Arc<AtomicBool>,
 }
 
 impl RiotApiClient {
     pub fn new() -> Result<Self, RiotApiClientInitError> {
         let client = Client::builder().timeout(Duration::from_secs(90)).build()?;
 
-        let server_alive = Arc::new(AtomicBool::new(false));
-
         // Clone for heartbeat thread
         let heartbeat_client = client.clone();
-        let heartbeat_alive = Arc::clone(&server_alive);
 
         // Spawn heartbeat thread
         thread::spawn(move || {
-            Self::heartbeat_loop(heartbeat_client, heartbeat_alive);
+            Self::heartbeat_loop(heartbeat_client);
         });
 
-        Ok(Self { client, server_alive })
+        Ok(Self { client })
     }
 
-    fn heartbeat_loop(client: Client, server_alive: Arc<AtomicBool>) {
+    fn heartbeat_loop(client: Client) {
         loop {
             let url = format!("{}/heartbeat", BASE_URL);
-            let is_alive = match client.get(&url).send() {
+            let _is_alive = match client.get(&url).send() {
                 Ok(response) => response.status().is_success(),
                 Err(_) => false,
             };
 
-            server_alive.store(is_alive, Ordering::Relaxed);
             thread::sleep(HEARTBEAT_INTERVAL);
         }
     }
@@ -56,19 +48,6 @@ impl RiotApiClient {
         &self,
         players: &[(String, String, Option<Champion>)],
     ) -> Vec<(String, String, Result<Arc<JsonValue>, RiotApiRequestError>)> {
-        if !self.server_alive.load(Ordering::Relaxed) {
-            return players
-                .iter()
-                .map(|(name, tagline, _)| {
-                    (
-                        name.clone(),
-                        tagline.clone(),
-                        Err(RiotApiRequestError::ClientUnavailable()),
-                    )
-                })
-                .collect();
-        }
-
         let (tx, rx) = mpsc::channel();
 
         // Spawn a thread for each request
@@ -152,7 +131,6 @@ impl From<reqwest::Error> for RiotApiClientInitError {
 
 #[derive(Debug)]
 pub enum RiotApiRequestError {
-    ClientUnavailable(),
     NetworkError(reqwest::Error),
     InvalidResponse(u16, String),
     JsonParseError(json::Error),
@@ -169,9 +147,6 @@ impl fmt::Display for RiotApiRequestError {
             }
             RiotApiRequestError::JsonParseError(e) => {
                 write!(f, "Failed to parse JSON response: {}", e)
-            }
-            RiotApiRequestError::ClientUnavailable() => {
-                write!(f, "Riot API client is unavailable")
             }
         }
     }
