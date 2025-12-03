@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fmt,
     sync::{
         mpsc::{self, Receiver},
@@ -14,10 +15,9 @@ use crate::{
         challenge::Challenge,
         champion::{AllChampionInfo, Champion, Chroma, Skin},
         game::{ChampSelectSession, LiveGameSession, QueueInfo},
-        ids::ChampionId,
         loot::LootItems,
         mastery::Mastery,
-        summoner::{Summoner, SummonerWithStats},
+        summoner::{PlayedChampionMasteryInfo, Summoner, SummonerWithStats},
     },
     service::gameapi::{
         lcu_client::{LcuClient, LcuClientInitError, LcuClientRequestType, LcuRequestError},
@@ -254,7 +254,7 @@ impl DataManager {
 
     pub fn get_ranked_info(
         &self,
-        players: Vec<(String, String, Option<ChampionId>)>,
+        players: Vec<(String, String, Option<Champion>)>,
     ) -> Receiver<DataRetrievalResult<Vec<SummonerWithStats>>> {
         let riot_client = Arc::clone(&self.riot_api_client);
 
@@ -272,6 +272,11 @@ impl DataManager {
                 }
                 results.push((name, tagline, None));
             }
+
+            let champion_name_lookup: HashMap<_, _> = players
+                .iter()
+                .filter_map(|(n, t, oc)| oc.as_ref().map(|c| ((n, t), c.name.clone())))
+                .collect();
 
             // Map to SummonerWithStats and return
             Ok(results
@@ -292,7 +297,16 @@ impl DataManager {
                                 .map(|r| (r.queue_type.clone(), r.clone()))
                                 .collect()
                         }),
-                        champion_mastery: resp.as_ref().and_then(|r| r.champion_mastery_info),
+                        champion_mastery: resp.as_ref().and_then(|r| {
+                            r.champion_mastery_info.map(|info| PlayedChampionMasteryInfo {
+                                champion_name: champion_name_lookup
+                                    .get(&(&name, &tagline))
+                                    .cloned()
+                                    .unwrap_or_else(|| "Unknown".to_string()),
+                                champion_level: info.0,
+                                champion_points: info.1,
+                            })
+                        }),
                     }
                 })
                 .collect_vec())

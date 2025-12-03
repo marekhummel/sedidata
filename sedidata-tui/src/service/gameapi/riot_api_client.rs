@@ -11,7 +11,7 @@ use std::{
 use json::JsonValue;
 use reqwest::blocking::Client;
 
-use crate::model::ids::ChampionId;
+use crate::model::{champion::Champion, ids::ChampionId};
 
 const BASE_URL: &str = "https://sedidata-server.onrender.com";
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5 * 60); // 5 minutes
@@ -54,7 +54,7 @@ impl RiotApiClient {
 
     pub fn get_multiple_player_info(
         &self,
-        players: &[(String, String, Option<ChampionId>)],
+        players: &[(String, String, Option<Champion>)],
     ) -> Vec<(String, String, Result<Arc<JsonValue>, RiotApiRequestError>)> {
         if !self.server_alive.load(Ordering::Relaxed) {
             return players
@@ -80,7 +80,7 @@ impl RiotApiClient {
             let champ = champ.clone();
 
             thread::spawn(move || {
-                let result = Self::fetch_player_info(&client, &name, &tagline, &champ);
+                let result = Self::fetch_player_info(&client, &name, &tagline, &champ.as_ref().map(|c| c.id.clone()));
                 let _ = tx.send((name, tagline, result));
             });
         }
