@@ -4,10 +4,10 @@ use crate::{
     empty_row, header_row, impl_text_view,
     model::{
         champion::Champion,
-        game::{ChampSelectSession, GameState, LiveGameSession, PlayerInfo},
+        game::{ChampSelectSession, GameState, LiveGameSession, PlayerInfo, PostGameSession},
         ids::ChampionId,
         mastery::Mastery,
-        summoner::{PlayedChampionMasteryInfo, SummonerWithStats},
+        summoner::SummonerWithStats,
     },
     service::lookup::LookupService,
     styled_line, styled_span,
@@ -152,6 +152,7 @@ impl_text_view!(ChampSelectAramView, champ_select_aram_view, "ARAM Champ Select 
 pub struct LivePlayerInfoView {
     cs_data: Option<AsyncData<Option<ChampSelectSession>>>,
     live_game_data: Option<AsyncData<Option<LiveGameSession>>>,
+    post_game_data: Option<AsyncData<Option<PostGameSession>>>,
     players_data: Option<AsyncData<Vec<SummonerWithStats>>>,
     game_state: Option<GameState>,
     self_info: (String, String),
@@ -164,6 +165,7 @@ impl LivePlayerInfoView {
         let mut view = Self {
             cs_data: None,
             live_game_data: None,
+            post_game_data: None,
             game_state: None,
             players_data: None,
             self_info: (summoner.game_name.clone(), summoner.tag_line.clone()),
@@ -173,12 +175,14 @@ impl LivePlayerInfoView {
     }
 
     fn start_session_requests(&mut self, ctrl: &Controller) {
-        // Start both fetches simultaneously
+        // Start all three fetches simultaneously
         let cs_rx = ctrl.manager.get_champ_select();
         let live_rx = ctrl.manager.get_live_game();
+        let post_rx = ctrl.manager.get_post_game();
 
         self.cs_data = Some(AsyncData::new(cs_rx));
         self.live_game_data = Some(AsyncData::new(live_rx));
+        self.post_game_data = Some(AsyncData::new(post_rx));
         self.players_data = None;
     }
 
@@ -192,7 +196,7 @@ impl LivePlayerInfoView {
             Constraint::Length(12), // Rank
             Constraint::Length(5),  // LP
             Constraint::Length(20), // Wins / Losses
-            Constraint::Length(22), // Mastery
+            Constraint::Length(25), // Mastery
         ]
     }
 
@@ -251,11 +255,10 @@ impl LivePlayerInfoView {
         }
     }
 
-    fn format_mastery(mastery: &PlayedChampionMasteryInfo) -> String {
+    fn format_mastery(level: u16, points: u32) -> String {
         format!(
             "{} pts (Lvl {})",
-            mastery
-                .champion_points
+            points
                 .to_string()
                 .as_bytes()
                 .rchunks(3)
@@ -264,7 +267,7 @@ impl LivePlayerInfoView {
                 .collect::<Result<Vec<_>, _>>()
                 .map(|parts| parts.join(","))
                 .unwrap(),
-            mastery.champion_level
+            level
         )
     }
 
@@ -343,13 +346,18 @@ impl LivePlayerInfoView {
         }
 
         // Mastery
-        let mastery_cells = match &summ_stats_opt.map(|s| s.champion_mastery.as_ref()) {
-            Some(Some(mastery)) => (
-                Cell::from(mastery.champion_name.clone()),
-                Cell::from(styled_span!(Self::format_mastery(mastery); Color::White)),
-            ),
-            Some(None) => (Cell::from(styled_span!("N/A"; Color::DarkGray)), Cell::from("")),
-            None => (Cell::from(styled_span!("---"; Color::DarkGray)), Cell::from("")),
+        let mastery_cells = match &summ_stats_opt.map(|s| &s.champion_mastery) {
+            Some(mastery) => match mastery.level_points {
+                Some((level, points)) => (
+                    Cell::from(styled_span!(mastery.champion_name.clone(); Color::White)),
+                    Cell::from(styled_span!(Self::format_mastery(level, points); Color::White)),
+                ),
+                None => (
+                    Cell::from(styled_span!(mastery.champion_name.clone(); Color::White)),
+                    Cell::from(styled_span!("---"; Color::DarkGray)),
+                ),
+            },
+            None => (Cell::from(styled_span!("?"; Color::DarkGray)), Cell::from("")),
         };
 
         // Final rows
@@ -391,17 +399,80 @@ impl RenderableView for LivePlayerInfoView {
         if let Some(live_data) = &mut self.live_game_data {
             live_data.try_update();
         }
+        if let Some(post_data) = &mut self.post_game_data {
+            post_data.try_update();
+        }
         if let Some(players_data) = &mut self.players_data {
             players_data.try_update();
         }
 
-        // Check if live game finished first
+        // Check if post game finished first (highest priority)
+        if let Some(post_data) = &self.post_game_data {
+            if !post_data.is_loading() && post_data.error().is_none() {
+                if let Some(Some(session)) = post_data.get_data() {
+                    let session = session.clone();
+                    self.cs_data = None; // Cancel other requests
+                    self.live_game_data = None;
+                    self.post_game_data = None;
+
+                    // Only update if this is a new post game session
+                    let is_new_session = match &self.game_state {
+                        Some(GameState::PostGame {
+                            session_info: curr_session,
+                            ..
+                        }) => session != *curr_session,
+                        _ => true,
+                    };
+
+                    if is_new_session {
+                        // PostGame is available, use it
+                        let player_team_id = session
+                            .teams
+                            .iter()
+                            .find(|t| t.is_player_team)
+                            .and_then(|t| t.players.first())
+                            .map(|p| p.team_id);
+
+                        let player_infos = session
+                            .teams
+                            .iter()
+                            .flat_map(|t| &t.players)
+                            .map(|p| PlayerInfo {
+                                game_name: p.game_name.clone(),
+                                tag_line: p.tag_line.clone(),
+                                position: p.position.clone(),
+                                is_ally: Some(p.team_id) == player_team_id,
+                                champion: ctrl.lookup.get_champion_name(&p.champion_name).ok(),
+                            })
+                            .collect_vec();
+
+                        // Extract player names and fetch ranked info
+                        let player_names = player_infos
+                            .iter()
+                            .map(|p| (p.game_name.clone(), p.tag_line.clone(), p.champion.clone()))
+                            .collect_vec();
+
+                        self.game_state = Some(GameState::PostGame {
+                            session_info: session,
+                            players: player_infos,
+                            ranked_info: None,
+                        });
+
+                        let rx = ctrl.manager.get_ranked_info(player_names);
+                        self.players_data = Some(AsyncData::new(rx));
+                    }
+                }
+            }
+        }
+
+        // Check if live game finished
         if let Some(live_data) = &self.live_game_data {
             if !live_data.is_loading() && live_data.error().is_none() {
                 if let Some(Some(session)) = live_data.get_data() {
                     let session = session.clone();
-                    self.cs_data = None; // Cancel champ select request
+                    self.cs_data = None; // Cancel other requests
                     self.live_game_data = None;
+                    self.post_game_data = None;
 
                     // Only update if this is a new live game session
                     let is_new_session = match &self.game_state {
@@ -457,14 +528,15 @@ impl RenderableView for LivePlayerInfoView {
                 if let Some(Some(session)) = cs_data.get_data() {
                     let session = session.clone();
                     self.cs_data = None;
-                    self.live_game_data = None; // Cancel live game request
+                    self.live_game_data = None; // Cancel other requests
+                    self.post_game_data = None;
 
                     // Only update if this is a new champ select session
                     let is_new_session = match &self.game_state {
                         Some(GameState::ChampSelect {
-                            session_info: old_session,
+                            session_info: curr_session,
                             ..
-                        }) => session != *old_session,
+                        }) => session != *curr_session,
                         _ => true,
                     };
 
@@ -515,6 +587,9 @@ impl RenderableView for LivePlayerInfoView {
                             GameState::LiveGame {
                                 ranked_info: players, ..
                             } => *players = Some(cloned),
+                            GameState::PostGame {
+                                ranked_info: players, ..
+                            } => *players = Some(cloned),
                             _ => {}
                         }
                     }
@@ -527,12 +602,14 @@ impl RenderableView for LivePlayerInfoView {
             }
         }
 
-        // If both session requests finished but we still have no game state, decide NotInGame vs Error
+        // If all session requests finished but we still have no game state, decide NotInGame vs Error
         let cs_finished = self.cs_data.as_ref().is_some_and(|d| !d.is_loading());
         let live_finished = self.live_game_data.as_ref().is_some_and(|d| !d.is_loading());
-        if cs_finished && live_finished {
+        let post_finished = self.post_game_data.as_ref().is_some_and(|d| !d.is_loading());
+        if cs_finished && live_finished && post_finished {
             self.cs_data = None;
             self.live_game_data = None;
+            self.post_game_data = None;
             self.players_data = None;
 
             let mut error = String::new();
@@ -541,6 +618,9 @@ impl RenderableView for LivePlayerInfoView {
             }
             if let Some(live_err) = self.live_game_data.as_ref().and_then(|d| d.error()) {
                 error.push_str(&format!("Live Game Error: {}\n", live_err));
+            }
+            if let Some(post_err) = self.post_game_data.as_ref().and_then(|d| d.error()) {
+                error.push_str(&format!("Post Game Error: {}\n", post_err));
             }
 
             if error.is_empty() {
@@ -564,6 +644,7 @@ impl RenderableView for LivePlayerInfoView {
         // Only refresh if we're not currently loading
         let is_loading = self.cs_data.as_ref().is_some_and(|d| d.is_loading())
             || self.live_game_data.as_ref().is_some_and(|d| d.is_loading())
+            || self.post_game_data.as_ref().is_some_and(|d| d.is_loading())
             || self.players_data.as_ref().is_some_and(|d| d.is_loading());
 
         if !is_loading {
@@ -603,6 +684,9 @@ impl RenderableView for LivePlayerInfoView {
             }
             | GameState::LiveGame {
                 players, ranked_info, ..
+            }
+            | GameState::PostGame {
+                players, ranked_info, ..
             } => {
                 let summoners = ranked_info.as_ref();
 
@@ -638,6 +722,13 @@ impl RenderableView for LivePlayerInfoView {
                     rows.extend(enemy_rows);
                 }
 
+                let extra_title = self.game_state.as_ref().map_or("".to_string(), |gs| match gs {
+                    GameState::ChampSelect { .. } => "(Champ Select)".to_string(),
+                    GameState::LiveGame { .. } => "(Live Game)".to_string(),
+                    GameState::PostGame { .. } => "(Post Game)".to_string(),
+                    _ => "".to_string(),
+                });
+
                 // Render table
                 let visible_rows: Vec<_> = rows.into_iter().skip(rc.scroll_offset as usize).collect();
 
@@ -647,7 +738,7 @@ impl RenderableView for LivePlayerInfoView {
                             .style(Style::default().fg(Color::LightBlue).add_modifier(Modifier::BOLD))
                             .bottom_margin(1),
                     )
-                    .block(rc.block)
+                    .block(rc.block.title(extra_title))
                     .column_spacing(2)
                     .style(Style::default().fg(Color::White));
 

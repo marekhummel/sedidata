@@ -14,7 +14,7 @@ use crate::{
     model::{
         challenge::Challenge,
         champion::{AllChampionInfo, Champion, Chroma, Skin},
-        game::{ChampSelectSession, LiveGameSession, QueueInfo},
+        game::{ChampSelectSession, LiveGameSession, PostGameSession, QueueInfo},
         loot::LootItems,
         mastery::Mastery,
         summoner::{PlayedChampionMasteryInfo, Summoner, SummonerWithStats},
@@ -29,6 +29,7 @@ use crate::{
             livegame::parse_live_game,
             loot::parse_loot,
             mastery::parse_masteries,
+            postgame::parse_post_game,
             queues::parse_queues,
             summoner::{parse_ranked_stats, parse_summoner},
             ParsingError,
@@ -252,6 +253,20 @@ impl DataManager {
         })
     }
 
+    pub fn get_post_game(&self) -> Receiver<DataRetrievalResult<Option<PostGameSession>>> {
+        let client = Arc::clone(&self.lcu_client);
+
+        self.async_wrapper(move || match client.request(LcuClientRequestType::EndOfGame, false) {
+            Ok(post_game_json) => {
+                let post_game_info = parse_post_game(Arc::as_ref(&post_game_json))?;
+                Ok(Some(post_game_info))
+            }
+            Err(LcuRequestError::InvalidResponse(_, _)) => Ok(None),
+            Err(LcuRequestError::LocalFileError(_)) => Ok(None),
+            Err(err) => Err(err.into()),
+        })
+    }
+
     pub fn get_ranked_info(
         &self,
         players: Vec<(String, String, Option<Champion>)>,
@@ -289,6 +304,10 @@ impl DataManager {
                         tag_line: tagline.clone(),
                         level: resp.clone().map(|r| r.level),
                     };
+                    let champion_name = champion_name_lookup
+                        .get(&(&name, &tagline))
+                        .cloned()
+                        .unwrap_or_else(|| "Unknown".to_string());
                     SummonerWithStats {
                         summoner,
                         ranked_stats: resp.as_ref().map(|r| {
@@ -297,16 +316,10 @@ impl DataManager {
                                 .map(|r| (r.queue_type.clone(), r.clone()))
                                 .collect()
                         }),
-                        champion_mastery: resp.as_ref().and_then(|r| {
-                            r.champion_mastery_info.map(|info| PlayedChampionMasteryInfo {
-                                champion_name: champion_name_lookup
-                                    .get(&(&name, &tagline))
-                                    .cloned()
-                                    .unwrap_or_else(|| "Unknown".to_string()),
-                                champion_level: info.0,
-                                champion_points: info.1,
-                            })
-                        }),
+                        champion_mastery: PlayedChampionMasteryInfo {
+                            champion_name,
+                            level_points: resp.as_ref().and_then(|r| r.champion_mastery_info),
+                        },
                     }
                 })
                 .collect_vec())

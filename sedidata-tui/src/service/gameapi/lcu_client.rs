@@ -237,6 +237,9 @@ impl LcuClient {
                     }
                     LcuClientRequestType::QueueTypes => {
                         format!("{}lol-game-queues/v1/queues", self.base_url)
+                    }
+                    LcuClientRequestType::EndOfGame => {
+                        format!("{}lol-end-of-game/v1/eog-stats-block", self.base_url)
                     } // LcuClientRequestType::OtherSummoner(puuid) => {
                       //     format!("{}lol-summoner/v2/summoners/puuid/{}", self.base_url, puuid)
                       // }
@@ -407,6 +410,7 @@ pub enum LcuClientRequestType {
     ChampSelect,
     Challenges,
     QueueTypes,
+    EndOfGame,
 }
 
 impl fmt::Display for LcuClientRequestType {
@@ -419,6 +423,7 @@ impl fmt::Display for LcuClientRequestType {
             LcuClientRequestType::ChampSelect => write!(f, "ChampSelect"),
             LcuClientRequestType::Challenges => write!(f, "Challenges"),
             LcuClientRequestType::QueueTypes => write!(f, "QueueTypes"),
+            LcuClientRequestType::EndOfGame => write!(f, "EndOfGame"),
         }
     }
 }

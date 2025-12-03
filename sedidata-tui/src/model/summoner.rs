@@ -22,7 +22,7 @@ pub struct RiotApiSummonerResponse {
 pub struct SummonerWithStats {
     pub summoner: Summoner,
     pub ranked_stats: Option<HashMap<String, RankedQueueStats>>,
-    pub champion_mastery: Option<PlayedChampionMasteryInfo>,
+    pub champion_mastery: PlayedChampionMasteryInfo,
 }
 
 #[derive(Debug, Clone)]
@@ -38,6 +38,5 @@ pub struct RankedQueueStats {
 #[derive(Debug, Clone)]
 pub struct PlayedChampionMasteryInfo {
     pub champion_name: String,
-    pub champion_level: u16,
-    pub champion_points: u32,
+    pub level_points: Option<(u16, u32)>,
 }

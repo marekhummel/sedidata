@@ -52,6 +52,29 @@ pub struct LiveGamePlayerInfo {
 }
 
 #[derive(Debug, Clone)]
+pub struct PostGameSession {
+    pub game_id: u64,
+    pub teams: Vec<PostGameTeamInfo>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PostGameTeamInfo {
+    pub is_player_team: bool,
+    pub _is_winning_team: bool,
+    pub players: Vec<PostGamePlayerInfo>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PostGamePlayerInfo {
+    pub game_name: String,
+    pub tag_line: String,
+    pub position: String,
+    pub champion_name: String,
+    pub team_id: u16,
+    pub _is_bot: bool,
+}
+
+#[derive(Debug, Clone)]
 pub enum GameState {
     ChampSelect {
         session_info: ChampSelectSession,
@@ -60,6 +83,11 @@ pub enum GameState {
     },
     LiveGame {
         session_info: LiveGameSession,
+        players: Vec<PlayerInfo>,
+        ranked_info: Option<Vec<SummonerWithStats>>,
+    },
+    PostGame {
+        session_info: PostGameSession,
         players: Vec<PlayerInfo>,
         ranked_info: Option<Vec<SummonerWithStats>>,
     },
@@ -93,5 +121,11 @@ impl PartialEq for LiveGameSession {
         p1_sorted
             .zip(p2_sorted)
             .all(|(a, b)| a.game_name == b.game_name && a.tag_line == b.tag_line)
+    }
+}
+
+impl PartialEq for PostGameSession {
+    fn eq(&self, other: &Self) -> bool {
+        self.game_id == other.game_id
     }
 }

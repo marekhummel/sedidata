@@ -6,6 +6,7 @@ pub mod champselect;
 pub mod livegame;
 pub mod loot;
 pub mod mastery;
+pub mod postgame;
 pub mod queues;
 pub mod summoner;
 
