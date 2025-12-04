@@ -255,6 +255,13 @@ impl LivePlayerInfoView {
         }
     }
 
+    fn format_champion_name(champion: &Option<String>) -> ratatui::text::Line<'_> {
+        match champion {
+            Some(champ) => styled_line!(champ.clone(); Color::White),
+            None => styled_line!("Unknown"; Color::DarkGray),
+        }
+    }
+
     fn format_mastery(level: u16, points: u32) -> String {
         format!(
             "{} pts (Lvl {})",
@@ -283,10 +290,10 @@ impl LivePlayerInfoView {
             styled_line!("<Player is private>"; Color::DarkGray)
         };
         let player_cells = vec![
-            Cell::from(if player.is_ally {
-                styled_line!("Ally"; Color::Blue)
-            } else {
-                styled_line!("Enemy"; Color::Red)
+            Cell::from(match player.is_ally {
+                Some(true) => styled_line!("Ally"; Color::Blue),
+                Some(false) => styled_line!("Enemy"; Color::Red),
+                None => styled_line!("N/A"; Color::DarkGray),
             }),
             Cell::from(Self::format_position(&player.position)),
             Cell::from(player_name),
@@ -349,11 +356,11 @@ impl LivePlayerInfoView {
         let mastery_cells = match &summ_stats_opt.map(|s| &s.champion_mastery) {
             Some(mastery) => match mastery.level_points {
                 Some((level, points)) => (
-                    Cell::from(styled_span!(mastery.champion_name.clone(); Color::White)),
+                    Cell::from(Self::format_champion_name(&mastery.champion_name)),
                     Cell::from(styled_span!(Self::format_mastery(level, points); Color::White)),
                 ),
                 None => (
-                    Cell::from(styled_span!(mastery.champion_name.clone(); Color::White)),
+                    Cell::from(Self::format_champion_name(&mastery.champion_name)),
                     Cell::from(styled_span!("---"; Color::DarkGray)),
                 ),
             },
@@ -441,7 +448,7 @@ impl RenderableView for LivePlayerInfoView {
                                 game_name: p.game_name.clone(),
                                 tag_line: p.tag_line.clone(),
                                 position: p.position.clone(),
-                                is_ally: Some(p.team_id) == player_team_id,
+                                is_ally: Some(Some(p.team_id) == player_team_id),
                                 champion: ctrl.lookup.get_champion_name(&p.champion_name).ok(),
                             })
                             .collect_vec();
@@ -489,8 +496,7 @@ impl RenderableView for LivePlayerInfoView {
                             .players
                             .iter()
                             .find(|p| (p.game_name.clone(), p.tag_line.clone()) == self.self_info)
-                            .map(|p| p.team.clone())
-                            .unwrap();
+                            .map(|p| p.team.clone());
                         let player_infos = session
                             .players
                             .iter()
@@ -498,7 +504,7 @@ impl RenderableView for LivePlayerInfoView {
                                 game_name: p.game_name.clone(),
                                 tag_line: p.tag_line.clone(),
                                 position: p.position.clone(),
-                                is_ally: p.team == ally_team,
+                                is_ally: ally_team.as_ref().map(|a| p.team == *a),
                                 champion: ctrl.lookup.get_champion_name(&p.champion_name).ok(),
                             })
                             .collect_vec();
@@ -549,7 +555,7 @@ impl RenderableView for LivePlayerInfoView {
                                 game_name: p.game_name.clone(),
                                 tag_line: p.tag_line.clone(),
                                 position: p.position.clone(),
-                                is_ally: p.is_ally,
+                                is_ally: Some(p.is_ally),
                                 champion: ctrl.lookup.get_champion(&p.selected_champion).ok(),
                             })
                             .collect_vec();
@@ -636,7 +642,7 @@ impl RenderableView for LivePlayerInfoView {
             None => Some(1.0),
             Some(GameState::Error(_)) => None,
             Some(GameState::NotInGame) => Some(1.0),
-            Some(_) => Some(5.0),
+            Some(_) => Some(10.0),
         }
     }
 
@@ -666,9 +672,10 @@ impl RenderableView for LivePlayerInfoView {
 
         match game_state {
             GameState::NotInGame => {
-                let not_in_game_text = vec![styled_line!(
-                    "Not in a game or champ select. Waiting for game to start..."
-                )];
+                let not_in_game_text = vec![
+                    styled_line!(),
+                    styled_line!("  Not in a champ select / live game / post game. Waiting for game to start..."; Color::Red),
+                ];
                 let paragraph = ratatui::widgets::Paragraph::new(not_in_game_text)
                     .block(rc.block)
                     .wrap(ratatui::widgets::Wrap { trim: false });
@@ -694,17 +701,21 @@ impl RenderableView for LivePlayerInfoView {
                 let mut ally_rows = vec![];
                 let mut enemy_rows = vec![];
 
-                for player in players
-                    .iter()
-                    .sorted_by_key(|p| (!p.is_ally, Self::position_sort_key(&p.position)))
-                {
+                for player in players.iter().sorted_by_key(|p| {
+                    (
+                        !p.is_ally.unwrap_or(false),
+                        Self::position_sort_key(&p.position),
+                        p.game_name.clone(),
+                        p.tag_line.clone(),
+                    )
+                }) {
                     let stats = summoners.and_then(|ss| {
                         ss.iter().find(|s| {
                             s.summoner.game_name == player.game_name && s.summoner.tag_line == player.tag_line
                         })
                     });
 
-                    let target_vec = if player.is_ally {
+                    let target_vec = if player.is_ally.unwrap_or(true) {
                         &mut ally_rows
                     } else {
                         &mut enemy_rows

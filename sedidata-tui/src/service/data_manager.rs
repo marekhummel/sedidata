@@ -304,10 +304,7 @@ impl DataManager {
                         tag_line: tagline.clone(),
                         level: resp.clone().map(|r| r.level),
                     };
-                    let champion_name = champion_name_lookup
-                        .get(&(&name, &tagline))
-                        .cloned()
-                        .unwrap_or_else(|| "Unknown".to_string());
+                    let champion_name = champion_name_lookup.get(&(&name, &tagline)).cloned();
                     SummonerWithStats {
                         summoner,
                         ranked_stats: resp.as_ref().map(|r| {

@@ -100,7 +100,7 @@ pub struct PlayerInfo {
     pub game_name: String,
     pub tag_line: String,
     pub position: String,
-    pub is_ally: bool,
+    pub is_ally: Option<bool>,
     pub champion: Option<Champion>,
 }
 

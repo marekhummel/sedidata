@@ -37,6 +37,6 @@ pub struct RankedQueueStats {
 
 #[derive(Debug, Clone)]
 pub struct PlayedChampionMasteryInfo {
-    pub champion_name: String,
+    pub champion_name: Option<String>,
     pub level_points: Option<(u16, u32)>,
 }
