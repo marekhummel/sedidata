@@ -184,14 +184,16 @@ impl MasteryView {
             }
         } else {
             // Add champion rows for this role
-            let max_points_log = self
-                .data
-                .iter()
-                .map(|(m, _)| (m.points as f32).log10().ceil() as usize)
-                .max()
-                .unwrap();
-            for (mastery, champ) in &self.data {
-                rows.push(self.render_row(mastery, champ, max_points_log));
+            if !self.data.is_empty() {
+                let max_points_log = self
+                    .data
+                    .iter()
+                    .map(|(m, _)| (m.points as f32).log10().ceil() as usize)
+                    .max()
+                    .unwrap();
+                for (mastery, champ) in &self.data {
+                    rows.push(self.render_row(mastery, champ, max_points_log));
+                }
             }
         }
 
