@@ -5,6 +5,9 @@ on:
     branches: ["main"]
     tags: ["v*"]  # for releases
 
+permissions:
+  contents: write  # Required for creating releases
+
 jobs:
   check_changes:
     name: Check if server code changed
@@ -44,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sedidata-tui
-          path: target/release/sedidata.exe
+          path: target/release/sedidata-tui.exe
           retention-days: 1
 
   release:
@@ -63,7 +66,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ./artifacts/sedidata.exe
+          files: ./artifacts/sedidata-tui.exe
           name: Release ${{ github.ref_name }}
           draft: false
           prerelease: false
