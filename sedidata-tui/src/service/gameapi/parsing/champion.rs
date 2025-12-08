@@ -16,7 +16,7 @@ pub fn parse_champions(json: &JsonValue) -> Result<AllChampionInfo, ParsingError
         for champ_entry in array {
             if let JsonValue::Object(champ_obj) = &champ_entry {
                 let champ = parse_champ_obj(champ_obj)?;
-                if champ.id == String::from("-1").into() || champ.name.contains("Doom Bot") {
+                if champ.id == String::from("-1").into() || !champ.active {
                     continue;
                 }
 
@@ -67,6 +67,9 @@ pub fn parse_champions(json: &JsonValue) -> Result<AllChampionInfo, ParsingError
 fn parse_champ_obj(obj: &Object) -> Result<Champion, ParsingError> {
     let champ_id = obj["id"].as_i32().ok_or(ParsingError::InvalidType("id".into()))?;
     let name = obj["name"].as_str().ok_or(ParsingError::InvalidType("name".into()))?;
+    let active = obj["active"]
+        .as_bool()
+        .ok_or(ParsingError::InvalidType("active".into()))?;
     let owned = obj["ownership"]["owned"]
         .as_bool()
         .ok_or(ParsingError::InvalidType("ownership/owned".into()))?;
@@ -81,6 +84,7 @@ fn parse_champ_obj(obj: &Object) -> Result<Champion, ParsingError> {
     Ok(Champion {
         id: champ_id.into(),
         name: name.to_string(),
+        active,
         owned,
         roles,
     })

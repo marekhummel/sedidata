@@ -11,6 +11,7 @@ pub struct AllChampionInfo {
 pub struct Champion {
     pub id: ChampionId,
     pub name: String,
+    pub active: bool,
     pub owned: bool,
     pub roles: Vec<String>,
 }
