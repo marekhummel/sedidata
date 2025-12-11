@@ -212,7 +212,7 @@ impl LivePlayerInfoView {
     }
 
     fn position_sort_key(position: &str) -> u8 {
-        match position {
+        match position.to_lowercase().as_str() {
             "top" => 0,
             "jungle" => 1,
             "middle" => 2,
