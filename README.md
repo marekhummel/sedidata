@@ -1,4 +1,7 @@
 # sedidata
+[![Github Actions](https://img.shields.io/github/actions/workflow/status/marekhummel/sedidata/ci.yml?branch=main&style=for-the-badge)](https://github.com/marekhummel/sedidata/actions)&emsp;
+[![Github Release](https://img.shields.io/github/v/release/marekhummel/sedidata?style=for-the-badge)](https://github.com/marekhummel/sedidata/releases)&emsp;
+
 League of Legends client connector, displays special statistics
 
 This repository contains a Rust workspace with **two applications**:
