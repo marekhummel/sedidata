@@ -25,7 +25,7 @@ struct LockFileContent {
 }
 
 pub struct LcuClient {
-    write_json: bool,
+    write_json: Arc<Mutex<bool>>,
     load_local_json: bool,
     client: Client,
     cache: Mutex<HashMap<LcuClientRequestType, Arc<JsonValue>>>,
@@ -34,7 +34,7 @@ pub struct LcuClient {
 }
 
 impl LcuClient {
-    pub fn new(read_json_files: bool, write_json: bool) -> Result<Self, LcuClientInitError> {
+    pub fn new(read_json_files: bool, write_json: Arc<Mutex<bool>>) -> Result<Self, LcuClientInitError> {
         let league_install_path = LcuClient::get_or_prompt_league_path()?;
         let (client, base_url) = LcuClient::setup_client(&league_install_path, read_json_files)?;
         let cache = Mutex::from(HashMap::new());
@@ -261,7 +261,7 @@ impl LcuClient {
                 let text = response.text()?;
                 let json = json::parse(text.as_str())?;
 
-                if self.write_json {
+                if *self.write_json.lock().unwrap() {
                     let _ = create_dir("data");
                     let mut file = File::create(format!("data/{:?}.json", request_type)).unwrap();
                     let _ = file.write_all(json.pretty(2).as_bytes());

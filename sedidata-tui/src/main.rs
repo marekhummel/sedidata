@@ -17,16 +17,12 @@ struct Args {
     /// Load data from local JSON files instead of fetching from the game client
     #[arg(short = 'l', long = "load-local")]
     load_local_json_files: bool,
-
-    /// Store API responses to JSON files for debugging/testing
-    #[arg(short = 's', long = "store-responses")]
-    store_responses: bool,
 }
 
 fn main() {
     let args = Args::parse();
 
-    match DataManager::new(args.load_local_json_files, args.store_responses) {
+    match DataManager::new(args.load_local_json_files) {
         Ok(manager) => match repl::run(manager) {
             Ok(_) => return,
             Err(error) => println!("Error occured while running REPL:\n{}\n", error),

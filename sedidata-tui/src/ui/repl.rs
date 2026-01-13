@@ -168,9 +168,14 @@ impl App {
                     f.render_widget(title, chunks[0]);
 
                     let info = if self.is_in_menu() {
-                        "Use ↑/↓ to navigate, Enter to select, r to refresh data, q to quit."
+                        let store_status = if manager.get_store_responses() {
+                            "ON"
+                        } else {
+                            "OFF"
+                        };
+                        format!("Use ↑/↓ to navigate, Enter to select, r to refresh data, s to toggle response storage [{}], q to quit.", store_status)
                     } else {
-                        "Use ↑/↓ or PgUp/PgDown to scroll, Esc/q to return."
+                        "Use ↑/↓ or PgUp/PgDown to scroll, Esc/q to return.".to_string()
                     };
                     let info_paragraph = Paragraph::new(info)
                         .style(Style::default().fg(Color::DarkGray))
@@ -222,6 +227,9 @@ impl App {
                             KeyCode::Char('r') if self.is_in_menu() => {
                                 self.should_refresh = true;
                                 break;
+                            }
+                            KeyCode::Char('s') if self.is_in_menu() => {
+                                manager.toggle_store_responses();
                             }
                             KeyCode::Char('r') if !self.is_in_menu() => {
                                 // Manual refresh in view mode

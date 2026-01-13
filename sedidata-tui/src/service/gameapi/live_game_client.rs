@@ -1,17 +1,17 @@
-use std::{fmt, fs::File, io::Read};
+use std::{fmt, fs::File, io::Read, sync::{Arc, Mutex}};
 
 use json::JsonValue;
 use reqwest::blocking::Client;
 
 pub struct LiveGameClient {
-    write_json: bool,
+    write_json: Arc<Mutex<bool>>,
     load_local_json: bool,
     client: Client,
     base_url: String,
 }
 
 impl LiveGameClient {
-    pub fn new(read_json_files: bool, write_json: bool) -> Self {
+    pub fn new(read_json_files: bool, write_json: Arc<Mutex<bool>>) -> Self {
         let client = Client::builder().danger_accept_invalid_certs(true).build().unwrap();
         let base_url = "https://127.0.0.1:2999".to_string();
 
@@ -42,7 +42,7 @@ impl LiveGameClient {
         let text = response.text()?;
         let json = json::parse(text.as_str())?;
 
-        if self.write_json {
+        if *self.write_json.lock().unwrap() {
             if let Err(e) = std::fs::create_dir("data") {
                 if e.kind() != std::io::ErrorKind::AlreadyExists {
                     return Err(LiveGameRequestError::LocalFileError(e));

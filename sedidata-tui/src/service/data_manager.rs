@@ -47,12 +47,14 @@ pub struct DataManager {
     loot_cache: Arc<Mutex<Option<LootItems>>>,
     challenges_cache: Arc<Mutex<Option<Vec<Challenge>>>>,
     queues_cache: Arc<Mutex<Option<Vec<QueueInfo>>>>,
+    store_responses: Arc<Mutex<bool>>,
 }
 
 impl DataManager {
-    pub fn new(load_local: bool, write_responses: bool) -> Result<Self, DataManagerInitError> {
-        let mut client = LcuClient::new(load_local, write_responses)?;
-        let live_game_client = LiveGameClient::new(load_local, write_responses);
+    pub fn new(load_local: bool) -> Result<Self, DataManagerInitError> {
+        let store_responses = Arc::new(Mutex::new(false));
+        let mut client = LcuClient::new(load_local, Arc::clone(&store_responses))?;
+        let live_game_client = LiveGameClient::new(load_local, Arc::clone(&store_responses));
         let riot_api_client = RiotApiClient::new()?;
         let summoner = DataManager::retrieve_summoner(&mut client)?;
         client.set_summoner(summoner.clone());
@@ -67,7 +69,17 @@ impl DataManager {
             loot_cache: Arc::new(Mutex::new(None)),
             challenges_cache: Arc::new(Mutex::new(None)),
             queues_cache: Arc::new(Mutex::new(None)),
+            store_responses,
         })
+    }
+
+    pub fn get_store_responses(&self) -> bool {
+        *self.store_responses.lock().unwrap()
+    }
+
+    pub fn toggle_store_responses(&self) {
+        let mut flag = self.store_responses.lock().unwrap();
+        *flag = !*flag;
     }
 
     // Generic async wrapper that executes fetch in a thread
