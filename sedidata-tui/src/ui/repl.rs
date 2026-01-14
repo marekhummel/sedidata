@@ -1,4 +1,8 @@
-use std::{io::stdout, time::Instant};
+use std::{
+    io::stdout,
+    sync::{Arc, Mutex},
+    time::Instant,
+};
 
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
@@ -9,7 +13,7 @@ use ratatui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, Borders, Paragraph, Wrap},
     Terminal,
 };
 
@@ -27,6 +31,7 @@ use super::ReplError;
 enum AppState {
     Menu,
     ViewingOutput(Box<dyn RenderableView>),
+    Error(String),
 }
 
 struct App {
@@ -37,10 +42,11 @@ struct App {
     scroll_offset: u16,
     pressed_keys: Vec<KeyCode>,
     last_refresh: Option<Instant>,
+    panic_flag: Arc<Mutex<Option<String>>>,
 }
 
 impl App {
-    fn new() -> Self {
+    fn new(panic_flag: Arc<Mutex<Option<String>>>) -> Self {
         Self {
             menu: Menu::new(),
             should_quit: false,
@@ -49,6 +55,7 @@ impl App {
             scroll_offset: 0,
             pressed_keys: Vec::new(),
             last_refresh: None,
+            panic_flag,
         }
     }
 
@@ -56,12 +63,16 @@ impl App {
         matches!(self.state, AppState::Menu)
     }
 
+    fn is_in_subview(&self) -> bool {
+        matches!(self.state, AppState::ViewingOutput(_))
+    }
+
     fn next(&mut self) {
         match &self.state {
             AppState::Menu => {
                 self.menu.next();
             }
-            AppState::ViewingOutput(_) => {
+            AppState::ViewingOutput(_) | AppState::Error(_) => {
                 self.scroll_offset = self.scroll_offset.saturating_add(1);
             }
         }
@@ -72,20 +83,20 @@ impl App {
             AppState::Menu => {
                 self.menu.previous();
             }
-            AppState::ViewingOutput(_) => {
+            AppState::ViewingOutput(_) | AppState::Error(_) => {
                 self.scroll_offset = self.scroll_offset.saturating_sub(1);
             }
         }
     }
 
     fn page_down(&mut self, amount: u16) {
-        if !self.is_in_menu() {
+        if self.is_in_subview() {
             self.scroll_offset = self.scroll_offset.saturating_add(amount);
         }
     }
 
     fn page_up(&mut self, amount: u16) {
-        if !self.is_in_menu() {
+        if self.is_in_subview() {
             self.scroll_offset = self.scroll_offset.saturating_sub(amount);
         }
     }
@@ -138,6 +149,13 @@ impl App {
             loop {
                 let summoner_name = manager.get_summoner().game_name.clone();
 
+                // Check if panic occurred and update state
+                if let Ok(panic_guard) = self.panic_flag.lock() {
+                    if let Some(panic_msg) = panic_guard.as_ref() {
+                        self.state = AppState::Error(panic_msg.clone());
+                    }
+                }
+
                 // Check if we should auto-refresh the current view
                 if self.should_refresh_view() {
                     self.refresh_current_view(&ctrl);
@@ -167,15 +185,21 @@ impl App {
                         );
                     f.render_widget(title, chunks[0]);
 
-                    let info = if self.is_in_menu() {
-                        let store_status = if manager.get_store_responses() {
-                            "ON"
-                        } else {
-                            "OFF"
-                        };
-                        format!("Use ↑/↓ to navigate, Enter to select, r to refresh data, s to toggle response storage [{}], q to quit.", store_status)
-                    } else {
-                        "Use ↑/↓ or PgUp/PgDown to scroll, Esc/q to return.".to_string()
+                    let info = match &self.state {
+                        AppState::Menu => {
+                            let store_status = if manager.get_store_responses() {
+                                "ON"
+                            } else {
+                                "OFF"
+                            };
+                            format!("Use ↑/↓ to navigate, Enter to select, r to refresh data, s to toggle response storage [{}], q to quit.", store_status)
+                        }
+                        AppState::ViewingOutput(_) => {
+                            "Use ↑/↓ or PgUp/PgDown to scroll, Esc/q to return.".to_string()
+                        }
+                        AppState::Error(_) => {
+                            "Press 'q' to quit.".to_string()
+                        }
                     };
                     let info_paragraph = Paragraph::new(info)
                         .style(Style::default().fg(Color::DarkGray))
@@ -184,6 +208,25 @@ impl App {
 
                     // Render current state
                     match &mut self.state {
+                        AppState::Error(panic_msg) => {
+                            // Render panic error
+                            let error_block = Block::default()
+                                .borders(Borders::ALL)
+                                .title("ERROR - Application Panicked")
+                                .title_style(
+                                    Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+                                )
+                                .padding(ratatui::widgets::Padding::horizontal(1))
+                                .border_style(Style::default().fg(Color::Red));
+
+                            let error_text = Paragraph::new(panic_msg.as_str())
+                                .block(error_block)
+                                .wrap(Wrap { trim: false })
+                                .scroll((self.scroll_offset, 0))
+                                .style(Style::default().fg(Color::Red));
+
+                            f.render_widget(error_text, chunks[1]);
+                        }
                         AppState::Menu => self.menu.render(f, chunks[1]),
                         AppState::ViewingOutput(view) => {
                             // Always update view (polls async data)
@@ -220,18 +263,18 @@ impl App {
                         }
 
                         match key.code {
-                            KeyCode::Char('q') if self.is_in_menu() => {
+                            KeyCode::Char('q') if !self.is_in_subview() => {
                                 self.should_quit = true;
-                                break;
-                            }
-                            KeyCode::Char('r') if self.is_in_menu() => {
-                                self.should_refresh = true;
                                 break;
                             }
                             KeyCode::Char('s') if self.is_in_menu() => {
                                 manager.toggle_store_responses();
                             }
-                            KeyCode::Char('r') if !self.is_in_menu() => {
+                            KeyCode::Char('r') if self.is_in_menu() => {
+                                self.should_refresh = true;
+                                break;
+                            }
+                            KeyCode::Char('r') if self.is_in_subview() => {
                                 // Manual refresh in view mode
                                 let ctrl = Controller {
                                     manager,
@@ -244,7 +287,7 @@ impl App {
                             KeyCode::Down => self.next(),
                             KeyCode::PageUp => self.page_up(view_height / 2),
                             KeyCode::PageDown => self.page_down(view_height / 2),
-                            KeyCode::Esc | KeyCode::Char('q') if !self.is_in_menu() => {
+                            KeyCode::Esc | KeyCode::Char('q') if self.is_in_subview() => {
                                 self.state = AppState::Menu;
                                 self.scroll_offset = 0;
                                 self.last_refresh = None;
@@ -290,13 +333,81 @@ impl App {
 }
 
 pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
+    // Enable backtrace in debug builds
+    #[cfg(debug_assertions)]
+    {
+        std::env::set_var("RUST_BACKTRACE", "1");
+    }
+
+    // Create panic flag
+    let panic_flag = Arc::new(Mutex::new(None));
+    let panic_flag_hook = panic_flag.clone();
+
+    // Set up panic hook to store panic info
+    std::panic::set_hook(Box::new(move |panic_info| {
+        let mut msg = String::from("Application panicked!\n\n");
+
+        // Location
+        if let Some(location) = panic_info.location() {
+            msg.push_str(&format!(
+                "Location: {}:{}:{}\n\n",
+                location.file(),
+                location.line(),
+                location.column()
+            ));
+        }
+
+        // Message
+        msg.push_str("Message:\n");
+        if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
+            msg.push_str(&format!("  {}\n\n", s));
+        } else if let Some(s) = panic_info.payload().downcast_ref::<String>() {
+            msg.push_str(&format!("  {}\n\n", s));
+        } else {
+            msg.push_str("  <no message>\n\n");
+        }
+
+        // Thread info
+        if let Some(thread_name) = std::thread::current().name() {
+            msg.push_str(&format!("Thread: {}\n\n", thread_name));
+        } else {
+            msg.push_str(&format!(
+                "Thread: <unnamed> (id: {:?})\n\n",
+                std::thread::current().id()
+            ));
+        }
+
+        // Backtrace
+        msg.push_str("Backtrace:\n");
+
+        // Check environment variable
+        let backtrace_enabled = std::env::var("RUST_BACKTRACE")
+            .map(|v| v == "1" || v.to_lowercase() == "full")
+            .unwrap_or(false);
+        msg.push_str(&format!(
+            "  RUST_BACKTRACE={:?}\n",
+            std::env::var("RUST_BACKTRACE").ok()
+        ));
+
+        if backtrace_enabled {
+            let backtrace = std::backtrace::Backtrace::force_capture();
+            msg.push_str(&format!("{}\n", backtrace));
+        } else {
+            msg.push_str("  <disabled - run with RUST_BACKTRACE=1 to enable>\n");
+        }
+
+        if let Ok(mut panic_info_guard) = panic_flag_hook.lock() {
+            *panic_info_guard = Some(msg);
+        }
+    }));
+
     enable_raw_mode()?;
     let mut stdout = stdout();
     execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut app = App::new();
+    let mut app = App::new(panic_flag);
     let result = app.run(&mut terminal, &mut manager);
 
     disable_raw_mode()?;

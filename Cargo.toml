@@ -4,6 +4,3 @@ members = [
     "sedidata-server",
 ]
 resolver = "2"
-
-
-[workspace.dependencies]
