@@ -1,4 +1,0 @@
-[alias]
-build-tui      = "build -p sedidata-tui --target x86_64-pc-windows-gnu"
-build-tui-rls  = "build -p sedidata-tui --release --target x86_64-pc-windows-gnu"
-run-tui        = "run   -p sedidata-tui --target x86_64-pc-windows-gnu"
