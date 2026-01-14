@@ -147,7 +147,7 @@ impl App {
             };
 
             loop {
-                let summoner_name = manager.get_summoner().game_name.clone();
+                let summoner_name = manager.get_summoner().name.full();
 
                 // Check if panic occurred and update state
                 if let Ok(panic_guard) = self.panic_flag.lock() {
@@ -384,10 +384,6 @@ pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
         let backtrace_enabled = std::env::var("RUST_BACKTRACE")
             .map(|v| v == "1" || v.to_lowercase() == "full")
             .unwrap_or(false);
-        msg.push_str(&format!(
-            "  RUST_BACKTRACE={:?}\n",
-            std::env::var("RUST_BACKTRACE").ok()
-        ));
 
         if backtrace_enabled {
             let backtrace = std::backtrace::Backtrace::force_capture();

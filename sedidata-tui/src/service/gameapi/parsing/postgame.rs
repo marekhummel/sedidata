@@ -1,6 +1,9 @@
 use json::JsonValue;
 
-use crate::model::game::{PostGamePlayerInfo, PostGameSession, PostGameTeamInfo};
+use crate::model::{
+    game::{PostGamePlayerInfo, PostGameSession, PostGameTeamInfo},
+    summoner::SummonerName,
+};
 
 use super::ParsingError;
 
@@ -92,8 +95,7 @@ fn parse_players(players_json: &JsonValue) -> Result<Vec<PostGamePlayerInfo>, Pa
                     .ok_or(ParsingError::InvalidType("botPlayer".into()))?;
 
                 players.push(PostGamePlayerInfo {
-                    game_name,
-                    tag_line,
+                    name: SummonerName { game_name, tag_line },
                     position,
                     champion_name,
                     team_id,

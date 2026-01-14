@@ -2,12 +2,36 @@ use std::collections::HashMap;
 
 use super::ids::SummonerId;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct SummonerName {
+    pub game_name: String,
+    pub tag_line: String,
+}
+
+impl SummonerName {
+    pub fn full(&self) -> String {
+        format!("{}#{}", self.game_name, self.tag_line)
+    }
+
+    pub fn tuple(&self) -> (String, String) {
+        (self.game_name.clone(), self.tag_line.clone())
+    }
+}
+
+impl Default for SummonerName {
+    fn default() -> Self {
+        SummonerName {
+            game_name: "".into(),
+            tag_line: "".into(),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Summoner {
     pub id: SummonerId,
     pub puuid: String,
-    pub game_name: String,
-    pub tag_line: String,
+    pub name: SummonerName,
     pub level: Option<u16>,
 }
 

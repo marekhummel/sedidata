@@ -17,7 +17,7 @@ use crate::{
         game::{ChampSelectSession, LiveGameSession, PostGameSession, QueueInfo},
         loot::LootItems,
         mastery::Mastery,
-        summoner::{PlayedChampionMasteryInfo, Summoner, SummonerWithStats},
+        summoner::{PlayedChampionMasteryInfo, Summoner, SummonerName, SummonerWithStats},
     },
     service::gameapi::{
         lcu_client::{LcuClient, LcuClientInitError, LcuClientRequestType, LcuRequestError},
@@ -281,7 +281,7 @@ impl DataManager {
 
     pub fn get_ranked_info(
         &self,
-        players: Vec<(String, String, Option<Champion>)>,
+        players: Vec<(Option<SummonerName>, Option<Champion>)>,
     ) -> Receiver<DataRetrievalResult<Vec<SummonerWithStats>>> {
         let riot_client = Arc::clone(&self.riot_api_client);
 
@@ -290,34 +290,34 @@ impl DataManager {
             let riot_api_response = riot_client.get_multiple_player_info(&players.iter().cloned().collect_vec());
 
             let mut results = Vec::new();
-            for (name, tagline, response_json) in riot_api_response {
+            for (name, response_json) in riot_api_response {
                 if let Ok(json) = &response_json {
                     if let Ok(parsed) = parse_ranked_stats(json.as_ref()) {
-                        results.push((name, tagline, Some(parsed)));
+                        results.push((name, Some(parsed)));
                         continue;
                     }
                 }
-                results.push((name, tagline, None));
+                results.push((name, None));
             }
 
             let champion_name_lookup: HashMap<_, _> = players
                 .iter()
-                .filter_map(|(n, t, oc)| oc.as_ref().map(|c| ((n, t), c.name.clone())))
+                .filter_map(|(on, oc)| on.clone().zip(oc.clone()).map(|(n, c)| (n, c.name)))
                 .collect();
 
             // Map to SummonerWithStats and return
             Ok(results
                 .into_iter()
-                .map(|(name, tagline, resp)| {
+                .filter_map(|(name, resp)| {
+                    let summ_name = name?;
                     let summoner = Summoner {
                         id: 0.into(),
                         puuid: "".into(),
-                        game_name: name.clone(),
-                        tag_line: tagline.clone(),
+                        name: summ_name.clone(),
                         level: resp.clone().map(|r| r.level),
                     };
-                    let champion_name = champion_name_lookup.get(&(&name, &tagline)).cloned();
-                    SummonerWithStats {
+                    let champion_name = champion_name_lookup.get(&summ_name).cloned();
+                    Some(SummonerWithStats {
                         summoner,
                         ranked_stats: resp.as_ref().map(|r| {
                             r.ranked_stats
@@ -329,7 +329,7 @@ impl DataManager {
                             champion_name,
                             level_points: resp.as_ref().and_then(|r| r.champion_mastery_info),
                         },
-                    }
+                    })
                 })
                 .collect_vec())
         })

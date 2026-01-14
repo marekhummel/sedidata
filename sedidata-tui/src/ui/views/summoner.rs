@@ -13,8 +13,8 @@ fn summoner_info_view(ctrl: &Controller) -> TextCreationResult {
     let summoner = ctrl.manager.get_summoner();
     let lines = vec![
         styled_line!(),
-        styled_line!("Game Name:      {}", summoner.game_name),
-        styled_line!("Tag Line:       {}", summoner.tag_line),
+        styled_line!("Game Name:      {}", summoner.name.game_name),
+        styled_line!("Tag Line:       {}", summoner.name.tag_line),
         styled_line!(
             "Level:          {}",
             summoner.level.map_or("-".to_string(), |l| l.to_string())

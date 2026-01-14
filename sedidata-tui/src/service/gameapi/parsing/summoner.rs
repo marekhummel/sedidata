@@ -1,6 +1,6 @@
 use json::JsonValue;
 
-use crate::model::summoner::{RankedQueueStats, RiotApiSummonerResponse, Summoner};
+use crate::model::summoner::{RankedQueueStats, RiotApiSummonerResponse, Summoner, SummonerName};
 
 use super::ParsingError;
 
@@ -23,8 +23,10 @@ pub fn parse_summoner(json: &JsonValue) -> Result<Summoner, ParsingError> {
         return Ok(Summoner {
             id: summoner_id.into(),
             puuid: puuid.to_string(),
-            game_name: game_name.to_string(),
-            tag_line: tag_line.to_string(),
+            name: SummonerName {
+                game_name: game_name.to_string(),
+                tag_line: tag_line.to_string(),
+            },
             level: Some(level),
         });
     }

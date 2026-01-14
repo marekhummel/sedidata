@@ -8,7 +8,7 @@ use std::{
 use json::JsonValue;
 use reqwest::blocking::Client;
 
-use crate::model::{champion::Champion, ids::ChampionId};
+use crate::model::{champion::Champion, ids::ChampionId, summoner::SummonerName};
 
 const BASE_URL: &str = "https://sedidata-server.onrender.com";
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5 * 60); // 5 minutes
@@ -46,21 +46,20 @@ impl RiotApiClient {
 
     pub fn get_multiple_player_info(
         &self,
-        players: &[(String, String, Option<Champion>)],
-    ) -> Vec<(String, String, Result<Arc<JsonValue>, RiotApiRequestError>)> {
+        players: &[(Option<SummonerName>, Option<Champion>)],
+    ) -> Vec<(Option<SummonerName>, RiotApiClientResult<Arc<JsonValue>>)> {
         let (tx, rx) = mpsc::channel();
 
         // Spawn a thread for each request
-        for (name, tagline, champ) in players {
+        for (name, champ) in players {
             let client = self.client.clone();
             let tx = tx.clone();
             let name = name.clone();
-            let tagline = tagline.clone();
             let champ = champ.clone();
 
             thread::spawn(move || {
-                let result = Self::fetch_player_info(&client, &name, &tagline, &champ.as_ref().map(|c| c.id.clone()));
-                let _ = tx.send((name, tagline, result));
+                let result = Self::fetch_player_info(&client, &name, &champ.as_ref().map(|c| c.id.clone()));
+                let _ = tx.send((name, result));
             });
         }
 
@@ -73,19 +72,18 @@ impl RiotApiClient {
 
     fn fetch_player_info(
         client: &Client,
-        name: &str,
-        tagline: &str,
+        name: &Option<SummonerName>,
         champ: &Option<ChampionId>,
-    ) -> Result<Arc<JsonValue>, RiotApiRequestError> {
-        if name.is_empty() || tagline.is_empty() {
+    ) -> RiotApiClientResult<Arc<JsonValue>> {
+        let Some(summ_name) = name else {
             return Ok(Arc::new(JsonValue::Null));
-        }
+        };
 
         let mut url = format!(
             "{}/league?name={}&tagline={}",
             BASE_URL,
-            urlencoding::encode(name),
-            urlencoding::encode(tagline)
+            urlencoding::encode(&summ_name.game_name),
+            urlencoding::encode(&summ_name.tag_line)
         );
 
         if let Some(champ_id) = champ {
@@ -128,6 +126,8 @@ impl From<reqwest::Error> for RiotApiClientInitError {
         Self::HttpClientCreation(error)
     }
 }
+
+pub type RiotApiClientResult<T> = Result<T, RiotApiRequestError>;
 
 #[derive(Debug)]
 pub enum RiotApiRequestError {

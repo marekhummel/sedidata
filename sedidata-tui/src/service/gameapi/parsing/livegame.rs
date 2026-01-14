@@ -1,6 +1,9 @@
 use json::JsonValue;
 
-use crate::model::game::{LiveGamePlayerInfo, LiveGameSession};
+use crate::model::{
+    game::{LiveGamePlayerInfo, LiveGameSession},
+    summoner::SummonerName,
+};
 
 use super::ParsingError;
 
@@ -10,15 +13,25 @@ pub fn parse_live_game(json: &JsonValue) -> Result<LiveGameSession, ParsingError
 
         for player_json in players_array {
             if let JsonValue::Object(player) = player_json {
-                let game_name = player["riotIdGameName"]
+                let riot_id = player["riotId"]
                     .as_str()
-                    .ok_or(ParsingError::InvalidType("riotIdGameName".into()))?
-                    .to_string();
+                    .ok_or(ParsingError::InvalidType("riotIdGameName".into()))?;
 
-                let tag_line = player["riotIdTagLine"]
-                    .as_str()
-                    .ok_or(ParsingError::InvalidType("riotIdTagLine".into()))?
-                    .to_string();
+                let summoner_name = match riot_id {
+                    "#" => None,
+                    _ => {
+                        let game_name = player["riotIdGameName"]
+                            .as_str()
+                            .ok_or(ParsingError::InvalidType("riotIdGameName".into()))?
+                            .to_string();
+
+                        let tag_line = player["riotIdTagLine"]
+                            .as_str()
+                            .ok_or(ParsingError::InvalidType("riotIdTagLine".into()))?
+                            .to_string();
+                        Some(SummonerName { game_name, tag_line })
+                    }
+                };
 
                 let position = player["position"]
                     .as_str()
@@ -40,8 +53,7 @@ pub fn parse_live_game(json: &JsonValue) -> Result<LiveGameSession, ParsingError
                     .ok_or(ParsingError::InvalidType("isBot".into()))?;
 
                 players.push(LiveGamePlayerInfo {
-                    game_name,
-                    tag_line,
+                    name: summoner_name,
                     position,
                     champion_name,
                     team,

@@ -7,7 +7,7 @@ use crate::{
         game::{ChampSelectSession, GameState, LiveGameSession, PlayerInfo, PostGameSession},
         ids::ChampionId,
         mastery::Mastery,
-        summoner::SummonerWithStats,
+        summoner::{SummonerName, SummonerWithStats},
     },
     service::lookup::LookupService,
     styled_line, styled_span,
@@ -155,7 +155,7 @@ pub struct LivePlayerInfoView {
     post_game_data: Option<AsyncData<Option<PostGameSession>>>,
     players_data: Option<AsyncData<Vec<SummonerWithStats>>>,
     game_state: Option<GameState>,
-    self_info: (String, String),
+    self_info: SummonerName,
 }
 
 impl LivePlayerInfoView {
@@ -168,7 +168,7 @@ impl LivePlayerInfoView {
             post_game_data: None,
             game_state: None,
             players_data: None,
-            self_info: (summoner.game_name.clone(), summoner.tag_line.clone()),
+            self_info: summoner.name.clone(),
         };
         view.start_session_requests(ctrl);
         view
@@ -284,10 +284,9 @@ impl LivePlayerInfoView {
         summ_stats_opt: Option<&'b SummonerWithStats>,
     ) -> Vec<Row<'b>> {
         // Player info
-        let player_name = if !player.game_name.is_empty() {
-            styled_line!("{}#{}", player.game_name, player.tag_line; Color::White)
-        } else {
-            styled_line!("<Player is private>"; Color::DarkGray)
+        let player_name = match &player.name {
+            Some(sn) => styled_line!(sn.full(); Color::White),
+            None => styled_line!("<Player is private>"; Color::DarkGray),
         };
         let player_cells = vec![
             Cell::from(match player.is_ally {
@@ -445,8 +444,7 @@ impl RenderableView for LivePlayerInfoView {
                             .iter()
                             .flat_map(|t| &t.players)
                             .map(|p| PlayerInfo {
-                                game_name: p.game_name.clone(),
-                                tag_line: p.tag_line.clone(),
+                                name: Some(p.name.clone()),
                                 position: p.position.clone(),
                                 is_ally: Some(Some(p.team_id) == player_team_id),
                                 champion: ctrl.lookup.get_champion_name(&p.champion_name).ok(),
@@ -456,7 +454,7 @@ impl RenderableView for LivePlayerInfoView {
                         // Extract player names and fetch ranked info
                         let player_names = player_infos
                             .iter()
-                            .map(|p| (p.game_name.clone(), p.tag_line.clone(), p.champion.clone()))
+                            .map(|p| (p.name.clone(), p.champion.clone()))
                             .collect_vec();
 
                         self.game_state = Some(GameState::PostGame {
@@ -495,14 +493,13 @@ impl RenderableView for LivePlayerInfoView {
                         let ally_team = session
                             .players
                             .iter()
-                            .find(|p| (p.game_name.clone(), p.tag_line.clone()) == self.self_info)
+                            .find(|p| p.name.as_ref() == Some(&self.self_info))
                             .map(|p| p.team.clone());
                         let player_infos = session
                             .players
                             .iter()
                             .map(|p| PlayerInfo {
-                                game_name: p.game_name.clone(),
-                                tag_line: p.tag_line.clone(),
+                                name: p.name.clone(),
                                 position: p.position.clone(),
                                 is_ally: ally_team.as_ref().map(|a| p.team == *a),
                                 champion: ctrl.lookup.get_champion_name(&p.champion_name).ok(),
@@ -512,7 +509,7 @@ impl RenderableView for LivePlayerInfoView {
                         // Extract player names and fetch ranked info
                         let player_names = player_infos
                             .iter()
-                            .map(|p| (p.game_name.clone(), p.tag_line.clone(), p.champion.clone()))
+                            .map(|p| (p.name.clone(), p.champion.clone()))
                             .collect_vec();
 
                         self.game_state = Some(GameState::LiveGame {
@@ -552,8 +549,7 @@ impl RenderableView for LivePlayerInfoView {
                             .iter()
                             .chain(session.their_team.iter())
                             .map(|p| PlayerInfo {
-                                game_name: p.game_name.clone(),
-                                tag_line: p.tag_line.clone(),
+                                name: p.name.clone(),
                                 position: p.position.clone(),
                                 is_ally: Some(p.is_ally),
                                 champion: ctrl.lookup.get_champion(&p.selected_champion).ok(),
@@ -561,10 +557,7 @@ impl RenderableView for LivePlayerInfoView {
                             .collect_vec();
 
                         // Extract player names and fetch ranked info
-                        let player_names = player_infos
-                            .iter()
-                            .map(|p| (p.game_name.clone(), p.tag_line.clone(), None))
-                            .collect_vec();
+                        let player_names = player_infos.iter().map(|p| (p.name.clone(), None)).collect_vec();
 
                         // New ChampSelect is available, use it
                         self.game_state = Some(GameState::ChampSelect {
@@ -705,14 +698,13 @@ impl RenderableView for LivePlayerInfoView {
                     (
                         !p.is_ally.unwrap_or(false),
                         Self::position_sort_key(&p.position),
-                        p.game_name.clone(),
-                        p.tag_line.clone(),
+                        p.name.is_none(),
+                        p.name.as_ref().map(|n| n.full().to_lowercase()),
                     )
                 }) {
                     let stats = summoners.and_then(|ss| {
-                        ss.iter().find(|s| {
-                            s.summoner.game_name == player.game_name && s.summoner.tag_line == player.tag_line
-                        })
+                        ss.iter()
+                            .find(|s| s.summoner.name == player.name.clone().unwrap_or_default())
                     });
 
                     let target_vec = if player.is_ally.unwrap_or(true) {

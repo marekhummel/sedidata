@@ -3,6 +3,7 @@ use json::JsonValue;
 use crate::model::{
     game::{ChampSelectPlayerInfo, ChampSelectSession},
     ids::ChampionId,
+    summoner::SummonerName,
 };
 
 use super::ParsingError;
@@ -73,14 +74,6 @@ fn parse_team_players(team_json: &JsonValue, is_ally: bool) -> Result<Vec<ChampS
         for player_json in team_array {
             if let JsonValue::Object(player) = player_json {
                 // Check if player is hidden
-                let name_visibility = player["nameVisibilityType"]
-                    .as_str()
-                    .ok_or(ParsingError::InvalidType("nameVisibilityType".into()))?;
-
-                if name_visibility == "HIDDEN" {
-                    // Skip hidden players entirely
-                    continue;
-                }
 
                 let cell_id = player["cellId"]
                     .as_u8()
@@ -100,22 +93,32 @@ fn parse_team_players(team_json: &JsonValue, is_ally: bool) -> Result<Vec<ChampS
                     .ok_or(ParsingError::InvalidType("puuid".into()))?
                     .to_string();
 
-                let game_name = player["gameName"]
+                let name_visibility = player["nameVisibilityType"]
                     .as_str()
-                    .ok_or(ParsingError::InvalidType("gameName".into()))?
-                    .to_string();
+                    .ok_or(ParsingError::InvalidType("nameVisibilityType".into()))?;
 
-                let tag_line = player["tagLine"]
-                    .as_str()
-                    .ok_or(ParsingError::InvalidType("tagLine".into()))?
-                    .to_string();
+                let name = match name_visibility {
+                    "HIDDEN" => None,
+                    _ => {
+                        let game_name = player["gameName"]
+                            .as_str()
+                            .ok_or(ParsingError::InvalidType("gameName".into()))?
+                            .to_string();
+
+                        let tag_line = player["tagLine"]
+                            .as_str()
+                            .ok_or(ParsingError::InvalidType("tagLine".into()))?
+                            .to_string();
+
+                        Some(SummonerName { game_name, tag_line })
+                    }
+                };
 
                 players.push(ChampSelectPlayerInfo {
                     cell_id,
                     position,
                     _puuid: puuid,
-                    game_name,
-                    tag_line,
+                    name,
                     is_ally,
                     selected_champion: champ_id.into(),
                 });

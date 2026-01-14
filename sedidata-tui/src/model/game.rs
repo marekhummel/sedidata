@@ -1,8 +1,10 @@
 use itertools::Itertools;
 
-use crate::model::champion::Champion;
-
-use super::{ids::ChampionId, summoner::SummonerWithStats};
+use crate::model::{
+    champion::Champion,
+    ids::ChampionId,
+    summoner::{SummonerName, SummonerWithStats},
+};
 
 #[derive(Debug, Clone)]
 pub struct ChampSelectSession {
@@ -19,8 +21,7 @@ pub struct ChampSelectPlayerInfo {
     pub cell_id: u8,
     pub position: String,
     pub _puuid: String,
-    pub game_name: String,
-    pub tag_line: String,
+    pub name: Option<SummonerName>,
     pub is_ally: bool,
     pub selected_champion: ChampionId,
 }
@@ -43,8 +44,7 @@ pub struct LiveGameSession {
 
 #[derive(Debug, Clone)]
 pub struct LiveGamePlayerInfo {
-    pub game_name: String,
-    pub tag_line: String,
+    pub name: Option<SummonerName>,
     pub position: String,
     pub champion_name: String,
     pub team: String,
@@ -66,8 +66,7 @@ pub struct PostGameTeamInfo {
 
 #[derive(Debug, Clone)]
 pub struct PostGamePlayerInfo {
-    pub game_name: String,
-    pub tag_line: String,
+    pub name: SummonerName,
     pub position: String,
     pub champion_name: String,
     pub team_id: u16,
@@ -97,8 +96,7 @@ pub enum GameState {
 
 #[derive(Debug, Clone)]
 pub struct PlayerInfo {
-    pub game_name: String,
-    pub tag_line: String,
+    pub name: Option<SummonerName>,
     pub position: String,
     pub is_ally: Option<bool>,
     pub champion: Option<Champion>,
@@ -116,11 +114,10 @@ impl PartialEq for LiveGameSession {
             return false;
         }
 
-        let p1_sorted = self.players.iter().sorted_by_key(|p| (&p.game_name, &p.tag_line));
-        let p2_sorted = other.players.iter().sorted_by_key(|p| (&p.game_name, &p.tag_line));
-        p1_sorted
-            .zip(p2_sorted)
-            .all(|(a, b)| a.game_name == b.game_name && a.tag_line == b.tag_line)
+        let sorter = |p: &&LiveGamePlayerInfo| p.name.as_ref().map(|name| name.tuple());
+        let p1_sorted = self.players.iter().sorted_by_key(sorter);
+        let p2_sorted = other.players.iter().sorted_by_key(sorter);
+        p1_sorted.zip(p2_sorted).all(|(a, b)| a.name == b.name)
     }
 }
 
