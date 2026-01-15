@@ -12,7 +12,7 @@ This repository contains a Rust workspace with **two applications**:
 2. **`sedidata-server/`**
    A small HTTP server deployed on **Render.com**.
    It performs specific external Riot API lookups (e.g., ranked player info) that cannot be retrieved via LCU.
-
+car
 Both applications share this repository but are built and deployed independently.
 
 
@@ -24,6 +24,13 @@ Both applications share this repository but are built and deployed independently
 
 
 ## Deployment Overview
+
+## Build
+Cargo uses the systems default target, which is usually `stable-x86_64-unknown-linux-gnu`.
+To allow automatic deployment of the server on Render, this cannot be changed.
+Since the TUI application is meant for usage under Windows, a build target of `x86_64-pc-windows-gnu` is recommended.
+Thus, building with `cargo build --release` builds for linux, but for releases one can use:
+`cargo build --release --package sedidata-tui --target x86_64-pc-windows-gnu`
 
 ### CI/CD Pipeline
 

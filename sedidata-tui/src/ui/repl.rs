@@ -176,7 +176,7 @@ impl App {
                             Block::default()
                                 .borders(Borders::ALL)
                                 .border_style(Style::default().fg(Color::Rgb(200, 150, 0)))
-                                .title("Sedidata - LoL Special Statistics")
+                                .title(concat!("Sedidata v", env!("CARGO_PKG_VERSION"), " - LoL Special Statistics"))
                                 .title_style(
                                     Style::default()
                                         .fg(Color::Rgb(200, 150, 0))
