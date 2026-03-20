@@ -75,7 +75,6 @@ impl DataManager {
     }
 
     pub fn get_store_responses(&self) -> bool {
-        log::debug!("Reading store_responses flag");
         *self.store_responses.lock().unwrap()
     }
 
@@ -104,7 +103,6 @@ impl DataManager {
     }
 
     pub fn get_summoner(&self) -> Summoner {
-        log::debug!("Fetching current summoner");
         self.summoner.lock().unwrap().clone().unwrap()
     }
 

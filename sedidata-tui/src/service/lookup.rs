@@ -44,7 +44,7 @@ impl LookupService {
     }
 
     pub fn get_champion(&self, id: &ChampionId) -> Result<Champion, IdNotFoundError> {
-        log::debug!("Looking up champion with ID: {}", id);
+        log::debug!("Looking up champion with ID: {} out of {}", id, self.champs.len());
         match self.champs.get(id) {
             Some(champ) => Ok(champ.clone()),
             None => Err(IdNotFoundError::Champ(id.clone())),
