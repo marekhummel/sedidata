@@ -35,6 +35,7 @@ pub struct LcuClient {
 
 impl LcuClient {
     pub fn new(read_json_files: bool, write_json: Arc<Mutex<bool>>) -> Result<Self, LcuClientInitError> {
+        log::debug!("Initialising LcuClient with read_json_files={}", read_json_files);
         let league_install_path = LcuClient::get_or_prompt_league_path()?;
         let (client, base_url) = LcuClient::setup_client(&league_install_path, read_json_files)?;
         let cache = Mutex::from(HashMap::new());
@@ -49,6 +50,7 @@ impl LcuClient {
     }
 
     fn get_app_data_dir() -> Result<PathBuf, LcuClientInitError> {
+        log::debug!("Resolving app data directory for LcuClient");
         let local_app_data = env::var("LOCALAPPDATA").map_err(|_| LcuClientInitError::LocalAppDataNotFound)?;
 
         let mut app_dir = PathBuf::from(local_app_data);
@@ -63,6 +65,7 @@ impl LcuClient {
     }
 
     fn get_or_prompt_league_path() -> Result<String, LcuClientInitError> {
+        log::debug!("Resolving League installation path");
         let app_dir = LcuClient::get_app_data_dir()?;
         let path_file = app_dir.join("league_path.txt");
 
@@ -117,6 +120,11 @@ impl LcuClient {
     }
 
     fn setup_client(league_install_path: &str, dummy: bool) -> Result<(Client, String), LcuClientInitError> {
+        log::debug!(
+            "Setting up LCU HTTP client with league_install_path='{}', dummy={}",
+            league_install_path,
+            dummy
+        );
         if dummy {
             let client = Client::builder().build()?;
             return Ok((client, String::new()));
@@ -146,6 +154,7 @@ impl LcuClient {
     }
 
     fn read_certificate() -> Result<Certificate, CertificateError> {
+        log::debug!("Reading Riot certificate for LCU client");
         // Get LocalAppData path
         let local_app_data = env::var("LOCALAPPDATA").map_err(|_| CertificateError::LocalAppDataNotFound)?;
 
@@ -184,6 +193,7 @@ impl LcuClient {
     }
 
     fn read_lockfile(league_install_path: &str) -> Result<LockFileContent, LockfileError> {
+        log::debug!("Reading LCU lockfile from '{}'", league_install_path);
         // read lockfile
         let lol_path = Path::new(league_install_path.trim());
         let lol_lockfile = File::open(lol_path.join("lockfile"))?;
@@ -202,6 +212,11 @@ impl LcuClient {
     }
 
     pub fn request(&self, request_type: LcuClientRequestType, cache: bool) -> Result<Arc<JsonValue>, LcuRequestError> {
+        log::debug!(
+            "Executing LCU request type={} with cache={}",
+            request_type,
+            cache
+        );
         if self.load_local_json {
             let mut file = File::open(format!("data/{}.json", request_type))?;
             let mut buf = String::new();
@@ -277,10 +292,12 @@ impl LcuClient {
     }
 
     pub fn set_summoner(&mut self, s: Summoner) {
+        log::debug!("Setting summoner in LcuClient");
         self.summoner = Some(s);
     }
 
     pub fn refresh(&mut self) -> Result<(), LcuClientInitError> {
+        log::debug!("Refreshing LcuClient state");
         let league_install_path = LcuClient::get_or_prompt_league_path()?;
         let (client, base_url) = LcuClient::setup_client(&league_install_path, self.load_local_json)?;
         self.client = client;

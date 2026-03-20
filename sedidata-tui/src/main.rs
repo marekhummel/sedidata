@@ -5,6 +5,7 @@ use ui::repl;
 
 use crate::service::data_manager::DataManager;
 
+mod logging;
 mod model;
 mod service;
 mod ui;
@@ -22,12 +23,20 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
+    if let Err(error) = logging::init() {
+        println!("Error occurred while initialising logger:\n{}\n", error);
+        return;
+    }
+
     match DataManager::new(args.load_local_json_files) {
-        Ok(manager) => match repl::run(manager) {
-            Ok(_) => return,
-            Err(error) => println!("Error occured while running REPL:\n{}\n", error),
-        },
-        Err(error) => println!("Error occured while initializing:\n{}\n", error),
+        Ok(manager) => {
+            logging::set_enabled(manager.get_store_responses());
+            match repl::run(manager) {
+                Ok(_) => return,
+                Err(error) => println!("Error occurred while running REPL:\n{}\n", error),
+            }
+        }
+        Err(error) => println!("Error occurred while initialising:\n{}\n", error),
     };
 
     let mut s = String::new();

@@ -15,10 +15,12 @@ pub struct UtilService<'a> {
 
 impl<'a> UtilService<'a> {
     pub fn new(manager: &'a DataManager) -> Self {
+        log::debug!("Creating UtilService");
         Self { manager }
     }
 
     pub fn get_owned_champions(&self) -> Receiver<DataRetrievalResult<Vec<Champion>>> {
+        log::debug!("Fetching owned champions");
         let rx = self.manager.get_champions();
         self.manager.async_wrapper(move || {
             rx.recv()
@@ -28,6 +30,7 @@ impl<'a> UtilService<'a> {
     }
 
     pub fn get_played_champions_set(&self) -> Receiver<DataRetrievalResult<HashSet<ChampionId>>> {
+        log::debug!("Fetching played champions set");
         let rx = self.manager.get_masteries();
         self.manager.async_wrapper(move || {
             rx.recv()
@@ -41,6 +44,11 @@ impl<'a> UtilService<'a> {
         maxpts: Option<u32>,
         minpts: Option<u32>,
     ) -> Receiver<DataRetrievalResult<Vec<ChampionId>>> {
+        log::debug!(
+            "Fetching champions sorted by mastery with maxpts={:?}, minpts={:?}",
+            maxpts,
+            minpts
+        );
         let rx = self.manager.get_masteries();
         self.manager.async_wrapper(move || {
             rx.recv().unwrap().map(|masteries| {
@@ -58,6 +66,7 @@ impl<'a> UtilService<'a> {
     }
 
     pub fn get_owned_skins(&self) -> Receiver<DataRetrievalResult<Vec<Skin>>> {
+        log::debug!("Fetching owned skins");
         let rx = self.manager.get_skins();
         self.manager.async_wrapper(move || {
             rx.recv()
@@ -67,6 +76,7 @@ impl<'a> UtilService<'a> {
     }
 
     pub fn get_owned_nobase_skins(&self) -> Receiver<DataRetrievalResult<Vec<Skin>>> {
+        log::debug!("Fetching owned non-base skins");
         let rx = self.manager.get_skins();
         self.manager.async_wrapper(move || {
             rx.recv()
@@ -76,6 +86,7 @@ impl<'a> UtilService<'a> {
     }
 
     pub fn get_owned_chromas(&self) -> Receiver<DataRetrievalResult<Vec<Chroma>>> {
+        log::debug!("Fetching owned chromas");
         let rx = self.manager.get_chromas();
         self.manager.async_wrapper(move || {
             rx.recv()
@@ -85,6 +96,7 @@ impl<'a> UtilService<'a> {
     }
 
     pub fn get_owned_skins_set(&self) -> Receiver<DataRetrievalResult<HashSet<SkinId>>> {
+        log::debug!("Fetching owned skins set");
         let rx = self.get_owned_skins();
         self.manager.async_wrapper(move || {
             rx.recv()
@@ -94,6 +106,7 @@ impl<'a> UtilService<'a> {
     }
 
     pub fn get_masteries_with_level(&self, levels: Vec<u16>) -> Receiver<DataRetrievalResult<Vec<Mastery>>> {
+        log::debug!("Fetching masteries with levels {:?}", levels);
         let rx = self.manager.get_masteries();
         self.manager.async_wrapper(move || {
             rx.recv()
@@ -103,6 +116,7 @@ impl<'a> UtilService<'a> {
     }
 
     pub fn _get_champ_shard_set(&self) -> Receiver<DataRetrievalResult<HashSet<ChampionId>>> {
+        log::debug!("Fetching champion shard set");
         let rx = self.manager.get_loot();
         self.manager.async_wrapper(move || {
             rx.recv()

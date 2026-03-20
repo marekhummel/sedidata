@@ -1,0 +1,483 @@
+2026-03-20T22:11:50.954382Z [INFO] Logging initialised at sedidata-tui.log
+2026-03-20T22:11:51.0162359Z [DEBUG] (4) reqwest::connect: starting new connection: https://sedidata-server.onrender.com/
+2026-03-20T22:11:51.0235595Z [DEBUG] (2) reqwest::connect: starting new connection: https://127.0.0.1:60585/
+2026-03-20T22:11:51.0316017Z [DEBUG] (6) hyper::client::connect::dns: resolving host="sedidata-server.onrender.com"
+2026-03-20T22:11:51.0387775Z [DEBUG] (2) hyper::client::connect::http: connecting to 127.0.0.1:60585
+2026-03-20T22:11:51.0492631Z [DEBUG] (2) hyper::client::connect::http: connected to 127.0.0.1:60585
+2026-03-20T22:11:51.0605884Z [DEBUG] (4) hyper::client::connect::http: connecting to 216.24.57.7:443
+2026-03-20T22:11:51.0813056Z [DEBUG] (2) hyper::proto::h1::io: flushed 145 bytes
+2026-03-20T22:11:51.0880639Z [DEBUG] (4) hyper::client::connect::http: connected to 216.24.57.7:443
+2026-03-20T22:11:51.0963227Z [DEBUG] (2) hyper::proto::h1::io: parsed 6 headers
+2026-03-20T22:11:51.1031234Z [DEBUG] (2) hyper::proto::h1::conn: incoming body is content-length (453 bytes)
+2026-03-20T22:11:51.1107205Z [DEBUG] (2) hyper::proto::h1::conn: incoming body completed
+2026-03-20T22:11:51.1176219Z [DEBUG] (2) hyper::client::pool: pooling idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:11:51.1345356Z [DEBUG] (4) hyper::proto::h1::io: flushed 76 bytes
+2026-03-20T22:11:51.1422511Z [DEBUG] (2) hyper::client::pool: reuse idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:11:51.1509609Z [DEBUG] (2) hyper::proto::h1::io: flushed 160 bytes
+2026-03-20T22:11:51.1876882Z [DEBUG] (4) hyper::proto::h1::io: parsed 13 headers
+2026-03-20T22:11:51.1950098Z [DEBUG] (4) hyper::proto::h1::conn: incoming body is chunked encoding
+2026-03-20T22:11:51.201225Z [DEBUG] (4) hyper::proto::h1::decode: incoming chunked header: 0x2 (2 bytes)
+2026-03-20T22:11:51.2092778Z [DEBUG] (4) hyper::proto::h1::conn: incoming body completed
+2026-03-20T22:11:51.2153992Z [DEBUG] (4) hyper::client::pool: pooling idle connection for ("https", sedidata-server.onrender.com)
+2026-03-20T22:11:51.4688109Z [DEBUG] (2) hyper::proto::h1::io: parsed 6 headers
+2026-03-20T22:11:51.475944Z [DEBUG] (2) hyper::proto::h1::conn: incoming body is content-length (5571807 bytes)
+2026-03-20T22:11:51.5143111Z [DEBUG] (2) hyper::proto::h1::conn: incoming body completed
+2026-03-20T22:11:51.5209203Z [DEBUG] (2) hyper::client::pool: pooling idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:11:51.6201802Z [DEBUG] (2) hyper::client::pool: reuse idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:11:51.6282786Z [DEBUG] (2) hyper::proto::h1::io: flushed 166 bytes
+2026-03-20T22:11:51.6349893Z [DEBUG] (2) hyper::proto::h1::io: parsed 6 headers
+2026-03-20T22:11:51.6419368Z [DEBUG] (2) hyper::proto::h1::conn: incoming body is content-length (78523 bytes)
+2026-03-20T22:11:51.6496192Z [DEBUG] (2) hyper::proto::h1::conn: incoming body completed
+2026-03-20T22:11:51.6568261Z [DEBUG] (2) hyper::client::pool: pooling idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:11:51.667394Z [DEBUG] (2) hyper::client::pool: reuse idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:11:51.6759839Z [DEBUG] (2) hyper::proto::h1::io: flushed 154 bytes
+2026-03-20T22:11:51.9936627Z [DEBUG] (2) hyper::proto::h1::io: parsed 6 headers
+2026-03-20T22:11:52.0008291Z [DEBUG] (2) hyper::proto::h1::conn: incoming body is content-length (1283453 bytes)
+2026-03-20T22:11:52.0162367Z [DEBUG] (2) hyper::proto::h1::conn: incoming body completed
+2026-03-20T22:11:52.0228681Z [DEBUG] (2) hyper::client::pool: pooling idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:11:52.0583702Z [DEBUG] (2) hyper::client::pool: reuse idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:11:52.0668449Z [DEBUG] (2) hyper::proto::h1::io: flushed 138 bytes
+2026-03-20T22:11:52.0746098Z [DEBUG] (2) hyper::proto::h1::io: parsed 6 headers
+2026-03-20T22:11:52.0814673Z [DEBUG] (2) hyper::proto::h1::conn: incoming body is content-length (133837 bytes)
+2026-03-20T22:11:52.0892391Z [DEBUG] (2) hyper::proto::h1::conn: incoming body completed
+2026-03-20T22:11:52.0957649Z [DEBUG] (2) hyper::client::pool: pooling idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:12:25.9443961Z [DEBUG] (1) sedidata_tui::service::lookup: Looking up champion with ID: 55
+2026-03-20T22:16:35.6325124Z [INFO] Logging initialised at sedidata-tui.log
+2026-03-20T22:16:35.641907Z [DEBUG] (1) sedidata_tui::service::data_manager: Initialising DataManager with load_local=false
+2026-03-20T22:16:35.6496928Z [DEBUG] (1) sedidata_tui::service::gameapi::lcu_client: Initialising LcuClient with read_json_files=false
+2026-03-20T22:16:35.6567222Z [DEBUG] (1) sedidata_tui::service::gameapi::lcu_client: Resolving League installation path
+2026-03-20T22:16:35.663896Z [DEBUG] (1) sedidata_tui::service::gameapi::lcu_client: Resolving app data directory for LcuClient
+2026-03-20T22:16:35.6751888Z [DEBUG] (1) sedidata_tui::service::gameapi::lcu_client: Setting up LCU HTTP client with league_install_path='C:\Program Files\Riot Games\League of Legends\', dummy=false
+2026-03-20T22:16:35.6814318Z [DEBUG] (1) sedidata_tui::service::gameapi::lcu_client: Reading Riot certificate for LCU client
+2026-03-20T22:16:35.6896481Z [DEBUG] (1) sedidata_tui::service::gameapi::lcu_client: Reading LCU lockfile from 'C:\Program Files\Riot Games\League of Legends\'
+2026-03-20T22:16:35.7312334Z [DEBUG] (1) sedidata_tui::service::gameapi::live_game_client: Initialising LiveGameClient with read_json_files=false
+2026-03-20T22:16:35.7383123Z [DEBUG] (1) sedidata_tui::service::gameapi::riot_api_client: Initialising RiotApiClient
+2026-03-20T22:16:35.7452363Z [DEBUG] (1) sedidata_tui::service::data_manager: Retrieving summoner from LCU
+2026-03-20T22:16:35.7520614Z [DEBUG] (1) sedidata_tui::service::gameapi::lcu_client: Executing LCU request type=Summoner with cache=true
+2026-03-20T22:16:35.7596274Z [DEBUG] (5) sedidata_tui::service::gameapi::riot_api_client: Starting Riot API heartbeat loop
+2026-03-20T22:16:35.773946Z [DEBUG] (2) reqwest::connect: starting new connection: https://127.0.0.1:60585/
+2026-03-20T22:16:35.7807134Z [DEBUG] (4) reqwest::connect: starting new connection: https://sedidata-server.onrender.com/
+2026-03-20T22:16:35.7885829Z [DEBUG] (2) hyper::client::connect::http: connecting to 127.0.0.1:60585
+2026-03-20T22:16:35.7979383Z [DEBUG] (6) hyper::client::connect::dns: resolving host="sedidata-server.onrender.com"
+2026-03-20T22:16:35.8050519Z [DEBUG] (2) hyper::client::connect::http: connected to 127.0.0.1:60585
+2026-03-20T22:16:35.8226416Z [DEBUG] (4) hyper::client::connect::http: connecting to 216.24.57.7:443
+2026-03-20T22:16:35.8361806Z [DEBUG] (2) hyper::proto::h1::io: flushed 145 bytes
+2026-03-20T22:16:35.8437849Z [DEBUG] (2) hyper::proto::h1::io: parsed 6 headers
+2026-03-20T22:16:35.8504115Z [DEBUG] (4) hyper::client::connect::http: connected to 216.24.57.7:443
+2026-03-20T22:16:35.859012Z [DEBUG] (2) hyper::proto::h1::conn: incoming body is content-length (453 bytes)
+2026-03-20T22:16:35.8663055Z [DEBUG] (2) hyper::proto::h1::conn: incoming body completed
+2026-03-20T22:16:35.8729542Z [DEBUG] (2) hyper::client::pool: pooling idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:16:35.8851759Z [DEBUG] (1) sedidata_tui::service::gameapi::lcu_client: Setting summoner in LcuClient
+2026-03-20T22:16:35.8961565Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching champions
+2026-03-20T22:16:35.9024259Z [DEBUG] (1) sedidata_tui::service::data_manager: Starting async_wrapper task
+2026-03-20T22:16:35.9094728Z [DEBUG] (7) sedidata_tui::service::gameapi::lcu_client: Executing LCU request type=Champions with cache=true
+2026-03-20T22:16:35.9173436Z [DEBUG] (4) hyper::proto::h1::io: flushed 76 bytes
+2026-03-20T22:16:35.9246626Z [DEBUG] (2) hyper::client::pool: reuse idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:16:35.9326443Z [DEBUG] (2) hyper::proto::h1::io: flushed 160 bytes
+2026-03-20T22:16:35.9850616Z [DEBUG] (4) hyper::proto::h1::io: parsed 13 headers
+2026-03-20T22:16:35.9919527Z [DEBUG] (4) hyper::proto::h1::conn: incoming body is chunked encoding
+2026-03-20T22:16:35.9984163Z [DEBUG] (4) hyper::proto::h1::decode: incoming chunked header: 0x2 (2 bytes)
+2026-03-20T22:16:36.0066943Z [DEBUG] (4) hyper::proto::h1::conn: incoming body completed
+2026-03-20T22:16:36.0130455Z [DEBUG] (4) hyper::client::pool: pooling idle connection for ("https", sedidata-server.onrender.com)
+2026-03-20T22:16:36.2645237Z [DEBUG] (2) hyper::proto::h1::io: parsed 6 headers
+2026-03-20T22:16:36.2717646Z [DEBUG] (2) hyper::proto::h1::conn: incoming body is content-length (5571807 bytes)
+2026-03-20T22:16:36.3098688Z [DEBUG] (2) hyper::proto::h1::conn: incoming body completed
+2026-03-20T22:16:36.3161445Z [DEBUG] (2) hyper::client::pool: pooling idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:16:36.413404Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching skins
+2026-03-20T22:16:36.419675Z [DEBUG] (1) sedidata_tui::service::data_manager: Starting async_wrapper task
+2026-03-20T22:16:36.4265776Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching masteries
+2026-03-20T22:16:36.4327257Z [DEBUG] (1) sedidata_tui::service::data_manager: Starting async_wrapper task
+2026-03-20T22:16:36.4386124Z [DEBUG] (9) sedidata_tui::service::gameapi::lcu_client: Executing LCU request type=Masteries with cache=true
+2026-03-20T22:16:36.4452764Z [DEBUG] (2) hyper::client::pool: reuse idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:16:36.4529627Z [DEBUG] (2) hyper::proto::h1::io: flushed 166 bytes
+2026-03-20T22:16:36.4596965Z [DEBUG] (2) hyper::proto::h1::io: parsed 6 headers
+2026-03-20T22:16:36.466232Z [DEBUG] (2) hyper::proto::h1::conn: incoming body is content-length (78523 bytes)
+2026-03-20T22:16:36.4733846Z [DEBUG] (2) hyper::proto::h1::conn: incoming body completed
+2026-03-20T22:16:36.4793768Z [DEBUG] (2) hyper::client::pool: pooling idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:16:36.4894497Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching challenges
+2026-03-20T22:16:36.4961201Z [DEBUG] (1) sedidata_tui::service::data_manager: Starting async_wrapper task
+2026-03-20T22:16:36.5026364Z [DEBUG] (10) sedidata_tui::service::gameapi::lcu_client: Executing LCU request type=Challenges with cache=true
+2026-03-20T22:16:36.5097166Z [DEBUG] (2) hyper::client::pool: reuse idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:16:36.5178492Z [DEBUG] (2) hyper::proto::h1::io: flushed 154 bytes
+2026-03-20T22:16:36.8365639Z [DEBUG] (2) hyper::proto::h1::io: parsed 6 headers
+2026-03-20T22:16:36.8432994Z [DEBUG] (2) hyper::proto::h1::conn: incoming body is content-length (1283453 bytes)
+2026-03-20T22:16:36.8588732Z [DEBUG] (2) hyper::proto::h1::conn: incoming body completed
+2026-03-20T22:16:36.8660236Z [DEBUG] (2) hyper::client::pool: pooling idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:16:36.9038358Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching queue types
+2026-03-20T22:16:36.9105996Z [DEBUG] (1) sedidata_tui::service::data_manager: Starting async_wrapper task
+2026-03-20T22:16:36.917233Z [DEBUG] (11) sedidata_tui::service::gameapi::lcu_client: Executing LCU request type=QueueTypes with cache=true
+2026-03-20T22:16:36.9243702Z [DEBUG] (2) hyper::client::pool: reuse idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:16:36.9326976Z [DEBUG] (2) hyper::proto::h1::io: flushed 138 bytes
+2026-03-20T22:16:36.9391351Z [DEBUG] (2) hyper::proto::h1::io: parsed 6 headers
+2026-03-20T22:16:36.9458806Z [DEBUG] (2) hyper::proto::h1::conn: incoming body is content-length (133837 bytes)
+2026-03-20T22:16:36.9535749Z [DEBUG] (2) hyper::proto::h1::conn: incoming body completed
+2026-03-20T22:16:36.9597236Z [DEBUG] (2) hyper::client::pool: pooling idle connection for ("https", 127.0.0.1:60585)
+2026-03-20T22:16:36.9705279Z [DEBUG] (1) sedidata_tui::service::lookup: Creating LookupService with champions=0, skins=0, masteries=172, challenges=399, queues=77
+2026-03-20T22:16:36.9803046Z [DEBUG] (1) sedidata_tui::service::util: Creating UtilService
+2026-03-20T22:16:36.9865756Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:36.9984217Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:37.0085376Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:37.0149705Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:37.1278402Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:37.1344959Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:37.2522077Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:37.2583686Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:37.3758871Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:37.3825997Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:37.5003877Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:37.5078673Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:37.6240515Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:37.630672Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:37.7477731Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:37.7547481Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:37.8716369Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:37.8785195Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:37.9953519Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:38.0020083Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:38.1190648Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:38.1256821Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:38.2422074Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:38.2491077Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:38.3661457Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:38.3726945Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:38.4906265Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:38.5019531Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:38.6144793Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:38.6216039Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:38.7375161Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:38.7450458Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:38.8615429Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:38.8683563Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:38.9860387Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:38.9932545Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:39.1095657Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:39.116625Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:39.2328931Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:39.2399604Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:39.3562116Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:39.3633798Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:39.4801072Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:39.4866986Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:39.6022139Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:39.6091064Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:39.726727Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:39.734522Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:39.8496092Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:39.8572065Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:39.9741465Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:39.9808529Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:40.0982388Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:40.1058468Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:40.2218613Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:40.2288267Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:40.3459275Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:40.3533682Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:40.4706597Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:40.4777669Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:40.5962232Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:40.6033993Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:40.7206884Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:40.7280633Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:40.8443615Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:40.8512961Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:40.9677076Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:40.9749408Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:41.0911658Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:41.0980635Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:41.2133459Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:41.2203999Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:41.3369456Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:41.3435618Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:41.4606419Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:41.467467Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:41.5857114Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:41.5925364Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:41.7099307Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:41.7164891Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:41.8342339Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:41.8411239Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:41.9588236Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:41.9660425Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:42.0838287Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:42.0907925Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:42.2078467Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:42.2144798Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:42.3306987Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:42.337411Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:42.4552192Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:42.4615312Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:42.5798747Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:42.5860789Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:42.704481Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:42.7110949Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:42.8292637Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:42.835894Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:42.9530694Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:42.9592539Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:43.0764094Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:43.0827046Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:43.1988365Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:43.2054877Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:43.32233Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:43.3290321Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:43.4452625Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:43.4518093Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:43.5683629Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:43.5750655Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:43.694072Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:43.7007464Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:43.8172914Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:43.8242196Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:43.9409147Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:43.9472939Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:44.0654269Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:44.0719237Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:44.1889577Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:44.1957225Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:44.3129207Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:44.3193059Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:44.4362015Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:44.4426901Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:44.560064Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:44.5664025Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:44.683991Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:44.6904717Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:44.8081042Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:44.8151405Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:44.9316843Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:44.9381055Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:45.054724Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:45.0610732Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:45.1785242Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:45.1847595Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:45.3021622Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:45.3091565Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:45.4260998Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:45.4330681Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:45.5510573Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:45.5582802Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:45.675256Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:45.6828067Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:45.7990832Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:45.8058478Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:45.9234965Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:45.9306044Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:46.0467961Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:46.0541195Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:46.1698433Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:46.176304Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:46.2928034Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:46.2995524Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:46.4166987Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:46.4232816Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:46.5406538Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:46.547376Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:46.6646972Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:46.6719091Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:46.7890262Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:46.7963994Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:46.912773Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:46.9190275Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:47.0375833Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:47.0448159Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:47.1620608Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:47.1684498Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:47.285741Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:47.2918976Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:47.3503749Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:47.3565198Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:47.4710575Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:47.4777521Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:47.5951721Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:47.6016263Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:47.7192514Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:47.7256887Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:47.8432938Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:47.8499005Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:47.9662712Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:47.973161Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:48.0908768Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:48.0982057Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:48.2150402Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:48.222328Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:48.340566Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:48.3475572Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:48.4659043Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:48.4727508Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:48.5304368Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:48.5369393Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:48.544607Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:48.5512178Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:48.6662791Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:48.6734167Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:48.7920243Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:48.7991086Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:48.9159481Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:48.9224674Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:49.0401004Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:49.0474248Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:49.1654665Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:49.1720321Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:49.2896375Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:49.296596Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:49.4135622Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:49.4207624Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:49.5378651Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:49.5444038Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:49.661769Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:49.6688893Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:49.7845079Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:49.7912439Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:49.9085683Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:49.9157119Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:50.0332222Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:50.040281Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:50.1573867Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:50.1644762Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:50.2807683Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:50.2877842Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:50.4045484Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:50.4115009Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:50.5292171Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:50.5362581Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:50.6532433Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:50.6603477Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:50.7764491Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:50.7832818Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:50.9009216Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:50.9085089Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:51.0246756Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:51.0319588Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:51.1482207Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:51.1554601Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:51.2719393Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:51.2788905Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:51.3965201Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:51.403689Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:51.5205674Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:51.5274133Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:51.6446776Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:51.6513696Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:51.7122859Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:51.7189218Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:51.726526Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:51.7332676Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:51.8457876Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:51.8518473Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:51.9143134Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:51.9205651Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:51.9276883Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:51.9335332Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:52.0476926Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:52.0554584Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:52.1710089Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:52.1778355Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:52.2946604Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:52.3015352Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:52.358284Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching masteries
+2026-03-20T22:16:52.3651813Z [DEBUG] (1) sedidata_tui::service::data_manager: Starting async_wrapper task
+2026-03-20T22:16:52.3715671Z [DEBUG] (1) sedidata_tui::service::lookup: Looking up champion with ID: 55
+2026-03-20T22:16:52.3783215Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:52.3868294Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:52.4959437Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:52.604929Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:52.7147343Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:52.8235121Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:52.9321321Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:53.041688Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:53.14951Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:53.2573603Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:53.3661273Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:53.4738545Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:53.5827273Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:53.6913268Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:53.799209Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:53.906881Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:54.0294971Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:54.1373985Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:54.2594714Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:54.368138Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:54.4766442Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:54.5848565Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:54.6931716Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:54.801757Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:54.9100781Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:55.0178113Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:55.1164409Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:55.2347424Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:55.3435001Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:55.4517787Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:55.5598228Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:55.6677399Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:55.7760342Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:55.8840324Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:55.9923954Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:56.1006191Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:56.1222354Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:56.238798Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:56.3096512Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:56.317679Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:56.4253363Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:56.5344158Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:56.6426938Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:56.7519433Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:56.8604359Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:56.9685389Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:57.0779317Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:57.1862788Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:57.2950338Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:57.404351Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:57.5134871Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:57.621557Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:57.6448422Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:57.6523171Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:57.7604158Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:57.8684035Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:57.9771367Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:58.0868047Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:58.1110138Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:58.1174517Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:58.125326Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:58.1311261Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:58.2423649Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:58.2487208Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:58.366919Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:58.3731817Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:58.4899542Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:58.4962792Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:58.6131849Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:58.6199325Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:58.7370829Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:58.7442945Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:58.8618478Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:58.8685914Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:58.9861373Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:58.9934676Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:59.1093831Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:59.1172262Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:59.2337589Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:59.2402842Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:59.3581163Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:59.3650589Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:59.4823831Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:59.4893151Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:59.6061281Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:59.6125519Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:59.729684Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:59.7369215Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:59.852944Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:59.8593202Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:16:59.9765502Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:16:59.983383Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:17:00.1008465Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:17:00.1072999Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:17:00.2246794Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:17:00.2312892Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:17:00.3493034Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:17:00.3563172Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:17:00.4740777Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:17:00.4809974Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:17:00.5985537Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:17:00.6053393Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag
+2026-03-20T22:17:00.7211453Z [DEBUG] (1) sedidata_tui::service::data_manager: Fetching current summoner
+2026-03-20T22:17:00.7280386Z [DEBUG] (1) sedidata_tui::service::data_manager: Reading store_responses flag

@@ -25,6 +25,14 @@ impl LookupService {
         challenges: &[Challenge],
         queues: &[QueueInfo],
     ) -> Self {
+        log::debug!(
+            "Creating LookupService with champions={}, skins={}, masteries={}, challenges={}, queues={}",
+            champions.len(),
+            skins.len(),
+            masteries.len(),
+            challenges.len(),
+            queues.len()
+        );
         Self {
             champs: champions.iter().map(|c| (c.id.clone(), c.clone())).collect(),
             champs_name: champions.iter().map(|c| (c.name.to_lowercase(), c.clone())).collect(),
@@ -36,6 +44,7 @@ impl LookupService {
     }
 
     pub fn get_champion(&self, id: &ChampionId) -> Result<Champion, IdNotFoundError> {
+        log::debug!("Looking up champion with ID: {}", id);
         match self.champs.get(id) {
             Some(champ) => Ok(champ.clone()),
             None => Err(IdNotFoundError::Champ(id.clone())),
@@ -43,6 +52,7 @@ impl LookupService {
     }
 
     pub fn get_champion_name(&self, name: &str) -> Result<Champion, IdNotFoundError> {
+        log::debug!("Looking up champion by name: {}", name);
         match self.champs_name.get(&name.to_lowercase()) {
             Some(champ) => Ok(champ.clone()),
             None => Err(IdNotFoundError::ChampName(name.to_string())),
@@ -50,6 +60,7 @@ impl LookupService {
     }
 
     pub fn get_skin(&self, id: &SkinId) -> Result<Skin, IdNotFoundError> {
+        log::debug!("Looking up skin with ID: {}", id);
         match self.skins.get(id) {
             Some(skin) => Ok(skin.clone()),
             None => Err(IdNotFoundError::Skin(id.clone())),
@@ -57,6 +68,7 @@ impl LookupService {
     }
 
     pub fn get_mastery(&self, id: &ChampionId) -> Result<Mastery, IdNotFoundError> {
+        log::debug!("Looking up mastery for champion ID: {}", id);
         match self.masteries.get(id) {
             Some(mastery) => Ok(mastery.clone()),
             None => Err(IdNotFoundError::Champ(id.clone())),
@@ -64,6 +76,7 @@ impl LookupService {
     }
 
     pub fn _get_challenge(&self, id: i32) -> Result<Challenge, IdNotFoundError> {
+        log::debug!("Looking up challenge with ID: {}", id);
         match self._challenges.get(&id) {
             Some(challenge) => Ok(challenge.clone()),
             None => Err(IdNotFoundError::_Challenge(id)),
@@ -71,6 +84,7 @@ impl LookupService {
     }
 
     pub fn get_queue(&self, id: u16) -> Result<QueueInfo, IdNotFoundError> {
+        log::debug!("Looking up queue with ID: {}", id);
         match self.queues.get(&id) {
             Some(queue) => Ok(queue.clone()),
             None => Err(IdNotFoundError::Queue(id)),

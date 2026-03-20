@@ -18,6 +18,7 @@ use ratatui::{
 };
 
 use crate::{
+    logging,
     service::{
         data_manager::{DataManager, DataRetrievalResult},
         lookup::LookupService,
@@ -269,6 +270,7 @@ impl App {
                             }
                             KeyCode::Char('s') if self.is_in_menu() => {
                                 manager.toggle_store_responses();
+                                logging::set_enabled(manager.get_store_responses());
                             }
                             KeyCode::Char('r') if self.is_in_menu() => {
                                 self.should_refresh = true;
@@ -411,7 +413,7 @@ pub fn run(mut manager: DataManager) -> Result<(), ReplError> {
     terminal.show_cursor()?;
 
     if let Err(err) = &result {
-        eprintln!("Error: {}", err);
+        log::error!("Error: {}", err);
     }
 
     result

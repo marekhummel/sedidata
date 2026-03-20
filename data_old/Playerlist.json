@@ -1,0 +1,1118 @@
+[
+  {
+    "championName": "Fiddlesticks",
+    "isBot": false,
+    "isDead": false,
+    "items": [
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Malignance",
+        "itemID": 3118,
+        "price": 650,
+        "rawDescription": "GeneratedTip_Item_3118_Description",
+        "rawDisplayName": "Item_3118_Name",
+        "slot": 0
+      },
+      {
+        "canUse": true,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Zhonya's Hourglass",
+        "itemID": 3157,
+        "price": 450,
+        "rawDescription": "GeneratedTip_Item_3157_Description",
+        "rawDisplayName": "Item_3157_Name",
+        "slot": 1
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Liandry's Torment",
+        "itemID": 6653,
+        "price": 800,
+        "rawDescription": "GeneratedTip_Item_6653_Description",
+        "rawDisplayName": "Item_6653_Name",
+        "slot": 2
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Sorcerer's Shoes",
+        "itemID": 3020,
+        "price": 800,
+        "rawDescription": "GeneratedTip_Item_3020_Description",
+        "rawDisplayName": "Item_3020_Name",
+        "slot": 3
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Amplifying Tome",
+        "itemID": 1052,
+        "price": 400,
+        "rawDescription": "GeneratedTip_Item_1052_Description",
+        "rawDisplayName": "Item_1052_Name",
+        "slot": 4
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Giant's Belt",
+        "itemID": 1011,
+        "price": 500,
+        "rawDescription": "GeneratedTip_Item_1011_Description",
+        "rawDisplayName": "Item_1011_Name",
+        "slot": 5
+      },
+      {
+        "canUse": true,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Scarecrow Effigy",
+        "itemID": 3330,
+        "price": 0,
+        "rawDescription": "GeneratedTip_Item_3330_Description",
+        "rawDisplayName": "Item_3330_Name",
+        "slot": 6
+      }
+    ],
+    "level": 17,
+    "position": "NONE",
+    "rawChampionName": "game_character_displayname_Fiddlesticks",
+    "rawSkinName": "game_character_skin_displayname_FiddleSticks_8",
+    "respawnTimer": 0,
+    "riotId": "Hely#1440",
+    "riotIdGameName": "Hely",
+    "riotIdTagLine": "1440",
+    "runes": null,
+    "scores": {
+      "assists": 14,
+      "creepScore": 20,
+      "deaths": 9,
+      "kills": 8,
+      "wardScore": 3.2006630897521974
+    },
+    "skinID": 8,
+    "skinName": "Risen Fiddlesticks",
+    "summonerName": "Hely#1440",
+    "summonerSpells": {
+      "summonerSpellOne": {
+        "displayName": "Mark",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+      },
+      "summonerSpellTwo": {
+        "displayName": "Flash",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+      }
+    },
+    "team": "ORDER"
+  },
+  {
+    "championName": "Varus",
+    "isBot": false,
+    "isDead": true,
+    "items": [
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "The Collector",
+        "itemID": 6676,
+        "price": 525,
+        "rawDescription": "GeneratedTip_Item_6676_Description",
+        "rawDisplayName": "Item_6676_Name",
+        "slot": 0
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Muramana",
+        "itemID": 3042,
+        "price": 2900,
+        "rawDescription": "GeneratedTip_Item_3042_Description",
+        "rawDisplayName": "Item_3042_Name",
+        "slot": 1
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Ionian Boots of Lucidity",
+        "itemID": 3158,
+        "price": 350,
+        "rawDescription": "GeneratedTip_Item_3158_Description",
+        "rawDisplayName": "Item_3158_Name",
+        "slot": 2
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Serylda's Grudge",
+        "itemID": 6694,
+        "price": 500,
+        "rawDescription": "GeneratedTip_Item_6694_Description",
+        "rawDisplayName": "Item_6694_Name",
+        "slot": 3
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Recurve Bow",
+        "itemID": 1043,
+        "price": 450,
+        "rawDescription": "GeneratedTip_Item_1043_Description",
+        "rawDisplayName": "Item_1043_Name",
+        "slot": 4
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Pickaxe",
+        "itemID": 1037,
+        "price": 875,
+        "rawDescription": "GeneratedTip_Item_1037_Description",
+        "rawDisplayName": "Item_1037_Name",
+        "slot": 5
+      },
+      {
+        "canUse": true,
+        "consumable": true,
+        "count": 1,
+        "displayName": "Poro-Snax",
+        "itemID": 2052,
+        "price": 0,
+        "rawDescription": "GeneratedTip_Item_2052_Description",
+        "rawDisplayName": "Item_2052_Name",
+        "slot": 6
+      }
+    ],
+    "level": 16,
+    "position": "NONE",
+    "rawChampionName": "game_character_displayname_Varus",
+    "rawSkinName": "game_character_skin_displayname_Varus_67",
+    "respawnTimer": 12.537626266479493,
+    "riotId": "Legoshi hit me#GTD",
+    "riotIdGameName": "Legoshi hit me",
+    "riotIdTagLine": "GTD",
+    "runes": null,
+    "scores": {
+      "assists": 19,
+      "creepScore": 20,
+      "deaths": 9,
+      "kills": 10,
+      "wardScore": 0
+    },
+    "skinID": 67,
+    "skinName": "Spirit Blossom Varus (Pearl)",
+    "summonerName": "Legoshi hit me#GTD",
+    "summonerSpells": {
+      "summonerSpellOne": {
+        "displayName": "Mark",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+      },
+      "summonerSpellTwo": {
+        "displayName": "Flash",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+      }
+    },
+    "team": "ORDER"
+  },
+  {
+    "championName": "Singed",
+    "isBot": false,
+    "isDead": true,
+    "items": [
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Liandry's Torment",
+        "itemID": 6653,
+        "price": 800,
+        "rawDescription": "GeneratedTip_Item_6653_Description",
+        "rawDisplayName": "Item_6653_Name",
+        "slot": 0
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Rod of Ages",
+        "itemID": 6657,
+        "price": 450,
+        "rawDescription": "GeneratedTip_Item_6657_Description",
+        "rawDisplayName": "Item_6657_Name",
+        "slot": 1
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Boots of Swiftness",
+        "itemID": 3009,
+        "price": 700,
+        "rawDescription": "GeneratedTip_Item_3009_Description",
+        "rawDisplayName": "Item_3009_Name",
+        "slot": 2
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Force of Nature",
+        "itemID": 4401,
+        "price": 750,
+        "rawDescription": "GeneratedTip_Item_4401_Description",
+        "rawDisplayName": "Item_4401_Name",
+        "slot": 3
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Rylai's Crystal Scepter",
+        "itemID": 3116,
+        "price": 450,
+        "rawDescription": "GeneratedTip_Item_3116_Description",
+        "rawDisplayName": "Item_3116_Name",
+        "slot": 4
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Winged Moonplate",
+        "itemID": 3066,
+        "price": 400,
+        "rawDescription": "GeneratedTip_Item_3066_Description",
+        "rawDisplayName": "Item_3066_Name",
+        "slot": 5
+      },
+      {
+        "canUse": true,
+        "consumable": true,
+        "count": 1,
+        "displayName": "Poro-Snax",
+        "itemID": 2052,
+        "price": 0,
+        "rawDescription": "GeneratedTip_Item_2052_Description",
+        "rawDisplayName": "Item_2052_Name",
+        "slot": 6
+      }
+    ],
+    "level": 17,
+    "position": "NONE",
+    "rawChampionName": "game_character_displayname_Singed",
+    "rawSkinName": "game_character_skin_displayname_Singed_2",
+    "respawnTimer": 0.8156852722167969,
+    "riotId": "Natsulo#EUW",
+    "riotIdGameName": "Natsulo",
+    "riotIdTagLine": "EUW",
+    "runes": null,
+    "scores": {
+      "assists": 18,
+      "creepScore": 20,
+      "deaths": 16,
+      "kills": 11,
+      "wardScore": 0
+    },
+    "skinID": 2,
+    "skinName": "Hextech Singed",
+    "summonerName": "Natsulo#EUW",
+    "summonerSpells": {
+      "summonerSpellOne": {
+        "displayName": "Flash",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+      },
+      "summonerSpellTwo": {
+        "displayName": "Mark",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+      }
+    },
+    "team": "ORDER"
+  },
+  {
+    "championName": "Kog'Maw",
+    "isBot": false,
+    "isDead": true,
+    "items": [
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Berserker's Greaves",
+        "itemID": 3006,
+        "price": 300,
+        "rawDescription": "GeneratedTip_Item_3006_Description",
+        "rawDisplayName": "Item_3006_Name",
+        "slot": 0
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Guinsoo's Rageblade",
+        "itemID": 3124,
+        "price": 1025,
+        "rawDescription": "GeneratedTip_Item_3124_Description",
+        "rawDisplayName": "Item_3124_Name",
+        "slot": 1
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Blade of The Ruined King",
+        "itemID": 3153,
+        "price": 725,
+        "rawDescription": "GeneratedTip_Item_3153_Description",
+        "rawDisplayName": "Item_3153_Name",
+        "slot": 2
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Wit's End",
+        "itemID": 3091,
+        "price": 550,
+        "rawDescription": "GeneratedTip_Item_3091_Description",
+        "rawDisplayName": "Item_3091_Name",
+        "slot": 3
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Runaan's Hurricane",
+        "itemID": 3085,
+        "price": 850,
+        "rawDescription": "GeneratedTip_Item_3085_Description",
+        "rawDisplayName": "Item_3085_Name",
+        "slot": 4
+      }
+    ],
+    "level": 17,
+    "position": "NONE",
+    "rawChampionName": "game_character_displayname_KogMaw",
+    "rawSkinName": "game_character_skin_displayname_KogMaw_3",
+    "respawnTimer": 5.452484130859375,
+    "riotId": "AmogusFromArcane#EUW",
+    "riotIdGameName": "AmogusFromArcane",
+    "riotIdTagLine": "EUW",
+    "runes": null,
+    "scores": {
+      "assists": 22,
+      "creepScore": 60,
+      "deaths": 13,
+      "kills": 7,
+      "wardScore": 0
+    },
+    "skinID": 3,
+    "skinName": "Monarch Kog'Maw",
+    "summonerName": "AmogusFromArcane#EUW",
+    "summonerSpells": {
+      "summonerSpellOne": {
+        "displayName": "Mark",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+      },
+      "summonerSpellTwo": {
+        "displayName": "Flash",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+      }
+    },
+    "team": "ORDER"
+  },
+  {
+    "championName": "Lee Sin",
+    "isBot": false,
+    "isDead": false,
+    "items": [
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Sundered Sky",
+        "itemID": 6610,
+        "price": 500,
+        "rawDescription": "GeneratedTip_Item_6610_Description",
+        "rawDisplayName": "Item_6610_Name",
+        "slot": 0
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Mercury's Treads",
+        "itemID": 3111,
+        "price": 550,
+        "rawDescription": "GeneratedTip_Item_3111_Description",
+        "rawDisplayName": "Item_3111_Name",
+        "slot": 1
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Death's Dance",
+        "itemID": 6333,
+        "price": 275,
+        "rawDescription": "GeneratedTip_Item_6333_Description",
+        "rawDisplayName": "Item_6333_Name",
+        "slot": 2
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Sterak's Gage",
+        "itemID": 3053,
+        "price": 775,
+        "rawDescription": "GeneratedTip_Item_3053_Description",
+        "rawDisplayName": "Item_3053_Name",
+        "slot": 3
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Ruby Crystal",
+        "itemID": 1028,
+        "price": 400,
+        "rawDescription": "GeneratedTip_Item_1028_Description",
+        "rawDisplayName": "Item_1028_Name",
+        "slot": 4
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Null-Magic Mantle",
+        "itemID": 1033,
+        "price": 400,
+        "rawDescription": "GeneratedTip_Item_1033_Description",
+        "rawDisplayName": "Item_1033_Name",
+        "slot": 5
+      },
+      {
+        "canUse": true,
+        "consumable": true,
+        "count": 1,
+        "displayName": "Poro-Snax",
+        "itemID": 2052,
+        "price": 0,
+        "rawDescription": "GeneratedTip_Item_2052_Description",
+        "rawDisplayName": "Item_2052_Name",
+        "slot": 6
+      }
+    ],
+    "level": 17,
+    "position": "NONE",
+    "rawChampionName": "game_character_displayname_LeeSin",
+    "rawSkinName": "game_character_displayname_LeeSin",
+    "respawnTimer": 0,
+    "riotId": "FiliusTTT#EUW",
+    "riotIdGameName": "FiliusTTT",
+    "riotIdTagLine": "EUW",
+    "runes": null,
+    "scores": {
+      "assists": 17,
+      "creepScore": 0,
+      "deaths": 7,
+      "kills": 8,
+      "wardScore": 0
+    },
+    "skinID": 0,
+    "skinName": "Lee Sin",
+    "summonerName": "FiliusTTT#EUW",
+    "summonerSpells": {
+      "summonerSpellOne": {
+        "displayName": "Flash",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+      },
+      "summonerSpellTwo": {
+        "displayName": "Mark",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+      }
+    },
+    "team": "ORDER"
+  },
+  {
+    "championName": "Nautilus",
+    "isBot": false,
+    "isDead": false,
+    "items": [
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Heartsteel",
+        "itemID": 3084,
+        "price": 400,
+        "rawDescription": "GeneratedTip_Item_3084_Description",
+        "rawDisplayName": "Item_3084_Name",
+        "slot": 0
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Fimbulwinter",
+        "itemID": 3121,
+        "price": 2400,
+        "rawDescription": "GeneratedTip_Item_3121_Description",
+        "rawDisplayName": "Item_3121_Name",
+        "slot": 1
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Mercury's Treads",
+        "itemID": 3111,
+        "price": 550,
+        "rawDescription": "GeneratedTip_Item_3111_Description",
+        "rawDisplayName": "Item_3111_Name",
+        "slot": 2
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Unending Despair",
+        "itemID": 2502,
+        "price": 800,
+        "rawDescription": "GeneratedTip_Item_2502_Description",
+        "rawDisplayName": "Item_2502_Name",
+        "slot": 3
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Warmog's Armor",
+        "itemID": 3083,
+        "price": 500,
+        "rawDescription": "GeneratedTip_Item_3083_Description",
+        "rawDisplayName": "Item_3083_Name",
+        "slot": 4
+      },
+      {
+        "canUse": true,
+        "consumable": true,
+        "count": 2,
+        "displayName": "Poro-Snax",
+        "itemID": 2052,
+        "price": 0,
+        "rawDescription": "GeneratedTip_Item_2052_Description",
+        "rawDisplayName": "Item_2052_Name",
+        "slot": 6
+      }
+    ],
+    "level": 17,
+    "position": "NONE",
+    "rawChampionName": "game_character_displayname_Nautilus",
+    "rawSkinName": "game_character_skin_displayname_Nautilus_3",
+    "respawnTimer": 0,
+    "riotId": "GENIII#EUW",
+    "riotIdGameName": "GENIII",
+    "riotIdTagLine": "EUW",
+    "runes": null,
+    "scores": {
+      "assists": 29,
+      "creepScore": 0,
+      "deaths": 9,
+      "kills": 11,
+      "wardScore": 0
+    },
+    "skinID": 3,
+    "skinName": "AstroNautilus",
+    "summonerName": "GENIII#EUW",
+    "summonerSpells": {
+      "summonerSpellOne": {
+        "displayName": "Flash",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+      },
+      "summonerSpellTwo": {
+        "displayName": "Mark",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+      }
+    },
+    "team": "CHAOS"
+  },
+  {
+    "championName": "Sivir",
+    "isBot": false,
+    "isDead": true,
+    "items": [
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Yun Tal Wildarrows",
+        "itemID": 3032,
+        "price": 850,
+        "rawDescription": "GeneratedTip_Item_3032_Description",
+        "rawDisplayName": "Item_3032_Name",
+        "slot": 0
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Berserker's Greaves",
+        "itemID": 3006,
+        "price": 300,
+        "rawDescription": "GeneratedTip_Item_3006_Description",
+        "rawDisplayName": "Item_3006_Name",
+        "slot": 1
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Navori Flickerblade",
+        "itemID": 6675,
+        "price": 950,
+        "rawDescription": "GeneratedTip_Item_6675_Description",
+        "rawDisplayName": "Item_6675_Name",
+        "slot": 2
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Infinity Edge",
+        "itemID": 3031,
+        "price": 725,
+        "rawDescription": "GeneratedTip_Item_3031_Description",
+        "rawDisplayName": "Item_3031_Name",
+        "slot": 3
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Bloodthirster",
+        "itemID": 3072,
+        "price": 325,
+        "rawDescription": "GeneratedTip_Item_3072_Description",
+        "rawDisplayName": "Item_3072_Name",
+        "slot": 4
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Caulfield's Warhammer",
+        "itemID": 3133,
+        "price": 100,
+        "rawDescription": "GeneratedTip_Item_3133_Description",
+        "rawDisplayName": "Item_3133_Name",
+        "slot": 5
+      },
+      {
+        "canUse": true,
+        "consumable": true,
+        "count": 2,
+        "displayName": "Poro-Snax",
+        "itemID": 2052,
+        "price": 0,
+        "rawDescription": "GeneratedTip_Item_2052_Description",
+        "rawDisplayName": "Item_2052_Name",
+        "slot": 6
+      }
+    ],
+    "level": 17,
+    "position": "NONE",
+    "rawChampionName": "game_character_displayname_Sivir",
+    "rawSkinName": "game_character_skin_displayname_Sivir_21",
+    "respawnTimer": 18.24264144897461,
+    "riotId": "Plexian#EUW",
+    "riotIdGameName": "Plexian",
+    "riotIdTagLine": "EUW",
+    "runes": null,
+    "scores": {
+      "assists": 22,
+      "creepScore": 60,
+      "deaths": 10,
+      "kills": 16,
+      "wardScore": 0
+    },
+    "skinID": 21,
+    "skinName": "Blood Moon Sivir (Citrine)",
+    "summonerName": "Plexian#EUW",
+    "summonerSpells": {
+      "summonerSpellOne": {
+        "displayName": "Flash",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+      },
+      "summonerSpellTwo": {
+        "displayName": "Ghost",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerHaste_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerHaste_DisplayName"
+      }
+    },
+    "team": "CHAOS"
+  },
+  {
+    "championName": "Nidalee",
+    "isBot": false,
+    "isDead": true,
+    "items": [
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Seraph's Embrace",
+        "itemID": 3040,
+        "price": 2900,
+        "rawDescription": "GeneratedTip_Item_3040_Description",
+        "rawDisplayName": "Item_3040_Name",
+        "slot": 0
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Luden's Echo",
+        "itemID": 6655,
+        "price": 450,
+        "rawDescription": "GeneratedTip_Item_6655_Description",
+        "rawDisplayName": "Item_6655_Name",
+        "slot": 1
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Sorcerer's Shoes",
+        "itemID": 3020,
+        "price": 800,
+        "rawDescription": "GeneratedTip_Item_3020_Description",
+        "rawDisplayName": "Item_3020_Name",
+        "slot": 2
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Stormsurge",
+        "itemID": 4646,
+        "price": 800,
+        "rawDescription": "GeneratedTip_Item_4646_Description",
+        "rawDisplayName": "Item_4646_Name",
+        "slot": 3
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Shadowflame",
+        "itemID": 4645,
+        "price": 900,
+        "rawDescription": "GeneratedTip_Item_4645_Description",
+        "rawDisplayName": "Item_4645_Name",
+        "slot": 4
+      },
+      {
+        "canUse": true,
+        "consumable": true,
+        "count": 2,
+        "displayName": "Poro-Snax",
+        "itemID": 2052,
+        "price": 0,
+        "rawDescription": "GeneratedTip_Item_2052_Description",
+        "rawDisplayName": "Item_2052_Name",
+        "slot": 6
+      }
+    ],
+    "level": 18,
+    "position": "NONE",
+    "rawChampionName": "game_character_displayname_Nidalee",
+    "rawSkinName": "game_character_displayname_Nidalee",
+    "respawnTimer": 10.136621475219727,
+    "riotId": "Keiteu88#EUW",
+    "riotIdGameName": "Keiteu88",
+    "riotIdTagLine": "EUW",
+    "runes": null,
+    "scores": {
+      "assists": 28,
+      "creepScore": 20,
+      "deaths": 5,
+      "kills": 7,
+      "wardScore": 0
+    },
+    "skinID": 0,
+    "skinName": "Nidalee",
+    "summonerName": "Keiteu88#EUW",
+    "summonerSpells": {
+      "summonerSpellOne": {
+        "displayName": "Flash",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+      },
+      "summonerSpellTwo": {
+        "displayName": "Mark",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+      }
+    },
+    "team": "CHAOS"
+  },
+  {
+    "championName": "Vladimir",
+    "isBot": false,
+    "isDead": false,
+    "items": [
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Riftmaker",
+        "itemID": 4633,
+        "price": 950,
+        "rawDescription": "GeneratedTip_Item_4633_Description",
+        "rawDisplayName": "Item_4633_Name",
+        "slot": 0
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Cosmic Drive",
+        "itemID": 4629,
+        "price": 450,
+        "rawDescription": "GeneratedTip_Item_4629_Description",
+        "rawDisplayName": "Item_4629_Name",
+        "slot": 1
+      },
+      {
+        "canUse": true,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Zhonya's Hourglass",
+        "itemID": 3157,
+        "price": 450,
+        "rawDescription": "GeneratedTip_Item_3157_Description",
+        "rawDisplayName": "Item_3157_Name",
+        "slot": 2
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Spirit Visage",
+        "itemID": 3065,
+        "price": 650,
+        "rawDescription": "GeneratedTip_Item_3065_Description",
+        "rawDisplayName": "Item_3065_Name",
+        "slot": 3
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Needlessly Large Rod",
+        "itemID": 1058,
+        "price": 1200,
+        "rawDescription": "GeneratedTip_Item_1058_Description",
+        "rawDisplayName": "Item_1058_Name",
+        "slot": 4
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Sorcerer's Shoes",
+        "itemID": 3020,
+        "price": 800,
+        "rawDescription": "GeneratedTip_Item_3020_Description",
+        "rawDisplayName": "Item_3020_Name",
+        "slot": 5
+      },
+      {
+        "canUse": true,
+        "consumable": true,
+        "count": 2,
+        "displayName": "Poro-Snax",
+        "itemID": 2052,
+        "price": 0,
+        "rawDescription": "GeneratedTip_Item_2052_Description",
+        "rawDisplayName": "Item_2052_Name",
+        "slot": 6
+      }
+    ],
+    "level": 17,
+    "position": "NONE",
+    "rawChampionName": "game_character_displayname_Vladimir",
+    "rawSkinName": "game_character_skin_displayname_Vladimir_6",
+    "respawnTimer": 0,
+    "riotId": "Martrix#EUW",
+    "riotIdGameName": "Martrix",
+    "riotIdTagLine": "EUW",
+    "runes": null,
+    "scores": {
+      "assists": 19,
+      "creepScore": 20,
+      "deaths": 10,
+      "kills": 17,
+      "wardScore": 0
+    },
+    "skinID": 6,
+    "skinName": "Soulstealer Vladimir",
+    "summonerName": "Martrix#EUW",
+    "summonerSpells": {
+      "summonerSpellOne": {
+        "displayName": "Mark",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+      },
+      "summonerSpellTwo": {
+        "displayName": "Flash",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+      }
+    },
+    "team": "CHAOS"
+  },
+  {
+    "championName": "Jinx",
+    "isBot": false,
+    "isDead": true,
+    "items": [
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Yun Tal Wildarrows",
+        "itemID": 3032,
+        "price": 850,
+        "rawDescription": "GeneratedTip_Item_3032_Description",
+        "rawDisplayName": "Item_3032_Name",
+        "slot": 0
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Lord Dominik's Regards",
+        "itemID": 3036,
+        "price": 550,
+        "rawDescription": "GeneratedTip_Item_3036_Description",
+        "rawDisplayName": "Item_3036_Name",
+        "slot": 1
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Berserker's Greaves",
+        "itemID": 3006,
+        "price": 300,
+        "rawDescription": "GeneratedTip_Item_3006_Description",
+        "rawDisplayName": "Item_3006_Name",
+        "slot": 2
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Infinity Edge",
+        "itemID": 3031,
+        "price": 725,
+        "rawDescription": "GeneratedTip_Item_3031_Description",
+        "rawDisplayName": "Item_3031_Name",
+        "slot": 3
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Zeal",
+        "itemID": 3086,
+        "price": 350,
+        "rawDescription": "GeneratedTip_Item_3086_Description",
+        "rawDisplayName": "Item_3086_Name",
+        "slot": 4
+      },
+      {
+        "canUse": false,
+        "consumable": false,
+        "count": 1,
+        "displayName": "Scout's Slingshot",
+        "itemID": 3144,
+        "price": 100,
+        "rawDescription": "GeneratedTip_Item_3144_Description",
+        "rawDisplayName": "Item_3144_Name",
+        "slot": 5
+      },
+      {
+        "canUse": true,
+        "consumable": true,
+        "count": 2,
+        "displayName": "Poro-Snax",
+        "itemID": 2052,
+        "price": 0,
+        "rawDescription": "GeneratedTip_Item_2052_Description",
+        "rawDisplayName": "Item_2052_Name",
+        "slot": 6
+      }
+    ],
+    "level": 16,
+    "position": "NONE",
+    "rawChampionName": "game_character_displayname_Jinx",
+    "rawSkinName": "game_character_displayname_Jinx",
+    "respawnTimer": 8.49374008178711,
+    "riotId": "Alphatol#EUW",
+    "riotIdGameName": "Alphatol",
+    "riotIdTagLine": "EUW",
+    "runes": null,
+    "scores": {
+      "assists": 25,
+      "creepScore": 30,
+      "deaths": 10,
+      "kills": 3,
+      "wardScore": 0
+    },
+    "skinID": 0,
+    "skinName": "Jinx",
+    "summonerName": "Alphatol#EUW",
+    "summonerSpells": {
+      "summonerSpellOne": {
+        "displayName": "Flash",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+      },
+      "summonerSpellTwo": {
+        "displayName": "Mark",
+        "rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+        "rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+      }
+    },
+    "team": "CHAOS"
+  }
+]

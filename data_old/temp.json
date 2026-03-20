@@ -1,0 +1,473 @@
+{
+	"activePlayer": {
+		"abilities": {
+			"E": {
+				"abilityLevel": 0,
+				"displayName": "Slice and Dice",
+				"id": "RenektonSliceAndDice",
+				"rawDescription": "GeneratedTip_Spell_RenektonSliceAndDice_Description",
+				"rawDisplayName": "GeneratedTip_Spell_RenektonSliceAndDice_DisplayName"
+			},
+			"Passive": {
+				"displayName": "Reign of Anger",
+				"id": "RenektonPredator",
+				"rawDescription": "GeneratedTip_Passive_RenektonPredator_Description",
+				"rawDisplayName": "GeneratedTip_Passive_RenektonPredator_DisplayName"
+			},
+			"Q": {
+				"abilityLevel": 0,
+				"displayName": "Cull the Meek",
+				"id": "RenektonCleave",
+				"rawDescription": "GeneratedTip_Spell_RenektonCleave_Description",
+				"rawDisplayName": "GeneratedTip_Spell_RenektonCleave_DisplayName"
+			},
+			"R": {
+				"abilityLevel": 0,
+				"displayName": "Dominus",
+				"id": "RenektonReignOfTheTyrant",
+				"rawDescription": "GeneratedTip_Spell_RenektonReignOfTheTyrant_Description",
+				"rawDisplayName": "GeneratedTip_Spell_RenektonReignOfTheTyrant_DisplayName"
+			},
+			"W": {
+				"abilityLevel": 0,
+				"displayName": "Ruthless Predator",
+				"id": "RenektonPreExecute",
+				"rawDescription": "GeneratedTip_Spell_RenektonPreExecute_Description",
+				"rawDisplayName": "GeneratedTip_Spell_RenektonPreExecute_DisplayName"
+			}
+		},
+		"championStats": {
+			"abilityHaste": 0.0,
+			"abilityPower": 0.0,
+			"armor": 0.0,
+			"armorPenetrationFlat": 0.0,
+			"armorPenetrationPercent": 0.0,
+			"attackDamage": 25.0,
+			"attackRange": 0.0,
+			"attackSpeed": 0.6650000214576721,
+			"bonusArmorPenetrationPercent": 0.0,
+			"bonusMagicPenetrationPercent": 0.0,
+			"critChance": 0.0,
+			"critDamage": 0.0,
+			"currentHealth": 660.0,
+			"healShieldPower": 0.0,
+			"healthRegenRate": 0.0,
+			"lifeSteal": 0.0,
+			"magicLethality": 0.0,
+			"magicPenetrationFlat": 0.0,
+			"magicPenetrationPercent": 0.0,
+			"magicResist": 0.0,
+			"maxHealth": 660.0,
+			"moveSpeed": 0.0,
+			"omnivamp": 0.0,
+			"physicalLethality": 0.0,
+			"physicalVamp": 0.0,
+			"resourceMax": 100.0,
+			"resourceRegenRate": 0.0,
+			"resourceType": "RAGE",
+			"resourceValue": 100.0,
+			"spellVamp": 0.0,
+			"tenacity": 5.0
+		},
+		"currentGold": 0.0,
+		"fullRunes": {},
+		"level": 1,
+		"riotId": "Plexian#EUW",
+		"riotIdGameName": "Plexian",
+		"riotIdTagLine": "EUW",
+		"summonerName": "Plexian#EUW",
+		"teamRelativeColors": true
+	},
+	"allPlayers": [
+		{
+			"championName": "Renekton",
+			"isBot": false,
+			"isDead": false,
+			"items": [],
+			"level": 1,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Renekton",
+			"rawSkinName": "game_character_skin_displayname_Renekton_10",
+			"respawnTimer": 0.0,
+			"riotId": "Plexian#EUW",
+			"riotIdGameName": "Plexian",
+			"riotIdTagLine": "EUW",
+			"runes": null,
+			"scores": {
+				"assists": 0,
+				"creepScore": 0,
+				"deaths": 0,
+				"kills": 0,
+				"wardScore": 0.0
+			},
+			"skinID": 10,
+			"skinName": "Renektoy",
+			"summonerName": "Plexian#EUW",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Flash",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Mark",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+				}
+			},
+			"team": "CHAOS"
+		},
+		{
+			"championName": "Alistar",
+			"isBot": false,
+			"isDead": false,
+			"items": [],
+			"level": 1,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Alistar",
+			"rawSkinName": "game_character_displayname_Alistar",
+			"respawnTimer": 0.0,
+			"riotId": "KIPU B0TE#KIPU",
+			"riotIdGameName": "KIPU B0TE",
+			"riotIdTagLine": "KIPU",
+			"runes": null,
+			"scores": {
+				"assists": 0,
+				"creepScore": 0,
+				"deaths": 0,
+				"kills": 0,
+				"wardScore": 0.0
+			},
+			"skinID": 0,
+			"skinName": "Alistar",
+			"summonerName": "KIPU B0TE#KIPU",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Mark",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Flash",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				}
+			},
+			"team": "ORDER"
+		},
+		{
+			"championName": "Sylas",
+			"isBot": false,
+			"isDead": false,
+			"items": [],
+			"level": 1,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Sylas",
+			"rawSkinName": "game_character_displayname_Sylas",
+			"respawnTimer": 0.0,
+			"riotId": "LoaRoxy#KIPU",
+			"riotIdGameName": "LoaRoxy",
+			"riotIdTagLine": "KIPU",
+			"runes": null,
+			"scores": {
+				"assists": 0,
+				"creepScore": 0,
+				"deaths": 0,
+				"kills": 0,
+				"wardScore": 0.0
+			},
+			"skinID": 0,
+			"skinName": "Sylas",
+			"summonerName": "LoaRoxy#KIPU",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Flash",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Mark",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+				}
+			},
+			"team": "ORDER"
+		},
+		{
+			"championName": "Jayce",
+			"isBot": false,
+			"isDead": false,
+			"items": [],
+			"level": 1,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Jayce",
+			"rawSkinName": "game_character_skin_displayname_Jayce_36",
+			"respawnTimer": 0.0,
+			"riotId": "KIPU Biribiri#KIPU",
+			"riotIdGameName": "KIPU Biribiri",
+			"riotIdTagLine": "KIPU",
+			"runes": null,
+			"scores": {
+				"assists": 0,
+				"creepScore": 0,
+				"deaths": 0,
+				"kills": 0,
+				"wardScore": 0.0
+			},
+			"skinID": 36,
+			"skinName": "Prestige T1 Jayce",
+			"summonerName": "KIPU Biribiri#KIPU",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Flash",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Ghost",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerHaste_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerHaste_DisplayName"
+				}
+			},
+			"team": "ORDER"
+		},
+		{
+			"championName": "Aurelion Sol",
+			"isBot": false,
+			"isDead": false,
+			"items": [],
+			"level": 1,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_AurelionSol",
+			"rawSkinName": "game_character_displayname_AurelionSol",
+			"respawnTimer": 0.0,
+			"riotId": "Stormz#KIPU",
+			"riotIdGameName": "Stormz",
+			"riotIdTagLine": "KIPU",
+			"runes": null,
+			"scores": {
+				"assists": 0,
+				"creepScore": 0,
+				"deaths": 0,
+				"kills": 0,
+				"wardScore": 0.0
+			},
+			"skinID": 0,
+			"skinName": "Aurelion Sol",
+			"summonerName": "Stormz#KIPU",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Flash",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Mark",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+				}
+			},
+			"team": "ORDER"
+		},
+		{
+			"championName": "Corki",
+			"isBot": false,
+			"isDead": false,
+			"items": [],
+			"level": 1,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Corki",
+			"rawSkinName": "game_character_skin_displayname_Corki_2",
+			"respawnTimer": 0.0,
+			"riotId": "KIPU Grilø#KIPU",
+			"riotIdGameName": "KIPU Grilø",
+			"riotIdTagLine": "KIPU",
+			"runes": null,
+			"scores": {
+				"assists": 0,
+				"creepScore": 0,
+				"deaths": 0,
+				"kills": 0,
+				"wardScore": 0.0
+			},
+			"skinID": 2,
+			"skinName": "Ice Toboggan Corki",
+			"summonerName": "KIPU Grilø#KIPU",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Flash",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Mark",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+				}
+			},
+			"team": "ORDER"
+		},
+		{
+			"championName": "Poppy",
+			"isBot": false,
+			"isDead": false,
+			"items": [],
+			"level": 1,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Poppy",
+			"rawSkinName": "game_character_skin_displayname_Poppy_16",
+			"respawnTimer": 0.0,
+			"riotId": "Bernard MootMoot#EUW",
+			"riotIdGameName": "Bernard MootMoot",
+			"riotIdTagLine": "EUW",
+			"runes": null,
+			"scores": {
+				"assists": 0,
+				"creepScore": 0,
+				"deaths": 0,
+				"kills": 0,
+				"wardScore": 0.0
+			},
+			"skinID": 16,
+			"skinName": "Astronaut Poppy",
+			"summonerName": "Bernard MootMoot#EUW",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Flash",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Mark",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+				}
+			},
+			"team": "CHAOS"
+		},
+		{
+			"championName": "Miss Fortune",
+			"isBot": false,
+			"isDead": false,
+			"items": [],
+			"level": 1,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_MissFortune",
+			"rawSkinName": "game_character_skin_displayname_MissFortune_15",
+			"respawnTimer": 0.0,
+			"riotId": "The X Boss#EUW",
+			"riotIdGameName": "The X Boss",
+			"riotIdTagLine": "EUW",
+			"runes": null,
+			"scores": {
+				"assists": 0,
+				"creepScore": 0,
+				"deaths": 0,
+				"kills": 0,
+				"wardScore": 0.0
+			},
+			"skinID": 15,
+			"skinName": "Star Guardian Miss Fortune",
+			"summonerName": "The X Boss#EUW",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Flash",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Ghost",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerHaste_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerHaste_DisplayName"
+				}
+			},
+			"team": "CHAOS"
+		},
+		{
+			"championName": "Kayle",
+			"isBot": false,
+			"isDead": false,
+			"items": [],
+			"level": 1,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Kayle",
+			"rawSkinName": "game_character_skin_displayname_Kayle_6",
+			"respawnTimer": 0.0,
+			"riotId": "αδελφός#7992",
+			"riotIdGameName": "αδελφός",
+			"riotIdTagLine": "7992",
+			"runes": null,
+			"scores": {
+				"assists": 0,
+				"creepScore": 0,
+				"deaths": 0,
+				"kills": 0,
+				"wardScore": 0.0
+			},
+			"skinID": 6,
+			"skinName": "Aether Wing Kayle",
+			"summonerName": "αδελφός#7992",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Ghost",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerHaste_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerHaste_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Flash",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				}
+			},
+			"team": "CHAOS"
+		},
+		{
+			"championName": "Quinn",
+			"isBot": false,
+			"isDead": false,
+			"items": [],
+			"level": 1,
+			"position": "NONE",
+			"rawChampionName": "game_character_displayname_Quinn",
+			"rawSkinName": "game_character_skin_displayname_Quinn_2",
+			"respawnTimer": 0.0,
+			"riotId": "Solace#1997",
+			"riotIdGameName": "Solace",
+			"riotIdTagLine": "1997",
+			"runes": null,
+			"scores": {
+				"assists": 0,
+				"creepScore": 0,
+				"deaths": 0,
+				"kills": 0,
+				"wardScore": 0.0
+			},
+			"skinID": 2,
+			"skinName": "Woad Scout Quinn",
+			"summonerName": "Solace#1997",
+			"summonerSpells": {
+				"summonerSpellOne": {
+					"displayName": "Flash",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerFlash_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerFlash_DisplayName"
+				},
+				"summonerSpellTwo": {
+					"displayName": "Mark",
+					"rawDescription": "GeneratedTip_SummonerSpell_SummonerSnowball_Description",
+					"rawDisplayName": "GeneratedTip_SummonerSpell_SummonerSnowball_DisplayName"
+				}
+			},
+			"team": "CHAOS"
+		}
+	],
+	"events": {
+		"Events": []
+	},
+	"gameData": {
+		"gameMode": "KIWI",
+		"gameTime": 0.018940800800919534,
+		"mapName": "Map12",
+		"mapNumber": 12,
+		"mapTerrain": "Default"
+	}
+}

@@ -19,6 +19,7 @@ pub struct RiotApiClient {
 
 impl RiotApiClient {
     pub fn new() -> Result<Self, RiotApiClientInitError> {
+        log::debug!("Initialising RiotApiClient");
         let client = Client::builder().timeout(Duration::from_secs(90)).build()?;
 
         // Clone for heartbeat thread
@@ -33,6 +34,7 @@ impl RiotApiClient {
     }
 
     fn heartbeat_loop(client: Client) {
+        log::debug!("Starting Riot API heartbeat loop");
         loop {
             let url = format!("{}/heartbeat", BASE_URL);
             let _is_alive = match client.get(&url).send() {
@@ -48,6 +50,10 @@ impl RiotApiClient {
         &self,
         players: &[(Option<SummonerName>, Option<Champion>)],
     ) -> Vec<(Option<SummonerName>, RiotApiClientResult<Arc<JsonValue>>)> {
+        log::debug!(
+            "Requesting Riot API player info for {} players",
+            players.len()
+        );
         let (tx, rx) = mpsc::channel();
 
         // Spawn a thread for each request
@@ -75,6 +81,11 @@ impl RiotApiClient {
         name: &Option<SummonerName>,
         champ: &Option<ChampionId>,
     ) -> RiotApiClientResult<Arc<JsonValue>> {
+        log::debug!(
+            "Fetching Riot API player info (has_name={}, has_champion={})",
+            name.is_some(),
+            champ.is_some()
+        );
         let Some(summ_name) = name else {
             return Ok(Arc::new(JsonValue::Null));
         };

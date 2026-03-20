@@ -12,6 +12,10 @@ pub struct LiveGameClient {
 
 impl LiveGameClient {
     pub fn new(read_json_files: bool, write_json: Arc<Mutex<bool>>) -> Self {
+        log::debug!(
+            "Initialising LiveGameClient with read_json_files={}",
+            read_json_files
+        );
         let client = Client::builder().danger_accept_invalid_certs(true).build().unwrap();
         let base_url = "https://127.0.0.1:2999".to_string();
 
@@ -24,6 +28,10 @@ impl LiveGameClient {
     }
 
     pub fn request(&self) -> Result<JsonValue, LiveGameRequestError> {
+        log::debug!(
+            "Requesting live game data (load_local_json={})",
+            self.load_local_json
+        );
         if self.load_local_json {
             let mut file = File::open("data/Playerlist.json")?;
             let mut buf = String::new();

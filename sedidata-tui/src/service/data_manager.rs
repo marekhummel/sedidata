@@ -52,6 +52,7 @@ pub struct DataManager {
 
 impl DataManager {
     pub fn new(load_local: bool) -> Result<Self, DataManagerInitError> {
+        log::debug!("Initialising DataManager with load_local={}", load_local);
         let store_responses = Arc::new(Mutex::new(false));
         let mut client = LcuClient::new(load_local, Arc::clone(&store_responses))?;
         let live_game_client = LiveGameClient::new(load_local, Arc::clone(&store_responses));
@@ -74,12 +75,15 @@ impl DataManager {
     }
 
     pub fn get_store_responses(&self) -> bool {
+        log::debug!("Reading store_responses flag");
         *self.store_responses.lock().unwrap()
     }
 
     pub fn toggle_store_responses(&self) {
+        log::debug!("Toggling store_responses flag");
         let mut flag = self.store_responses.lock().unwrap();
         *flag = !*flag;
+        log::debug!("store_responses flag is now {}", *flag);
     }
 
     // Generic async wrapper that executes fetch in a thread
@@ -88,6 +92,7 @@ impl DataManager {
         T: Send + 'static,
         F: FnOnce() -> DataRetrievalResult<T> + Send + 'static,
     {
+        log::debug!("Starting async_wrapper task");
         let (tx, rx) = mpsc::channel();
 
         thread::spawn(move || {
@@ -99,10 +104,12 @@ impl DataManager {
     }
 
     pub fn get_summoner(&self) -> Summoner {
+        log::debug!("Fetching current summoner");
         self.summoner.lock().unwrap().clone().unwrap()
     }
 
     pub fn get_champions(&self) -> Receiver<DataRetrievalResult<Vec<Champion>>> {
+        log::debug!("Fetching champions");
         let client = Arc::clone(&self.lcu_client);
         let cache = Arc::clone(&self.champ_info_cache);
 
@@ -123,6 +130,7 @@ impl DataManager {
     }
 
     pub fn get_skins(&self) -> Receiver<DataRetrievalResult<Vec<Skin>>> {
+        log::debug!("Fetching skins");
         let client = Arc::clone(&self.lcu_client);
         let cache = Arc::clone(&self.champ_info_cache);
 
@@ -143,6 +151,7 @@ impl DataManager {
     }
 
     pub fn get_chromas(&self) -> Receiver<DataRetrievalResult<Vec<Chroma>>> {
+        log::debug!("Fetching chromas");
         let client = Arc::clone(&self.lcu_client);
         let cache = Arc::clone(&self.champ_info_cache);
 
@@ -163,6 +172,7 @@ impl DataManager {
     }
 
     pub fn get_masteries(&self) -> Receiver<DataRetrievalResult<Vec<Mastery>>> {
+        log::debug!("Fetching masteries");
         let client = Arc::clone(&self.lcu_client);
         let cache = Arc::clone(&self.masteries_cache);
 
@@ -182,6 +192,7 @@ impl DataManager {
     }
 
     pub fn get_loot(&self) -> Receiver<DataRetrievalResult<LootItems>> {
+        log::debug!("Fetching loot");
         let client = Arc::clone(&self.lcu_client);
         let cache = Arc::clone(&self.loot_cache);
 
@@ -201,6 +212,7 @@ impl DataManager {
     }
 
     pub fn get_challenges(&self) -> Receiver<DataRetrievalResult<Vec<Challenge>>> {
+        log::debug!("Fetching challenges");
         let client = Arc::clone(&self.lcu_client);
         let cache = Arc::clone(&self.challenges_cache);
 
@@ -220,6 +232,7 @@ impl DataManager {
     }
 
     pub fn get_queue_types(&self) -> Receiver<DataRetrievalResult<Vec<QueueInfo>>> {
+        log::debug!("Fetching queue types");
         let client = Arc::clone(&self.lcu_client);
         let cache = Arc::clone(&self.queues_cache);
 
@@ -239,6 +252,7 @@ impl DataManager {
     }
 
     pub fn get_champ_select(&self) -> Receiver<DataRetrievalResult<Option<ChampSelectSession>>> {
+        log::debug!("Fetching champion select session");
         let client = Arc::clone(&self.lcu_client);
 
         self.async_wrapper(move || match client.request(LcuClientRequestType::ChampSelect, false) {
@@ -253,6 +267,7 @@ impl DataManager {
     }
 
     pub fn get_live_game(&self) -> Receiver<DataRetrievalResult<Option<LiveGameSession>>> {
+        log::debug!("Fetching live game session");
         let client = Arc::clone(&self.live_game_client);
 
         self.async_wrapper(move || match client.request() {
@@ -266,6 +281,7 @@ impl DataManager {
     }
 
     pub fn get_post_game(&self) -> Receiver<DataRetrievalResult<Option<PostGameSession>>> {
+        log::debug!("Fetching post-game session");
         let client = Arc::clone(&self.lcu_client);
 
         self.async_wrapper(move || match client.request(LcuClientRequestType::EndOfGame, false) {
@@ -283,6 +299,7 @@ impl DataManager {
         &self,
         players: Vec<(Option<SummonerName>, Option<Champion>)>,
     ) -> Receiver<DataRetrievalResult<Vec<SummonerWithStats>>> {
+        log::debug!("Fetching ranked info for {} players", players.len());
         let riot_client = Arc::clone(&self.riot_api_client);
 
         self.async_wrapper(move || {
@@ -336,6 +353,7 @@ impl DataManager {
     }
 
     pub fn refresh(&mut self) -> DataRetrievalResult<()> {
+        log::debug!("Refreshing DataManager state and caches");
         // Get mutable reference to lcu_client (need to deref Arc)
         let client = Arc::get_mut(&mut self.lcu_client).ok_or(DataRetrievalError::ClientRefresh(
             LcuClientInitError::LocalAppDataNotFound,
@@ -356,6 +374,7 @@ impl DataManager {
     }
 
     fn retrieve_summoner(client: &mut LcuClient) -> DataRetrievalResult<Summoner> {
+        log::debug!("Retrieving summoner from LCU");
         let summoner_json = client.request(LcuClientRequestType::Summoner, true)?;
         let summoner = parse_summoner(Arc::as_ref(&summoner_json))?;
         Ok(summoner)

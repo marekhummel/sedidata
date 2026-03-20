@@ -1,0 +1,21 @@
+{
+    "bonusPointsGained": 0,
+    "championId": 50,
+    "gameId": 7602586784,
+    "grade": "C+",
+    "hasLeveledUp": false,
+    "id": "7602586784",
+    "level": 6,
+    "levelUpList": [],
+    "memberGrades": [],
+    "pointsBeforeGame": 33803,
+    "pointsGained": 423,
+    "pointsGainedIndividualContribution": 84,
+    "pointsSinceLastLevelBeforeGame": 2203,
+    "pointsUntilNextLevelAfterGame": 8373,
+    "pointsUntilNextLevelBeforeGame": 8797,
+    "puuid": "7496d9e2-1ec1-5303-b3e5-02caab8c00aa",
+    "score": 1013,
+    "tokenEarnedAfterGame": false,
+    "tokensEarned": 3
+}
