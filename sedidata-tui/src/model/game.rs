@@ -31,7 +31,7 @@ pub struct QueueInfo {
     pub queue_id: u16,
     pub _category: String,
     pub _description: String,
-    pub _gamemode: String,
+    pub gamemode: String,
     pub _type_descriptor: String,
     pub _select_mode_group: String,
     pub pick_mode: String,
@@ -40,6 +40,7 @@ pub struct QueueInfo {
 #[derive(Debug, Clone)]
 pub struct LiveGameSession {
     pub players: Vec<LiveGamePlayerInfo>,
+    pub game_mode: Option<String>,
 }
 
 #[derive(Debug, Clone)]

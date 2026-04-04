@@ -1,4 +1,9 @@
-use std::{fmt, fs::File, io::Read, sync::{Arc, Mutex}};
+use std::{
+    fmt,
+    fs::File,
+    io::{Read, Write},
+    sync::{Arc, Mutex},
+};
 
 use json::JsonValue;
 use reqwest::blocking::Client;
@@ -12,10 +17,7 @@ pub struct LiveGameClient {
 
 impl LiveGameClient {
     pub fn new(read_json_files: bool, write_json: Arc<Mutex<bool>>) -> Self {
-        log::debug!(
-            "Initialising LiveGameClient with read_json_files={}",
-            read_json_files
-        );
+        log::debug!("Initialising LiveGameClient with read_json_files={}", read_json_files);
         let client = Client::builder().danger_accept_invalid_certs(true).build().unwrap();
         let base_url = "https://127.0.0.1:2999".to_string();
 
@@ -29,39 +31,42 @@ impl LiveGameClient {
 
     pub fn request(&self) -> Result<JsonValue, LiveGameRequestError> {
         log::debug!(
-            "Requesting live game data (load_local_json={})",
+            "Requesting live game all-game data (load_local_json={})",
             self.load_local_json
         );
         if self.load_local_json {
-            let mut file = File::open("data/Playerlist.json")?;
+            let mut file = File::open("data/AllGameData.json")?;
             let mut buf = String::new();
             file.read_to_string(&mut buf)?;
-            let json = json::parse(buf.as_str())?;
-            return Ok(json);
+            return Ok(json::parse(buf.as_str())?);
         }
 
-        let url = format!("{}/liveclientdata/playerlist", self.base_url);
+        let url = format!("{}/liveclientdata/allgamedata", self.base_url);
         let response = self.client.get(url).send()?;
-
         if !response.status().is_success() {
             return Err(LiveGameRequestError::InvalidResponse(response.status()));
         }
 
         let text = response.text()?;
-        let json = json::parse(text.as_str())?;
+        let allgamedata = json::parse(text.as_str())?;
+        self.maybe_write_json("data/AllGameData.json", &allgamedata)?;
+        Ok(allgamedata)
+    }
 
-        if *self.write_json.lock().unwrap() {
-            if let Err(e) = std::fs::create_dir("data") {
-                if e.kind() != std::io::ErrorKind::AlreadyExists {
-                    return Err(LiveGameRequestError::LocalFileError(e));
-                }
-            }
-            let mut file = File::create("data/Playerlist.json")?;
-            use std::io::Write;
-            file.write_all(json.pretty(2).as_bytes())?;
+    fn maybe_write_json(&self, path: &str, value: &JsonValue) -> Result<(), LiveGameRequestError> {
+        if !*self.write_json.lock().unwrap() {
+            return Ok(());
         }
 
-        Ok(json)
+        if let Err(e) = std::fs::create_dir("data") {
+            if e.kind() != std::io::ErrorKind::AlreadyExists {
+                return Err(LiveGameRequestError::LocalFileError(e));
+            }
+        }
+
+        let mut file = File::create(path)?;
+        file.write_all(value.pretty(2).as_bytes())?;
+        Ok(())
     }
 }
 

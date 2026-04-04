@@ -152,6 +152,7 @@ impl Menu {
             menu_entry!(group: "Live Game"),
             menu_entry!(item: "Live Game Player Info", LivePlayerInfoView),
             menu_entry!(item: "Champ Select Info (ARAM)", ChampSelectAramView),
+            menu_entry!(item: "Builds + Runes", BuildsAndRunesView),
             // Mastery
             menu_entry!(group: "Mastery"),
             menu_entry!(item: "All Masteries", AllMasteriesView),

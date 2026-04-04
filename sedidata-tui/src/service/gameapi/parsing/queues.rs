@@ -20,7 +20,7 @@ pub fn parse_queues(json: &JsonValue) -> Result<Vec<QueueInfo>, ParsingError> {
                 .as_str()
                 .ok_or(ParsingError::InvalidType("description".into()))?
                 .to_string();
-            let _gamemode = queue_obj["gameMode"]
+            let gamemode = queue_obj["gameMode"]
                 .as_str()
                 .ok_or(ParsingError::InvalidType("gameMode".into()))?
                 .to_string();
@@ -44,7 +44,7 @@ pub fn parse_queues(json: &JsonValue) -> Result<Vec<QueueInfo>, ParsingError> {
                 queue_id,
                 _category,
                 _description,
-                _gamemode,
+                gamemode,
                 _type_descriptor,
                 _select_mode_group: select_mode_group,
                 pick_mode,

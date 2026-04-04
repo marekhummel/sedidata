@@ -8,7 +8,18 @@ use crate::model::{
 use super::ParsingError;
 
 pub fn parse_live_game(json: &JsonValue) -> Result<LiveGameSession, ParsingError> {
-    if let JsonValue::Array(players_array) = json {
+    if let JsonValue::Object(obj) = json {
+        return Ok(LiveGameSession {
+            players: parse_live_game_players(&obj["allPlayers"])?,
+            game_mode: parse_live_game_gametype(&obj["gameData"])?,
+        });
+    }
+
+    Err(ParsingError::InvalidType("root".into()))
+}
+
+fn parse_live_game_players(players_json: &JsonValue) -> Result<Vec<LiveGamePlayerInfo>, ParsingError> {
+    if let JsonValue::Array(players_array) = players_json {
         let mut players = Vec::new();
 
         for player_json in players_array {
@@ -64,8 +75,21 @@ pub fn parse_live_game(json: &JsonValue) -> Result<LiveGameSession, ParsingError
             }
         }
 
-        Ok(LiveGameSession { players })
+        Ok(players)
     } else {
-        Err(ParsingError::InvalidType("root (expected array)".into()))
+        Err(ParsingError::InvalidType("root (expected player array)".into()))
     }
+}
+
+fn parse_live_game_gametype(json: &JsonValue) -> Result<Option<String>, ParsingError> {
+    if let JsonValue::Object(obj) = json {
+        return Ok(Some(
+            obj["gameMode"]
+                .as_str()
+                .ok_or(ParsingError::InvalidType("gameMode".into()))?
+                .to_string(),
+        ));
+    }
+
+    Err(ParsingError::InvalidType("gameMode".into()))
 }

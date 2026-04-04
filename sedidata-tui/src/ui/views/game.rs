@@ -20,6 +20,7 @@ use itertools::Itertools;
 use ratatui::{
     layout::{Alignment, Constraint},
     style::{Color, Modifier, Style},
+    text::Line,
     widgets::{Block, Cell, Paragraph, Row, Table},
 };
 
@@ -146,7 +147,161 @@ fn champ_select_aram_view(ctrl: &Controller) -> TextCreationResult {
 impl_text_view!(ChampSelectAramView, champ_select_aram_view, "ARAM Champ Select Info", auto_refresh: 0.5);
 
 // ===========================================================================
-//   Future Game Info Views
+//   Builds / Runes Game Info Views
+// ==========================================================================
+
+pub struct BuildsAndRunesView {
+    champ_select_data: AsyncData<Option<ChampSelectSession>>,
+    live_game_data: AsyncData<Option<LiveGameSession>>,
+    lines: Option<Vec<Line<'static>>>,
+}
+
+impl BuildsAndRunesView {
+    pub fn new(ctrl: &Controller) -> Self {
+        Self {
+            champ_select_data: AsyncData::new(ctrl.manager.get_champ_select()),
+            live_game_data: AsyncData::new(ctrl.manager.get_live_game()),
+            lines: None,
+        }
+    }
+
+    fn start_session_requests(&mut self, ctrl: &Controller) {
+        self.champ_select_data = AsyncData::new(ctrl.manager.get_champ_select());
+        self.live_game_data = AsyncData::new(ctrl.manager.get_live_game());
+    }
+
+    fn build_champ_select_lines(
+        ctrl: &Controller,
+        champ_select_info: &ChampSelectSession,
+    ) -> Result<Vec<Line<'static>>, String> {
+        let mut lines = Vec::new();
+        let queue = ctrl
+            .lookup
+            .get_queue(champ_select_info.queue_id)
+            .map_err(|err| err.to_string())?;
+        let selected_champion = champ_select_info
+            .my_team
+            .iter()
+            .find(|p| p.cell_id == champ_select_info.local_player_cell)
+            .map(|p| p.selected_champion.clone());
+
+        let champion_name = selected_champion
+            .and_then(|id| ctrl.lookup.get_champion(&id).ok().map(|c| c.name))
+            .unwrap_or_else(|| "Unknown".to_string());
+
+        lines.push(styled_line!("Source: Champ Select / Loading Screen"; Color::Rgb(200, 150, 0)));
+        lines.push(styled_line!("Champion: {}", champion_name));
+        lines.push(styled_line!("Queue: {} ({})", queue.gamemode, queue.queue_id));
+        add_links(&mut lines, &champion_name, &queue.gamemode);
+        Ok(lines)
+    }
+
+    fn build_live_game_lines(ctrl: &Controller, live_game_info: &LiveGameSession) -> Vec<Line<'static>> {
+        let mut lines = Vec::new();
+        lines.push(styled_line!("Source: Live Game"; Color::Rgb(200, 150, 0)));
+
+        let self_name = ctrl.manager.get_summoner().name;
+        let champion_name = live_game_info
+            .players
+            .iter()
+            .find(|p| p.name.as_ref() == Some(&self_name))
+            .map(|p| p.champion_name.clone())
+            .unwrap_or_else(|| "Unknown".to_string());
+        lines.push(styled_line!("Champion: {}", champion_name));
+
+        let game_mode = live_game_info
+            .game_mode
+            .clone()
+            .unwrap_or_else(|| "Unknown".to_string());
+        lines.push(styled_line!("Game mode: {}", game_mode));
+
+        add_links(&mut lines, &champion_name, &game_mode);
+        lines
+    }
+}
+
+fn add_links(lines: &mut Vec<Line<'static>>, champion_name: &str, game_mode: &str) {
+    let champ = champion_name.to_lowercase();
+    lines.push(styled_line!());
+    lines.push(styled_line!("Helpful links"; Color::Rgb(200, 150, 0)));
+    lines.push(styled_line!("  LoLalytics: https://lolalytics.com/lol/{}/build/", champ; Color::DarkGray));
+
+    let blitz_url = match game_mode {
+        "CLASSIC" => format!("https://blitz.gg/lol/champions/{}/build", champ),
+        "ARAM" => format!("https://blitz.gg/lol/champions/{}/aram", champ),
+        "KIWI" => format!("https://blitz.gg/lol/champions/{}/aram-mayhem", champ),
+        "URF" => format!("https://blitz.gg/lol/champions/{}/urf", champ),
+        _ => format!("https://blitz.gg/lol/champions/{}/build", champ),
+    };
+    lines.push(styled_line!("  Blitz.gg: {}", blitz_url; Color::DarkGray));
+}
+
+impl RenderableView for BuildsAndRunesView {
+    fn title(&self) -> &str {
+        "Builds + Runes"
+    }
+
+    fn auto_refresh_interval(&self) -> Option<f32> {
+        Some(0.25)
+    }
+
+    fn update(&mut self, ctrl: &Controller, _keys: &[crossterm::event::KeyCode]) {
+        self.champ_select_data.try_update();
+        self.live_game_data.try_update();
+
+        if let Some(Some(champ_select_info)) = self.champ_select_data.get_data() {
+            self.lines = Some(
+                Self::build_champ_select_lines(ctrl, champ_select_info).unwrap_or_else(|err| {
+                    vec![styled_line!(), styled_line!("  {}", err; Color::Red)]
+                }),
+            );
+            return;
+        }
+
+        if let Some(Some(live_game_info)) = self.live_game_data.get_data() {
+            self.lines = Some(Self::build_live_game_lines(ctrl, live_game_info));
+            return;
+        }
+
+        let champ_select_done = !self.champ_select_data.is_loading();
+        let live_game_done = !self.live_game_data.is_loading();
+        if champ_select_done && live_game_done {
+            self.lines = Some(vec![
+                styled_line!(),
+                styled_line!("  Not in loading screen or live game."; Color::Red),
+            ]);
+        }
+    }
+
+    fn refresh_data(&mut self, ctrl: &Controller) -> Result<(), String> {
+        let is_loading = self.champ_select_data.is_loading() || self.live_game_data.is_loading();
+        if !is_loading {
+            // Keep existing lines while the next background refresh is in flight.
+            self.start_session_requests(ctrl);
+        }
+        Ok(())
+    }
+
+    fn render(&self, rc: RenderContext) -> ViewResult {
+        let Some(lines) = &self.lines else {
+            let paragraph = Paragraph::new(vec![styled_line!("Loading game data...")])
+                .block(rc.block)
+                .wrap(ratatui::widgets::Wrap { trim: false });
+            rc.frame.render_widget(paragraph, rc.area);
+            return Ok(());
+        };
+
+        let paragraph = Paragraph::new(lines.clone())
+            .block(rc.block)
+            .wrap(ratatui::widgets::Wrap { trim: false })
+            .scroll((rc.scroll_offset, 0));
+        rc.frame.render_widget(paragraph, rc.area);
+        Ok(())
+    }
+}
+
+// ===========================================================================
+//   Live Game Info Views
 // ==========================================================================
 
 pub struct LivePlayerInfoView {
