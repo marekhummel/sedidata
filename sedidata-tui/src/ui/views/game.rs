@@ -46,14 +46,15 @@ fn format_selectable_champ(entry: ChampionSelectAramEntry) -> Result<String, Vie
     match champion.owned {
         true => match mastery {
             Some(mastery) => {
+                let missing_points = mastery.missing_points.max(0);
                 output.push_str(&format!("  Level {}", mastery.level));
                 if mastery.level > 5 {
                     output.push_str(&format!(
-                        " ({} pts, {}/{} marks)",
-                        mastery.points, mastery.marks, mastery.required_marks
+                        " - {} pts ({} to next), {}/{} marks",
+                        mastery.points, missing_points, mastery.marks, mastery.required_marks
                     ));
                 } else {
-                    output.push_str(&format!(" ({} pts)", mastery.points));
+                    output.push_str(&format!(" - {} pts ({} to next)", mastery.points, missing_points));
                 }
             }
             None => output.push_str("  Level 0 (not played!)"),
@@ -251,9 +252,8 @@ impl RenderableView for BuildsAndRunesView {
 
         if let Some(Some(champ_select_info)) = self.champ_select_data.get_data() {
             self.lines = Some(
-                Self::build_champ_select_lines(ctrl, champ_select_info).unwrap_or_else(|err| {
-                    vec![styled_line!(), styled_line!("  {}", err; Color::Red)]
-                }),
+                Self::build_champ_select_lines(ctrl, champ_select_info)
+                    .unwrap_or_else(|err| vec![styled_line!(), styled_line!("  {}", err; Color::Red)]),
             );
             return;
         }
