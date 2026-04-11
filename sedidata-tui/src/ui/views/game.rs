@@ -222,7 +222,7 @@ impl BuildsAndRunesView {
 }
 
 fn add_links(lines: &mut Vec<Line<'static>>, champion_name: &str, game_mode: &str) {
-    let champ = champion_name.to_lowercase();
+    let champ = champion_name.to_lowercase().replace('\'', "");
     lines.push(styled_line!());
     lines.push(styled_line!("Helpful links"; Color::Rgb(200, 150, 0)));
     lines.push(styled_line!("  LoLalytics: https://lolalytics.com/lol/{}/build/", champ; Color::DarkGray));
