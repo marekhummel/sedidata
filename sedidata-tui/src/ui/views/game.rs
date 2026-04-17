@@ -104,8 +104,8 @@ fn champ_select_aram_view(ctrl: &Controller) -> TextCreationResult {
         Some(champ_select_info) => {
             let queue = ctrl.lookup.get_queue(champ_select_info.queue_id)?;
 
-            match queue.pick_mode.as_str() {
-                "AllRandomPickStrategy" => {
+            match (queue.pick_mode.as_str(), queue.gamemode.as_str()) {
+                ("AllRandomPickStrategy", _) | (_, "ARAM") | (_, "KIWI") => {
                     let (current_champ, team_champs) = get_team_selections(&champ_select_info);
 
                     lines.push(styled_line!("Currently selected champ:"; Color::Rgb(200, 150, 0)));
