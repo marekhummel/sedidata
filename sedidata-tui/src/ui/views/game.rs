@@ -221,11 +221,64 @@ impl BuildsAndRunesView {
     }
 }
 
+/// Returns the compact champion identifier expected by the linked build sites.
+///
+/// These sites use compact identifiers such as `drmundo` and `ksante`, rather
+/// than URL-encoded display names.
+fn champion_url_slug(champion_name: &str) -> String {
+    let slug: String = champion_name
+        .chars()
+        .filter(|character| character.is_ascii_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect();
+
+    // Build sites use the champion's short name for this display-name exception.
+    match slug.as_str() {
+        "nunuwillump" => "nunu".to_string(),
+        _ => slug,
+    }
+}
+
+fn metasrc_champion_url_slug(champion_name: &str) -> String {
+    let slug: String = champion_name
+        .split_whitespace()
+        .map(|word| {
+            word.chars()
+                .filter(|character| character.is_ascii_alphanumeric())
+                .flat_map(char::to_lowercase)
+                .collect::<String>()
+        })
+        .filter(|word| !word.is_empty())
+        .collect::<Vec<_>>()
+        .join("-");
+
+    match slug.as_str() {
+        "nunu-willump" => "nunu".to_string(),
+        _ => slug,
+    }
+}
+
 fn add_links(lines: &mut Vec<Line<'static>>, champion_name: &str, game_mode: &str) {
-    let champ = champion_name.to_lowercase().replace('\'', "");
+    let champ = champion_url_slug(champion_name);
+    let metasrc_champ = metasrc_champion_url_slug(champion_name);
     lines.push(styled_line!());
     lines.push(styled_line!("Helpful links"; Color::Rgb(200, 150, 0)));
-    lines.push(styled_line!("  LoLalytics: https://lolalytics.com/lol/{}/build/", champ; Color::DarkGray));
+
+    let lolalytics_url = match game_mode {
+        "ARAM" => format!("https://lolalytics.com/lol/{}/aram/build/", champ),
+        "URF" => format!("https://lolalytics.com/lol/{}/arurf/build/", champ),
+        _ => format!("https://lolalytics.com/lol/{}/build/", champ),
+    };
+    lines.push(styled_line!("  LoLalytics: {}", lolalytics_url; Color::DarkGray));
+    lines.push(styled_line!("  Deeplol: https://www.deeplol.gg/champions/{}/build", champ; Color::DarkGray));
+
+    let metasrc_url = match game_mode {
+        "ARAM" => format!("https://www.metasrc.com/lol/aram/champions/{}/build", metasrc_champ),
+        "KIWI" => format!("https://www.metasrc.com/lol/mayhem/champions/{}/build", metasrc_champ),
+        "URF" => format!("https://www.metasrc.com/lol/urf/champions/{}/build", metasrc_champ),
+        _ => format!("https://www.metasrc.com/lol/champions/{}/build", metasrc_champ),
+    };
+    lines.push(styled_line!("  METAsrc: {}", metasrc_url; Color::DarkGray));
 
     let blitz_url = match game_mode {
         "CLASSIC" => format!("https://blitz.gg/lol/champions/{}/build", champ),
