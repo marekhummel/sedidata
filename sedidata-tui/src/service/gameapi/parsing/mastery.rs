@@ -1,6 +1,9 @@
 use json::JsonValue;
 
-use crate::model::mastery::{Mastery, Milestone};
+use crate::model::{
+    ids::ChampionId,
+    mastery::{Mastery, Milestone},
+};
 
 use super::ParsingError;
 
@@ -10,9 +13,14 @@ pub fn parse_masteries(json: &JsonValue) -> Result<Vec<Mastery>, ParsingError> {
 
         for champ_entry in array {
             if let JsonValue::Object(champ_obj) = &champ_entry {
-                let champ_id = champ_obj["championId"]
+                let champ_id: ChampionId = champ_obj["championId"]
                     .as_i32()
-                    .ok_or(ParsingError::InvalidType("championId".into()))?;
+                    .ok_or(ParsingError::InvalidType("championId".into()))?
+                    .into();
+                if champ_id.is_project_jade() {
+                    continue;
+                }
+
                 let level = champ_obj["championLevel"]
                     .as_u16()
                     .ok_or(ParsingError::InvalidType("championLevel".into()))?;
@@ -45,7 +53,7 @@ pub fn parse_masteries(json: &JsonValue) -> Result<Vec<Mastery>, ParsingError> {
                     .collect::<Result<Vec<(String, u16)>, ParsingError>>()?;
 
                 masteries.push(Mastery {
-                    champ_id: champ_id.into(),
+                    champ_id,
                     level,
                     points,
                     missing_points: points_to_next_level,

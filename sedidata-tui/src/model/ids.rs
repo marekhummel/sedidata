@@ -12,6 +12,12 @@ pub struct SkinId(String);
 #[derive(Debug, Clone)]
 pub struct ChromaId(String);
 
+impl ChampionId {
+    pub fn is_project_jade(&self) -> bool {
+        matches!(self.0.parse::<i32>(), Ok(id) if (60_000..70_000).contains(&id))
+    }
+}
+
 impl Display for SummonerId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)

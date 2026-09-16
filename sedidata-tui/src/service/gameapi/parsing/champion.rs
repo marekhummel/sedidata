@@ -15,17 +15,9 @@ pub fn parse_champions(json: &JsonValue) -> Result<AllChampionInfo, ParsingError
 
         for champ_entry in array {
             if let JsonValue::Object(champ_obj) = &champ_entry {
-                let alias = champ_obj["alias"]
-                    .as_str()
-                    .ok_or(ParsingError::InvalidType("alias".into()))?;
-                // Project Jade entries duplicate the base champion and its skins under a `Jade_` alias.
-                if alias.starts_with("Jade_") {
-                    continue;
-                }
-
                 let champ = parse_champ_obj(champ_obj)?;
                 // Skip active check, as currently all are marked inactive
-                if champ.id == String::from("-1").into() {
+                if champ.id == String::from("-1").into() || champ.id.is_project_jade() {
                     continue;
                 }
 
