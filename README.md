@@ -4,6 +4,8 @@
 
 League of Legends client connector, displays special statistics
 
+![Menu Screenshot](sedidata-tui/menu.png)
+
 This repository contains a Rust workspace with **two applications**:
 1. **`sedidata-tui/`**
    The main desktop application.
