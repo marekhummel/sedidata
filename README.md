@@ -27,14 +27,14 @@ Both applications share this repository but are built and deployed independently
 
 ## Deployment Overview
 
-## Build
+### Build
 Cargo uses the systems default target, which is usually `stable-x86_64-unknown-linux-gnu`.
 To allow automatic deployment of the server on Render, this cannot be changed.
 Since the TUI application is meant for usage under Windows, a build target of `x86_64-pc-windows-gnu` is recommended.
 Thus, building with `cargo build --release` builds for linux, but for releases one can use:
 `cargo build --release --package sedidata-tui --target x86_64-pc-windows-gnu`
 
-### CI/CD Pipeline
+#### CI/CD Pipeline
 
 * **On every push**
   Both applications are built to ensure they compile correctly.
@@ -48,7 +48,7 @@ Thus, building with `cargo build --release` builds for linux, but for releases o
   were detected.
   Render then pulls the latest commit and builds the server internally.
 
-### Required GitHub Secrets
+#### Required GitHub Secrets
 
 The CI/CD workflow requires two secrets:
 
@@ -58,7 +58,7 @@ The CI/CD workflow requires two secrets:
 | `RENDER_SERVICE_ID` | Identifies the specific Render service to deploy           |
 
 
-## Server Runtime Secret (Riot API Key)
+### Server Runtime Secret (Riot API Key)
 
 The `sedidata-server` service uses a **Riot API Key** to perform ranked info lookups.
 
