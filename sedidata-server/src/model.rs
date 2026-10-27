@@ -21,7 +21,6 @@ pub struct RiotAccountResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LeagueEntry {
-    pub league_id: String,
     pub puuid: String,
     pub queue_type: String,
     pub tier: String,

@@ -61,7 +61,10 @@ async fn main() {
 }
 
 async fn get_league_entries(Query(params): Query<AccountRequest>, State(state): State<AppState>) -> impl IntoResponse {
-    println!("Request received for Riot ID: {}#{}", params.name, params.tagline);
+    println!(
+        "Incoming league request: name={} tagline={} champion={:?}",
+        params.name, params.tagline, params.champion
+    );
 
     // Return 422 if name is empty
     if params.name.trim().is_empty() {
@@ -80,11 +83,20 @@ async fn get_league_entries(Query(params): Query<AccountRequest>, State(state): 
         Err(resp) => return resp,
     };
 
+    println!("Resolved PUUID for {}#{}: {}", params.name, params.tagline, puuid);
+
     // 2) Resolve player data (cached or fresh)
     let (entries, level) = match get_or_request_player_data(&puuid, &state).await {
         Ok(data) => data,
         Err(resp) => return resp,
     };
+
+    println!(
+        "Resolved player data for PUUID {}: level={} league_entries={}",
+        puuid,
+        level,
+        entries.len()
+    );
 
     // 3) Resolve optional champion mastery
     let mastery = if let Some(champion) = &params.champion {
@@ -108,19 +120,26 @@ async fn get_league_entries(Query(params): Query<AccountRequest>, State(state): 
         level, entries_json, mastery_json
     );
 
+    println!("Completed league request for {}#{}", params.name, params.tagline);
     (StatusCode::OK, combined_json).into_response()
 }
 
 async fn get_or_request_puuid(params: &AccountRequest, state: &AppState) -> Result<String, axum::response::Response> {
     if let Some(cached_puuid) = state.cache.get_puuid(&params.name, &params.tagline).await {
-        println!("  PUUID found in cache");
+        println!(
+            "PUUID cache hit: name={} tagline={} puuid={}",
+            params.name, params.tagline, cached_puuid
+        );
         return Ok(cached_puuid);
     }
 
-    println!("  Fetching PUUID from Riot API");
+    println!("PUUID cache miss: name={} tagline={}", params.name, params.tagline);
     let fetched_puuid = request_puuid(&params.name, &params.tagline, state).await?;
 
-    println!("  PUUID cached");
+    println!(
+        "Caching PUUID: name={} tagline={} puuid={}",
+        params.name, params.tagline, fetched_puuid
+    );
     state
         .cache
         .store_puuid(params.name.clone(), params.tagline.clone(), fetched_puuid.clone())
@@ -133,14 +152,24 @@ async fn get_or_request_player_data(
     state: &AppState,
 ) -> Result<(Vec<LeagueEntry>, u64), axum::response::Response> {
     if let Some(cached) = state.cache.get_player_data(puuid).await {
-        println!("  Player data found in cache (from last hour)");
+        println!(
+            "Player-data cache hit: puuid={} level={} league_entries={}",
+            puuid,
+            cached.level,
+            cached.ranked_stats.len()
+        );
         return Ok((cached.ranked_stats, cached.level));
     }
 
-    println!("  Fetching fresh player data from Riot API");
+    println!("Player-data cache miss: puuid={}", puuid);
     let (entries, level) = request_player_data(puuid, state).await?;
 
-    println!("  Player data cached");
+    println!(
+        "Caching player data: puuid={} level={} league_entries={}",
+        puuid,
+        level,
+        entries.len()
+    );
     state
         .cache
         .store_player_data(puuid.to_string(), level, entries.clone())
@@ -155,14 +184,20 @@ async fn get_or_request_champion_mastery(
     state: &AppState,
 ) -> Result<ChampionMastery, axum::response::Response> {
     if let Some(cached) = state.cache.get_champion_mastery(puuid, champion).await {
-        println!("  Champion mastery found in cache (from last hour)");
+        println!(
+            "Champion-mastery cache hit: puuid={} champion={} level={} points={}",
+            puuid, champion, cached.mastery.champion_level, cached.mastery.champion_points
+        );
         return Ok(cached.mastery);
     }
 
-    println!("  Fetching champion mastery from Riot API");
+    println!("Champion-mastery cache miss: puuid={} champion={}", puuid, champion);
     let mastery = request_champion_mastery(puuid, champion, state).await?;
 
-    println!("  Champion mastery cached");
+    println!(
+        "Caching champion mastery: puuid={} champion={} level={} points={}",
+        puuid, champion, mastery.champion_level, mastery.champion_points
+    );
     state
         .cache
         .store_champion_mastery(puuid.to_string(), champion.to_string(), mastery.clone())
@@ -184,7 +219,13 @@ async fn request_puuid(name: &str, tagline: &str, state: &AppState) -> Result<St
         Ok(resp) => {
             if resp.status().is_success() {
                 match resp.json::<RiotAccountResponse>().await {
-                    Ok(account) => Ok(account.puuid),
+                    Ok(account) => {
+                        println!(
+                            "Account lookup succeeded: requested={}#{} returned={}#{} puuid={}",
+                            name, tagline, account.game_name, account.tag_line, account.puuid
+                        );
+                        Ok(account.puuid)
+                    }
                     Err(e) => {
                         eprintln!("Failed to parse account response: {}", e);
                         Err((
@@ -197,8 +238,7 @@ async fn request_puuid(name: &str, tagline: &str, state: &AppState) -> Result<St
                     }
                 }
             } else {
-                let status = resp.status();
-                eprintln!("Riot API returned error for account lookup: {}", status);
+                let status = log_riot_error("account lookup", resp).await;
                 Err((
                     StatusCode::BAD_GATEWAY,
                     Json(ErrorResponse {
@@ -265,6 +305,10 @@ async fn request_champion_mastery(
                     Ok(json) => {
                         let champion_level = json["championLevel"].as_u64().unwrap_or(0);
                         let champion_points = json["championPoints"].as_u64().unwrap_or(0);
+                        println!(
+                            "Champion-mastery lookup succeeded: puuid={} champion={} level={} points={}",
+                            puuid, champion, champion_level, champion_points
+                        );
                         Ok(ChampionMastery {
                             champion_level,
                             champion_points,
@@ -283,13 +327,16 @@ async fn request_champion_mastery(
                 }
             } else if resp.status() == StatusCode::NOT_FOUND {
                 // No mastery found for this champion
+                println!(
+                    "Champion-mastery lookup returned no data: puuid={} champion={}",
+                    puuid, champion
+                );
                 Ok(ChampionMastery {
                     champion_level: 0,
                     champion_points: 0,
                 })
             } else {
-                let status = resp.status();
-                eprintln!("Riot API returned error for champion mastery: {}", status);
+                let status = log_riot_error("champion mastery", resp).await;
                 Err((
                     StatusCode::BAD_GATEWAY,
                     Json(ErrorResponse {
@@ -321,7 +368,11 @@ async fn extract_level(response: Result<Response, reqwest::Error>) -> Result<u64
                     Ok(text) => {
                         // Parse JSON to extract level
                         match serde_json::from_str::<serde_json::Value>(&text) {
-                            Ok(json) => Ok(json["summonerLevel"].as_u64().unwrap_or(0)),
+                            Ok(json) => {
+                                let level = json["summonerLevel"].as_u64().unwrap_or(0);
+                                println!("Summoner lookup succeeded: level={}", level);
+                                Ok(level)
+                            }
                             Err(e) => {
                                 eprintln!("Failed to parse summoner response: {}", e);
                                 Err((
@@ -346,8 +397,7 @@ async fn extract_level(response: Result<Response, reqwest::Error>) -> Result<u64
                     }
                 }
             } else {
-                let status = resp.status();
-                eprintln!("Riot API returned error for summoner lookup: {}", status);
+                let status = log_riot_error("summoner lookup", resp).await;
                 Err((
                     StatusCode::BAD_GATEWAY,
                     Json(ErrorResponse {
@@ -377,7 +427,10 @@ async fn extract_league_entries(
         Ok(resp) => {
             if resp.status().is_success() {
                 match resp.json::<Vec<LeagueEntry>>().await {
-                    Ok(entries) => Ok(entries),
+                    Ok(entries) => {
+                        println!("League-entries lookup succeeded: entries={}", entries.len());
+                        Ok(entries)
+                    }
                     Err(e) => {
                         eprintln!("Failed to parse league entries response: {}", e);
                         Err((
@@ -390,8 +443,7 @@ async fn extract_league_entries(
                     }
                 }
             } else {
-                let status = resp.status();
-                eprintln!("Riot API returned error for league entries: {}", status);
+                let status = log_riot_error("league entries", resp).await;
                 Err((
                     StatusCode::BAD_GATEWAY,
                     Json(ErrorResponse {
@@ -412,6 +464,18 @@ async fn extract_league_entries(
                 .into_response())
         }
     }
+}
+
+async fn log_riot_error(operation: &str, response: Response) -> StatusCode {
+    let status = response.status();
+    match response.text().await {
+        Ok(body) => eprintln!("Riot {} failed: status={} body={}", operation, status, body),
+        Err(error) => eprintln!(
+            "Riot {} failed: status={} and its response body could not be read: {}",
+            operation, status, error
+        ),
+    }
+    status
 }
 
 async fn heartbeat() -> impl IntoResponse {

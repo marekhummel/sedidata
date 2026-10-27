@@ -21,15 +21,33 @@ impl RiotApiClient {
 
         let mut attempts = 0;
         loop {
-            let resp = self
-                .client
-                .get(url)
-                .header("X-Riot-Token", &self.api_key)
-                .send()
-                .await?;
+            let attempt = attempts + 1;
+            println!("Riot request: attempt={} url={}", attempt, url);
+
+            let response = self.client.get(url).header("X-Riot-Token", &self.api_key).send().await;
+
+            let resp = match response {
+                Ok(response) => response,
+                Err(error) => {
+                    eprintln!("Riot request failed: attempt={} url={} error={}", attempt, url, error);
+                    return Err(error);
+                }
+            };
+
+            println!(
+                "Riot response: attempt={} url={} status={}",
+                attempt,
+                url,
+                resp.status()
+            );
 
             if resp.status() == reqwest::StatusCode::TOO_MANY_REQUESTS && attempts < MAX_RETRIES {
                 attempts += 1;
+                println!(
+                    "Riot rate limit: retrying url={} after {} seconds",
+                    url,
+                    RETRY_DELAYS[attempts - 1]
+                );
                 sleep(Duration::from_secs(RETRY_DELAYS[attempts - 1])).await;
                 continue;
             }
