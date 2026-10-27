@@ -167,7 +167,7 @@ impl App {
                     let chunks = Layout::default()
                         .direction(Direction::Vertical)
                         .constraints([Constraint::Length(3), Constraint::Min(0), Constraint::Length(1)])
-                        .split(f.size());
+                        .split(f.area());
                     view_height = chunks[1].height;
 
                     // Title with subtle welcome message
