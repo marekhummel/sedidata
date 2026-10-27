@@ -43,8 +43,14 @@ async fn main() {
         .layer(cors)
         .with_state(state);
 
-    // Determine port from environment or use default
-    let port = 3000;
+    // Render supplies the public listening port; retain 3000 for local development.
+    let port = env::var("PORT")
+        .map(|value| {
+            value
+                .parse::<u16>()
+                .expect("PORT environment variable must be a valid TCP port")
+        })
+        .unwrap_or(3000);
     let addr = format!("0.0.0.0:{}", port);
     let listener = tokio::net::TcpListener::bind(&addr)
         .await
