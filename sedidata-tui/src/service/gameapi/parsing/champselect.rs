@@ -47,6 +47,22 @@ pub fn parse_champ_select(json: &JsonValue) -> Result<ChampSelectSession, Parsin
     Err(ParsingError::InvalidType("root".into()))
 }
 
+pub fn parse_subset_champions(json: &JsonValue) -> Result<Vec<ChampionId>, ParsingError> {
+    let JsonValue::Array(champion_ids) = json else {
+        return Err(ParsingError::InvalidType("subset champion list".into()));
+    };
+
+    champion_ids
+        .iter()
+        .map(|champion_id| {
+            champion_id
+                .as_i32()
+                .map(ChampionId::from)
+                .ok_or(ParsingError::InvalidType("subset champion id".into()))
+        })
+        .collect()
+}
+
 fn parse_bench_champions(bench_json: &JsonValue) -> Result<Vec<ChampionId>, ParsingError> {
     let mut bench = Vec::new();
 

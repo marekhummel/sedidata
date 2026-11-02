@@ -15,6 +15,7 @@ use crate::{
         challenge::Challenge,
         champion::{AllChampionInfo, Champion, Chroma, Skin},
         game::{ChampSelectSession, LiveGameSession, PostGameSession, QueueInfo},
+        ids::ChampionId,
         loot::LootItems,
         mastery::Mastery,
         summoner::{PlayedChampionMasteryInfo, Summoner, SummonerName, SummonerWithStats},
@@ -25,7 +26,7 @@ use crate::{
         parsing::{
             challenge::parse_challenges,
             champion::parse_champions,
-            champselect::parse_champ_select,
+            champselect::{parse_champ_select, parse_subset_champions},
             livegame::parse_live_game,
             loot::parse_loot,
             mastery::parse_masteries,
@@ -258,6 +259,33 @@ impl DataManager {
                 let champ_select_info = parse_champ_select(Arc::as_ref(&champ_select_json))?;
                 Ok(Some(champ_select_info))
             }
+            Err(LcuRequestError::InvalidResponse(_, _)) => Ok(None),
+            Err(LcuRequestError::LocalFileError(_)) => Ok(None),
+            Err(err) => Err(err.into()),
+        })
+    }
+
+    pub fn get_subset_champions(&self) -> Receiver<DataRetrievalResult<Option<Vec<ChampionId>>>> {
+        log::debug!("Fetching subset champion list");
+        let client = Arc::clone(&self.lcu_client);
+
+        self.async_wrapper(move || match client.request(LcuClientRequestType::SubsetChampionList, false) {
+            Ok(champions_json) => Ok(Some(parse_subset_champions(Arc::as_ref(&champions_json))?)),
+            Err(LcuRequestError::InvalidResponse(_, _)) => Ok(None),
+            Err(LcuRequestError::LocalFileError(_)) => Ok(None),
+            Err(err) => Err(err.into()),
+        })
+    }
+
+    pub fn get_gameflow_phase(&self) -> Receiver<DataRetrievalResult<Option<String>>> {
+        log::debug!("Fetching gameflow phase");
+        let client = Arc::clone(&self.lcu_client);
+
+        self.async_wrapper(move || match client.request(LcuClientRequestType::GameflowPhase, false) {
+            Ok(phase_json) => phase_json
+                .as_str()
+                .map(|phase| Some(phase.to_string()))
+                .ok_or_else(|| ParsingError::InvalidType("gameflow phase".into()).into()),
             Err(LcuRequestError::InvalidResponse(_, _)) => Ok(None),
             Err(LcuRequestError::LocalFileError(_)) => Ok(None),
             Err(err) => Err(err.into()),

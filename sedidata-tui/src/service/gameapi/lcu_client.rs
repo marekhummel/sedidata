@@ -247,6 +247,12 @@ impl LcuClient {
                     LcuClientRequestType::ChampSelect => {
                         format!("{}lol-champ-select/v1/session", self.base_url)
                     }
+                    LcuClientRequestType::SubsetChampionList => {
+                        format!("{}lol-lobby-team-builder/champ-select/v1/subset-champion-list", self.base_url)
+                    }
+                    LcuClientRequestType::GameflowPhase => {
+                        format!("{}lol-gameflow/v1/gameflow-phase", self.base_url)
+                    }
                     LcuClientRequestType::Challenges => {
                         format!("{}lol-challenges/v1/challenges/local-player", self.base_url)
                     }
@@ -425,6 +431,8 @@ pub enum LcuClientRequestType {
     Masteries,
     Loot,
     ChampSelect,
+    SubsetChampionList,
+    GameflowPhase,
     Challenges,
     QueueTypes,
     EndOfGame,
@@ -438,6 +446,8 @@ impl fmt::Display for LcuClientRequestType {
             LcuClientRequestType::Masteries => write!(f, "Masteries"),
             LcuClientRequestType::Loot => write!(f, "Loot"),
             LcuClientRequestType::ChampSelect => write!(f, "ChampSelect"),
+            LcuClientRequestType::SubsetChampionList => write!(f, "SubsetChampionList"),
+            LcuClientRequestType::GameflowPhase => write!(f, "GameflowPhase"),
             LcuClientRequestType::Challenges => write!(f, "Challenges"),
             LcuClientRequestType::QueueTypes => write!(f, "QueueTypes"),
             LcuClientRequestType::EndOfGame => write!(f, "EndOfGame"),

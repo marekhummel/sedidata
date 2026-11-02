@@ -2226,7 +2226,7 @@ dependencies = [
 
 [[package]]
 name = "sedidata-tui"
-version = "2.4.0"
+version = "2.4.1"
 dependencies = [
  "base64 0.21.7",
  "clap",

@@ -67,7 +67,7 @@ fn format_selectable_champ(entry: ChampionSelectAramEntry) -> Result<String, Vie
 fn get_entries(champ_ids: &[ChampionId], lookup: &LookupService) -> Result<Vec<ChampionSelectAramEntry>, ViewError> {
     let mut entries = champ_ids
         .iter()
-        .filter(|champ| champ.0 != "0")
+        .filter(|champ| champ.0 != "0" && !champ.is_project_jade())
         .map(|champ| get_champ_info(champ, lookup))
         .collect::<Result<Vec<_>, _>>()?;
     entries.sort_by_key(|(champ, mastery)| {
@@ -99,14 +99,30 @@ fn get_team_selections(session: &ChampSelectSession) -> (ChampionId, Vec<Champio
 
 fn champ_select_aram_view(ctrl: &Controller) -> TextCreationResult {
     let mut lines = Vec::new();
+    let champ_select_request = ctrl.manager.get_champ_select();
+    let subset_champions_request = ctrl.manager.get_subset_champions();
 
-    match ctrl.manager.get_champ_select().recv().unwrap()? {
+    match champ_select_request.recv().unwrap()? {
         Some(champ_select_info) => {
             let queue = ctrl.lookup.get_queue(champ_select_info.queue_id)?;
 
             match (queue.pick_mode.as_str(), queue.gamemode.as_str()) {
                 ("AllRandomPickStrategy", _) | (_, "ARAM") | (_, "KIWI") => {
                     let (current_champ, team_champs) = get_team_selections(&champ_select_info);
+                    if current_champ == ChampionId("0".into()) {
+                        let subset_champions = subset_champions_request.recv().unwrap()?;
+
+                        if let Some(subset_champions) = subset_champions {
+                            let offered = get_entries(&subset_champions, ctrl.lookup)?;
+                            if !offered.is_empty() {
+                                lines.push(styled_line!("Champion options:"; Color::Rgb(200, 150, 0)));
+                                for entry in offered {
+                                    lines.push(styled_line!("{}", format_selectable_champ(entry)?));
+                                }
+                                lines.push(styled_line!());
+                            }
+                        }
+                    }
 
                     lines.push(styled_line!("Currently selected champ:"; Color::Rgb(200, 150, 0)));
                     if current_champ == ChampionId("0".into()) {
@@ -153,7 +169,9 @@ impl_text_view!(ChampSelectAramView, champ_select_aram_view, "ARAM Champ Select 
 
 pub struct BuildsAndRunesView {
     champ_select_data: AsyncData<Option<ChampSelectSession>>,
+    gameflow_phase_data: AsyncData<Option<String>>,
     live_game_data: AsyncData<Option<LiveGameSession>>,
+    last_champ_select: Option<ChampSelectSession>,
     lines: Option<Vec<Line<'static>>>,
 }
 
@@ -161,19 +179,23 @@ impl BuildsAndRunesView {
     pub fn new(ctrl: &Controller) -> Self {
         Self {
             champ_select_data: AsyncData::new(ctrl.manager.get_champ_select()),
+            gameflow_phase_data: AsyncData::new(ctrl.manager.get_gameflow_phase()),
             live_game_data: AsyncData::new(ctrl.manager.get_live_game()),
+            last_champ_select: None,
             lines: None,
         }
     }
 
     fn start_session_requests(&mut self, ctrl: &Controller) {
         self.champ_select_data = AsyncData::new(ctrl.manager.get_champ_select());
+        self.gameflow_phase_data = AsyncData::new(ctrl.manager.get_gameflow_phase());
         self.live_game_data = AsyncData::new(ctrl.manager.get_live_game());
     }
 
     fn build_champ_select_lines(
         ctrl: &Controller,
         champ_select_info: &ChampSelectSession,
+        source: &str,
     ) -> Result<Vec<Line<'static>>, String> {
         let mut lines = Vec::new();
         let queue = ctrl
@@ -190,7 +212,7 @@ impl BuildsAndRunesView {
             .and_then(|id| ctrl.lookup.get_champion(&id).ok().map(|c| c.name))
             .unwrap_or_else(|| "Unknown".to_string());
 
-        lines.push(styled_line!("Source: Champ Select / Loading Screen"; Color::Rgb(200, 150, 0)));
+        lines.push(styled_line!("Source: {}", source; Color::Rgb(200, 150, 0)));
         lines.push(styled_line!("Champion: {}", champion_name));
         lines.push(styled_line!("Queue: {} ({})", queue.gamemode, queue.queue_id));
         add_links(&mut lines, &champion_name, &queue.gamemode);
@@ -301,11 +323,13 @@ impl RenderableView for BuildsAndRunesView {
 
     fn update(&mut self, ctrl: &Controller, _keys: &[crossterm::event::KeyCode]) {
         self.champ_select_data.try_update();
+        self.gameflow_phase_data.try_update();
         self.live_game_data.try_update();
 
         if let Some(Some(champ_select_info)) = self.champ_select_data.get_data() {
+            self.last_champ_select = Some(champ_select_info.clone());
             self.lines = Some(
-                Self::build_champ_select_lines(ctrl, champ_select_info)
+                Self::build_champ_select_lines(ctrl, champ_select_info, "Champ Select")
                     .unwrap_or_else(|err| vec![styled_line!(), styled_line!("  {}", err; Color::Red)]),
             );
             return;
@@ -316,9 +340,22 @@ impl RenderableView for BuildsAndRunesView {
             return;
         }
 
+        // Champ select closes before the in-game API becomes available. Keep the
+        // selected champion's links visible throughout that loading-screen gap.
+        if matches!(self.gameflow_phase_data.get_data(), Some(Some(phase)) if phase == "GameStart") {
+            if let Some(champ_select_info) = &self.last_champ_select {
+                self.lines = Some(
+                    Self::build_champ_select_lines(ctrl, champ_select_info, "Loading Screen")
+                        .unwrap_or_else(|err| vec![styled_line!(), styled_line!("  {}", err; Color::Red)]),
+                );
+                return;
+            }
+        }
+
         let champ_select_done = !self.champ_select_data.is_loading();
+        let gameflow_phase_done = !self.gameflow_phase_data.is_loading();
         let live_game_done = !self.live_game_data.is_loading();
-        if champ_select_done && live_game_done {
+        if champ_select_done && gameflow_phase_done && live_game_done {
             self.lines = Some(vec![
                 styled_line!(),
                 styled_line!("  Not in loading screen or live game."; Color::Red),
@@ -327,7 +364,9 @@ impl RenderableView for BuildsAndRunesView {
     }
 
     fn refresh_data(&mut self, ctrl: &Controller) -> Result<(), String> {
-        let is_loading = self.champ_select_data.is_loading() || self.live_game_data.is_loading();
+        let is_loading = self.champ_select_data.is_loading()
+            || self.gameflow_phase_data.is_loading()
+            || self.live_game_data.is_loading();
         if !is_loading {
             // Keep existing lines while the next background refresh is in flight.
             self.start_session_requests(ctrl);
